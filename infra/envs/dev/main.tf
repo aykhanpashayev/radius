@@ -40,9 +40,18 @@ variable "lambda_concurrency_limit"        { type = number }
 variable "log_retention_days"              { type = number }
 variable "cloudtrail_organization_enabled" { type = bool }
 variable "enable_pitr"                     { type = bool }
-variable "lambda_s3_bucket"                { type = string; default = "" }
-variable "email_subscriptions"             { type = list(string); default = [] }
-variable "https_subscriptions"             { type = list(string); default = [] }
+variable "lambda_s3_bucket" {
+  type    = string
+  default = ""
+}
+variable "email_subscriptions" {
+  type    = list(string)
+  default = []
+}
+variable "https_subscriptions" {
+  type    = list(string)
+  default = []
+}
 variable "tags"                            { type = map(string) }
 
 # ---------------------------------------------------------------------------

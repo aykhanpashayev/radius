@@ -1,0 +1,36 @@
+{
+  "eventVersion": "1.08",
+  "userIdentity": {
+    "type": "IAMUser",
+    "principalId": "AIDAEXAMPLEADMINUSER1",
+    "arn": "arn:aws:iam::123456789012:user/admin-user",
+    "accountId": "123456789012",
+    "userName": "admin-user"
+  },
+  "eventTime": "2026-03-16T11:10:00Z",
+  "eventSource": "sts.amazonaws.com",
+  "eventName": "GetFederationToken",
+  "awsRegion": "us-east-1",
+  "sourceIPAddress": "203.0.113.10",
+  "userAgent": "aws-cli/2.15.0",
+  "requestParameters": {
+    "name": "federated-session",
+    "durationSeconds": 7200
+  },
+  "responseElements": {
+    "credentials": {
+      "accessKeyId": "ASIAEXAMPLEKEY00003",
+      "expiration": "2026-03-16T13:10:00Z"
+    },
+    "federatedUser": {
+      "federatedUserId": "123456789012:federated-session",
+      "arn": "arn:aws:sts::123456789012:federated-user/federated-session"
+    }
+  },
+  "requestID": "b1c2d3e4-0003-0003-0003-000000000003",
+  "eventID": "f1a2b3c4-0003-0003-0003-000000000003",
+  "readOnly": false,
+  "eventType": "AwsApiCall",
+  "managementEvent": true,
+  "recipientAccountId": "123456789012"
+}

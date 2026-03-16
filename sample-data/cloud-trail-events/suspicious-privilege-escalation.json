@@ -1,0 +1,28 @@
+{
+  "_comment": "Suspicious: newly created user immediately attaches AdministratorAccess to themselves — classic privilege escalation pattern.",
+  "eventVersion": "1.08",
+  "userIdentity": {
+    "type": "IAMUser",
+    "principalId": "AIDAEXAMPLENEWUSER001",
+    "arn": "arn:aws:iam::123456789012:user/new-service-account",
+    "accountId": "123456789012",
+    "userName": "new-service-account"
+  },
+  "eventTime": "2026-03-16T10:06:00Z",
+  "eventSource": "iam.amazonaws.com",
+  "eventName": "AttachUserPolicy",
+  "awsRegion": "us-east-1",
+  "sourceIPAddress": "198.51.100.99",
+  "userAgent": "python-requests/2.31.0",
+  "requestParameters": {
+    "userName": "new-service-account",
+    "policyArn": "arn:aws:iam::aws:policy/AdministratorAccess"
+  },
+  "responseElements": null,
+  "requestID": "a1b2c3d4-9001-9001-9001-000000009001",
+  "eventID": "e1f2a3b4-9001-9001-9001-000000009001",
+  "readOnly": false,
+  "eventType": "AwsApiCall",
+  "managementEvent": true,
+  "recipientAccountId": "123456789012"
+}

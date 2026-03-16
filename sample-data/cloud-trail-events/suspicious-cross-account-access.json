@@ -1,0 +1,38 @@
+{
+  "_comment": "Suspicious: identity assumes a high-privilege role in a different account from an unusual IP, outside normal working hours.",
+  "eventVersion": "1.08",
+  "userIdentity": {
+    "type": "IAMUser",
+    "principalId": "AIDAEXAMPLEDEVUSER001",
+    "arn": "arn:aws:iam::123456789012:user/dev-user",
+    "accountId": "123456789012",
+    "userName": "dev-user"
+  },
+  "eventTime": "2026-03-16T03:17:00Z",
+  "eventSource": "sts.amazonaws.com",
+  "eventName": "AssumeRole",
+  "awsRegion": "us-east-1",
+  "sourceIPAddress": "185.220.101.45",
+  "userAgent": "aws-cli/2.15.0",
+  "requestParameters": {
+    "roleArn": "arn:aws:iam::987654321098:role/OrganizationAccountAccessRole",
+    "roleSessionName": "suspicious-session",
+    "durationSeconds": 3600
+  },
+  "responseElements": {
+    "credentials": {
+      "accessKeyId": "ASIAEXAMPLEKEY99999",
+      "expiration": "2026-03-16T04:17:00Z"
+    },
+    "assumedRoleUser": {
+      "assumedRoleId": "AROAEXAMPLEROLEID999:suspicious-session",
+      "arn": "arn:aws:sts::987654321098:assumed-role/OrganizationAccountAccessRole/suspicious-session"
+    }
+  },
+  "requestID": "b1c2d3e4-9001-9001-9001-000000009001",
+  "eventID": "f1a2b3c4-9001-9001-9001-000000009001",
+  "readOnly": false,
+  "eventType": "AwsApiCall",
+  "managementEvent": true,
+  "recipientAccountId": "987654321098"
+}

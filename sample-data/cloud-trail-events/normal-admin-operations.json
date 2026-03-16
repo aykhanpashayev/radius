@@ -1,0 +1,27 @@
+{
+  "_comment": "Normal: admin user performs routine IAM operations during business hours from a known corporate IP.",
+  "eventVersion": "1.08",
+  "userIdentity": {
+    "type": "IAMUser",
+    "principalId": "AIDAEXAMPLEADMINUSER1",
+    "arn": "arn:aws:iam::123456789012:user/admin-user",
+    "accountId": "123456789012",
+    "userName": "admin-user"
+  },
+  "eventTime": "2026-03-16T14:30:00Z",
+  "eventSource": "iam.amazonaws.com",
+  "eventName": "ListUsers",
+  "awsRegion": "us-east-1",
+  "sourceIPAddress": "203.0.113.10",
+  "userAgent": "AWS Management Console",
+  "requestParameters": {
+    "maxItems": 100
+  },
+  "responseElements": null,
+  "requestID": "a1b2c3d4-8001-8001-8001-000000008001",
+  "eventID": "e1f2a3b4-8001-8001-8001-000000008001",
+  "readOnly": true,
+  "eventType": "AwsApiCall",
+  "managementEvent": true,
+  "recipientAccountId": "123456789012"
+}

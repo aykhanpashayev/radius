@@ -1,67 +1,66 @@
-# Architecture Overview
+# Radius Architecture
 
-> **Status**: Documentation stub - to be completed during Milestone 6
+Radius is a serverless, event-driven cloud security platform that measures and reduces the blast radius of identity-based attacks in AWS Organizations.
 
-## Introduction
+## Event Processing Pipeline
 
-This document describes the event processing pipeline and system architecture for Radius.
+```
+CloudTrail (management events)
+    │
+    ▼
+EventBridge (rule: IAM/STS/Orgs/EC2 events)
+    │
+    ▼
+Event_Normalizer Lambda
+    ├──► Detection_Engine Lambda (async invoke)
+    │        └──► Incident_Processor Lambda (async invoke)
+    │                  └──► SNS Alert_Topic (high-severity only)
+    └──► Identity_Collector Lambda (async invoke)
+             ├── Identity_Profile table (DynamoDB)
+             └── Trust_Relationship table (DynamoDB)
+```
 
-## System Architecture
+Event_Normalizer is the single entry point from EventBridge. It invokes Detection_Engine and Identity_Collector **asynchronously** — neither is triggered directly by EventBridge.
 
-<!-- TODO: Add system architecture diagram -->
+## Lambda Functions
 
-## Event Processing Flow
+| Function | Trigger | Purpose |
+|---|---|---|
+| Event_Normalizer | EventBridge | Parse, validate, and store CloudTrail events; fan out to downstream functions |
+| Detection_Engine | Async invoke (Event_Normalizer) | PLACEHOLDER — logs events, defines detection interfaces for Phase 3 |
+| Incident_Processor | Async invoke (Detection_Engine) | Create/deduplicate incidents; publish SNS alerts |
+| Identity_Collector | Async invoke (Event_Normalizer) | Maintain Identity_Profile and Trust_Relationship records |
+| Score_Engine | On-demand | PLACEHOLDER — logs invocations, defines scoring interfaces for Phase 3 |
+| API_Handler | API Gateway | Serve REST API for all read/write operations |
 
-<!-- TODO: Document CloudTrail → EventBridge → Lambda → DynamoDB flow -->
+## Data Flow
 
-### 1. CloudTrail Capture
+1. CloudTrail captures management-plane events across the AWS Organization
+2. EventBridge filters IAM, STS, Organizations, and EC2 events and routes them to Event_Normalizer
+3. Event_Normalizer normalizes the event, stores an Event_Summary record, then asynchronously invokes Detection_Engine and Identity_Collector
+4. Detection_Engine (placeholder) forwards a finding to Incident_Processor
+5. Incident_Processor creates or deduplicates an Incident record and publishes SNS alerts for High/Very High/Critical severity
+6. Identity_Collector creates or updates Identity_Profile records and records Trust_Relationship edges for AssumeRole events
+7. API_Handler serves the React dashboard via API Gateway
 
-<!-- TODO: Describe CloudTrail configuration and event capture -->
+## Infrastructure Modules
 
-### 2. EventBridge Routing
+```
+KMS ──────────────────────────────────────────────────────────────────┐
+                                                                       │ (encryption keys)
+DynamoDB ◄─────────────────────────────────────────────────────────── ┤
+SNS      ◄─────────────────────────────────────────────────────────── ┤
+Lambda   ◄── DynamoDB table names/ARNs, SNS topic ARN, KMS key ────── ┤
+EventBridge ◄── Lambda ARNs ──────────────────────────────────────────┘
+API Gateway ◄── Lambda ARN/name
+CloudTrail  ◄── KMS key
+CloudWatch  ◄── Lambda names, DynamoDB table names, API Gateway name
+```
 
-<!-- TODO: Describe event filtering and routing rules -->
+## Design Principles
 
-### 3. Event Normalization
-
-<!-- TODO: Describe Event_Normalizer Lambda function -->
-
-### 4. Detection and Incident Processing
-
-<!-- TODO: Describe Detection_Engine and Incident_Processor -->
-
-### 5. Identity Collection
-
-<!-- TODO: Describe Identity_Collector and trust relationship recording -->
-
-### 6. Score Calculation
-
-<!-- TODO: Describe Score_Engine (placeholder in Phase 2) -->
-
-### 7. API Access
-
-<!-- TODO: Describe API Gateway and API_Handler -->
-
-## Component Interactions
-
-<!-- TODO: Add Lambda function interaction diagrams -->
-
-## Data Flow Diagrams
-
-<!-- TODO: Add detailed data flow diagrams -->
-
-## EventBridge Routing
-
-<!-- TODO: Add EventBridge routing diagrams -->
-
-## DynamoDB Access Patterns
-
-<!-- TODO: Document access patterns for each table -->
-
-## Key Architecture Decisions
-
-<!-- TODO: Document important architectural decisions and rationale -->
-
-## Phase 2 Scope
-
-<!-- TODO: Clarify what is implemented vs placeholder in Phase 2 -->
+- **Serverless**: No persistent compute — all processing is Lambda-based
+- **Event-driven**: Processing triggered by CloudTrail events, not polling
+- **Cost-aware**: On-demand DynamoDB billing, arm64 Lambda, TTL for data expiry
+- **Explainable**: Detection and scoring logic is rule-based and transparent
+- **Multi-account**: CloudTrail org-wide trail covers all accounts in the Organization

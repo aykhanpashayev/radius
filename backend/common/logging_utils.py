@@ -1,0 +1,132 @@
+"""Structured JSON logging utilities for Radius Lambda functions."""
+
+import json
+import logging
+import traceback
+import uuid
+from datetime import datetime, timezone
+from typing import Any
+
+
+def _utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+class _JsonFormatter(logging.Formatter):
+    """Emit each log record as a single JSON line."""
+
+    def format(self, record: logging.LogRecord) -> str:
+        payload: dict[str, Any] = {
+            "timestamp": _utc_now(),
+            "level": record.levelname,
+            "logger": record.name,
+            "message": record.getMessage(),
+        }
+        # Merge any extra fields attached to the record
+        for key, value in record.__dict__.items():
+            if key not in (
+                "args", "asctime", "created", "exc_info", "exc_text",
+                "filename", "funcName", "id", "levelname", "levelno",
+                "lineno", "message", "module", "msecs", "msg", "name",
+                "pathname", "process", "processName", "relativeCreated",
+                "stack_info", "thread", "threadName",
+            ):
+                payload[key] = value
+
+        if record.exc_info:
+            payload["exception"] = self.formatException(record.exc_info)
+
+        return json.dumps(payload, default=str)
+
+
+def get_logger(name: str, correlation_id: str | None = None) -> logging.Logger:
+    """Return a structured JSON logger.
+
+    Args:
+        name: Logger name (typically __name__ of the calling module).
+        correlation_id: Optional correlation ID to attach to every record.
+
+    Returns:
+        Configured Logger instance.
+    """
+    logger = logging.getLogger(name)
+
+    if not logger.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(_JsonFormatter())
+        logger.addHandler(handler)
+        logger.setLevel(logging.INFO)
+        logger.propagate = False
+
+    if correlation_id:
+        logger = logging.LoggerAdapter(logger, {"correlation_id": correlation_id})  # type: ignore[assignment]
+
+    return logger
+
+
+def generate_correlation_id() -> str:
+    """Generate a new UUID v4 correlation ID."""
+    return str(uuid.uuid4())
+
+
+def log_error(
+    logger: logging.Logger,
+    message: str,
+    error: Exception,
+    correlation_id: str | None = None,
+    **extra: Any,
+) -> None:
+    """Log an error with structured fields including stack trace.
+
+    Args:
+        logger: Logger instance.
+        message: Human-readable error description.
+        error: The exception that was raised.
+        correlation_id: Optional correlation ID for request tracing.
+        **extra: Additional key-value pairs to include in the log record.
+    """
+    fields: dict[str, Any] = {
+        "error_type": type(error).__name__,
+        "error_message": str(error),
+        "stack_trace": traceback.format_exc(),
+        **extra,
+    }
+    if correlation_id:
+        fields["correlation_id"] = correlation_id
+
+    logger.error(message, extra=fields)
+
+
+def log_request(
+    logger: logging.Logger,
+    endpoint: str,
+    method: str,
+    correlation_id: str,
+    parameters: dict[str, Any] | None = None,
+    response_time_ms: float | None = None,
+    status_code: int | None = None,
+) -> None:
+    """Log an API request with tracing fields.
+
+    Args:
+        logger: Logger instance.
+        endpoint: API endpoint path.
+        method: HTTP method.
+        correlation_id: Request correlation ID.
+        parameters: Query/path parameters (sanitized).
+        response_time_ms: Response time in milliseconds.
+        status_code: HTTP response status code.
+    """
+    fields: dict[str, Any] = {
+        "correlation_id": correlation_id,
+        "endpoint": endpoint,
+        "method": method,
+    }
+    if parameters is not None:
+        fields["parameters"] = parameters
+    if response_time_ms is not None:
+        fields["response_time_ms"] = round(response_time_ms, 2)
+    if status_code is not None:
+        fields["status_code"] = status_code
+
+    logger.info("API request", extra=fields)

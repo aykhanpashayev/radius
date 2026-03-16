@@ -1,0 +1,36 @@
+{
+  "eventVersion": "1.08",
+  "userIdentity": {
+    "type": "IAMUser",
+    "principalId": "AIDAEXAMPLEADMINUSER1",
+    "arn": "arn:aws:iam::111111111111:user/org-admin",
+    "accountId": "111111111111",
+    "userName": "org-admin"
+  },
+  "eventTime": "2026-03-16T12:15:00Z",
+  "eventSource": "organizations.amazonaws.com",
+  "eventName": "InviteAccountToOrganization",
+  "awsRegion": "us-east-1",
+  "sourceIPAddress": "203.0.113.30",
+  "userAgent": "aws-cli/2.15.0",
+  "requestParameters": {
+    "target": {
+      "id": "222222222222",
+      "type": "ACCOUNT"
+    },
+    "notes": "Inviting existing account to org"
+  },
+  "responseElements": {
+    "handshake": {
+      "id": "h-examplehandshake01",
+      "arn": "arn:aws:organizations::111111111111:handshake/o-exampleorgid/invite/h-examplehandshake01",
+      "state": "OPEN"
+    }
+  },
+  "requestID": "c1d2e3f4-0002-0002-0002-000000000002",
+  "eventID": "g1h2i3j4-0002-0002-0002-000000000002",
+  "readOnly": false,
+  "eventType": "AwsApiCall",
+  "managementEvent": true,
+  "recipientAccountId": "111111111111"
+}

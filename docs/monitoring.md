@@ -1,85 +1,80 @@
-# Monitoring Guide
-
-> **Status**: Documentation stub - to be completed during Milestone 6
-
-## Introduction
-
-This document describes monitoring setup, CloudWatch dashboards, alarms, and troubleshooting procedures.
+# Monitoring
 
 ## CloudWatch Dashboards
 
-<!-- TODO: Document CloudWatch dashboards and their metrics -->
+Four dashboards are provisioned automatically by the `cloudwatch` Terraform module.
 
-### Lambda Metrics Dashboard
+| Dashboard | Metrics |
+|---|---|
+| `{prefix}-lambda` | Invocations, Errors, Duration (p99) per function |
+| `{prefix}-dynamodb` | Consumed read/write capacity, throttled requests per table |
+| `{prefix}-api-gateway` | Request count, latency (p99), 4xx/5xx error rates |
+| `{prefix}-eventbridge` | Rule invocations, failed invocations |
 
-### DynamoDB Metrics Dashboard
-
-### API Gateway Metrics Dashboard
-
-### EventBridge Metrics Dashboard
+Access dashboards at: `https://console.aws.amazon.com/cloudwatch/home#dashboards`
 
 ## CloudWatch Alarms
 
-<!-- TODO: Document alarm configurations and thresholds -->
+All alarms publish to the SNS Alert_Topic when triggered.
 
-### Lambda Alarms
+| Alarm | Condition | Period |
+|---|---|---|
+| `{prefix}-{fn}-error-rate` | Lambda error rate > 5% | 5 min |
+| `{prefix}-{fn}-duration` | Lambda p99 duration > 24s | 5 min |
+| `{prefix}-dynamodb-{table}-throttles` | DynamoDB throttled requests > 10 | 1 min |
+| `{prefix}-{fn}-dlq-messages` | DLQ message count > 0 | 1 min |
+| `{prefix}-api-gateway-5xx` | API Gateway 5xx rate > 1% | 5 min |
 
-### DynamoDB Alarms
+## Structured Logging
 
-### API Gateway Alarms
+All Lambda functions emit structured JSON logs to CloudWatch Logs via `backend/common/logging_utils.py`.
 
-### Dead-Letter Queue Alarms
+Every log record includes:
+- `timestamp` — ISO 8601 UTC
+- `level` — INFO, WARNING, or ERROR
+- `logger` — module name
+- `message` — human-readable description
+- `correlation_id` — UUID v4 generated per invocation (propagated across async calls)
 
-## CloudWatch Logs
+Log groups follow the pattern `/aws/lambda/{prefix}-{function-name}`.
 
-<!-- TODO: Document log groups and log analysis -->
+Retention: 7 days (dev), 30 days (prod).
 
-### Log Groups
+## Correlation ID Tracing
 
-### Structured Logging Format
+Each Lambda invocation generates a `correlation_id` at entry. This ID is:
+- Included in every log record for that invocation
+- Passed to downstream async invocations in the event payload
+- Logged on errors with full stack trace via `log_error()`
 
-### Correlation ID Tracing
+To trace a request end-to-end, search CloudWatch Logs Insights across all log groups:
 
-## Metrics
+```
+fields @timestamp, @message
+| filter correlation_id = "your-correlation-id-here"
+| sort @timestamp asc
+```
 
-<!-- TODO: Document custom metrics and their meanings -->
+## Troubleshooting Common Issues
 
-### Lambda Metrics
+**Lambda errors appearing in DLQ:**
+1. Check the DLQ alarm — it fires on any message count > 0
+2. Open the DLQ in SQS console and inspect the message body
+3. Search CloudWatch Logs for the `correlation_id` in the failed event
+4. Common causes: DynamoDB throttling, malformed event payload, IAM permission missing
 
-### DynamoDB Metrics
+**DynamoDB throttling:**
+- On-demand tables auto-scale but can throttle during sudden traffic spikes
+- Check the DynamoDB dashboard for consumed vs provisioned capacity
+- The `dynamodb_utils.py` retry logic handles transient throttles with exponential backoff (3 retries, 100ms base delay)
 
-### API Gateway Metrics
+**API Gateway 5xx errors:**
+- Check the API Gateway dashboard for the affected endpoint
+- Search Lambda logs for the `requestId` from the API Gateway access log
+- Common causes: Lambda timeout, unhandled exception in handler, DynamoDB error
 
-## Troubleshooting Procedures
-
-<!-- TODO: Document troubleshooting procedures for common issues -->
-
-### High Lambda Error Rates
-
-### Lambda Timeout Issues
-
-### DynamoDB Throttling
-
-### API Gateway 5xx Errors
-
-### Dead-Letter Queue Messages
-
-## Log Analysis
-
-<!-- TODO: Document log analysis techniques and tools -->
-
-### CloudWatch Insights Queries
-
-### Correlation ID Tracing
-
-### Error Pattern Analysis
-
-## Alerting
-
-<!-- TODO: Document SNS alerting configuration -->
-
-### Operational Alerts
-
-### Security Incident Alerts
-
-### Alert Routing
+**CloudTrail events not appearing in DynamoDB:**
+- Verify CloudTrail trail is logging: `aws cloudtrail get-trail-status --name {prefix}-trail`
+- Verify EventBridge rule is enabled: check the EventBridge console
+- Check Event_Normalizer DLQ for failed events
+- Verify Event_Normalizer IAM role has `dynamodb:PutItem` on the Event_Summary table

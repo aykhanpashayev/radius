@@ -1,0 +1,37 @@
+{
+  "eventVersion": "1.08",
+  "userIdentity": {
+    "type": "IAMUser",
+    "principalId": "AIDAEXAMPLEADMINUSER1",
+    "arn": "arn:aws:iam::123456789012:user/admin-user",
+    "accountId": "123456789012",
+    "userName": "admin-user"
+  },
+  "eventTime": "2026-03-16T11:00:00Z",
+  "eventSource": "sts.amazonaws.com",
+  "eventName": "AssumeRole",
+  "awsRegion": "us-east-1",
+  "sourceIPAddress": "203.0.113.10",
+  "userAgent": "aws-cli/2.15.0",
+  "requestParameters": {
+    "roleArn": "arn:aws:iam::987654321098:role/cross-account-admin",
+    "roleSessionName": "admin-session",
+    "durationSeconds": 3600
+  },
+  "responseElements": {
+    "credentials": {
+      "accessKeyId": "ASIAEXAMPLEKEY00001",
+      "expiration": "2026-03-16T12:00:00Z"
+    },
+    "assumedRoleUser": {
+      "assumedRoleId": "AROAEXAMPLEROLEID001:admin-session",
+      "arn": "arn:aws:sts::987654321098:assumed-role/cross-account-admin/admin-session"
+    }
+  },
+  "requestID": "b1c2d3e4-0001-0001-0001-000000000001",
+  "eventID": "f1a2b3c4-0001-0001-0001-000000000001",
+  "readOnly": false,
+  "eventType": "AwsApiCall",
+  "managementEvent": true,
+  "recipientAccountId": "987654321098"
+}

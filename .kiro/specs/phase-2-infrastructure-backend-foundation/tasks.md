@@ -188,8 +188,8 @@ This implementation plan translates the Phase 2 requirements and design into act
 
 ### Milestone 3: Processing Pipeline (Lambda Functions)
 
-- [ ] 18. Create shared Python utilities for Lambda functions (must-have)
-  - [ ] 18.1 Create backend/common/ directory structure
+- [x] 18. Create shared Python utilities for Lambda functions (must-have)
+  - [x] 18.1 Create backend/common/ directory structure
     - Create backend/common/__init__.py
     - Create backend/common/logging_utils.py for structured JSON logging
     - Create backend/common/dynamodb_utils.py for DynamoDB operations
@@ -198,7 +198,7 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Shared utilities directory structure
     - _Requirements: 3.13, 3.17_
   
-  - [ ] 18.2 Implement logging_utils.py
+  - [x] 18.2 Implement logging_utils.py
     - Implement get_logger() function with structured JSON formatting
     - Implement log_error() function with correlation ID, error type, and stack trace
     - Implement log_request() function for request tracing
@@ -206,7 +206,7 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Logging utilities with correlation ID support
     - _Requirements: 3.13, 3.17, 11.13, 11.14_
   
-  - [ ] 18.3 Implement dynamodb_utils.py
+  - [x] 18.3 Implement dynamodb_utils.py
     - Implement get_dynamodb_client() function with boto3 initialization
     - Implement put_item() wrapper with error handling and retry logic
     - Implement query_gsi() wrapper for GSI queries with pagination support
@@ -215,7 +215,7 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** DynamoDB utilities with retry logic
     - _Requirements: 3.18_
   
-  - [ ] 18.4 Implement validation.py
+  - [x] 18.4 Implement validation.py
     - Implement validate_arn() function for ARN format validation
     - Implement validate_timestamp() function for ISO 8601 validation
     - Implement validate_required_fields() function for CloudTrail events
@@ -223,7 +223,7 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Validation utilities for CloudTrail events
     - _Requirements: 6.3, 6.4, 6.7_
   
-  - [ ] 18.5 Implement errors.py
+  - [x] 18.5 Implement errors.py
     - Define RadiusError base exception class
     - Define ValidationError for input validation failures
     - Define DynamoDBError for database operation failures
@@ -231,8 +231,8 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Custom exception classes for error handling
     - _Requirements: 3.17_
 
-- [ ] 19. Implement Event_Normalizer Lambda function (must-have)
-  - [ ] 19.1 Create Event_Normalizer function structure
+- [x] 19. Implement Event_Normalizer Lambda function (must-have)
+  - [x] 19.1 Create Event_Normalizer function structure
     - Create backend/functions/event_normalizer/ directory
     - Create handler.py with lambda_handler entry point
     - Create normalizer.py with event parsing logic
@@ -240,7 +240,7 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Event_Normalizer function skeleton
     - _Requirements: 3.1, 6.1_
   
-  - [ ] 19.2 Implement CloudTrail event parsing and validation
+  - [x] 19.2 Implement CloudTrail event parsing and validation
     - Extract identity ARN, event type, timestamp, source IP, user agent from CloudTrail events
     - Normalize timestamp to ISO 8601 and identity ARN to consistent format
     - Validate required fields (eventName, userIdentity, eventTime) are present
@@ -248,7 +248,7 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Event parsing and validation logic
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
   
-  - [ ] 19.3 Implement Event_Summary storage
+  - [x] 19.3 Implement Event_Summary storage
     - Store normalized event in Event_Summary DynamoDB table
     - Generate date_partition field (YYYY-MM-DD format) for TimeRangeIndex
     - Exclude sensitive data and large payloads (>10KB)
@@ -256,15 +256,15 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Event storage with sanitization
     - _Requirements: 6.7, 6.8_
   
-  - [ ] 19.4 Implement downstream invocations
+  - [x] 19.4 Implement downstream invocations
     - Invoke Detection_Engine Lambda asynchronously with Event_Summary
     - Invoke Identity_Collector Lambda asynchronously with event data
     - Handle invocation errors and log failures
     - **Deliverable:** Async invocations to Detection_Engine and Identity_Collector
     - _Requirements: 6.9_
 
-- [ ] 20. Implement Detection_Engine Lambda function (PLACEHOLDER) (must-have)
-  - [ ] 20.1 Create Detection_Engine function structure
+- [x] 20. Implement Detection_Engine Lambda function (PLACEHOLDER) (must-have)
+  - [x] 20.1 Create Detection_Engine function structure
     - Create backend/functions/detection_engine/ directory
     - Create handler.py with lambda_handler entry point
     - Create interfaces.py with detection rule interface definitions
@@ -272,7 +272,7 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Detection_Engine function skeleton
     - _Requirements: 3.1, 7.1_
   
-  - [ ] 20.2 Implement placeholder detection logic
+  - [x] 20.2 Implement placeholder detection logic
     - Log received Event_Summary with event ID, identity ARN, and event type
     - Define DetectionRule interface class with rule_id, rule_name, and evaluate() method signature
     - Define Finding data structure with identity_arn, detection_type, severity, confidence, related_event_ids
@@ -281,8 +281,8 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Placeholder detection logic with interface definitions
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6_
 
-- [ ] 21. Implement Identity_Collector Lambda function (must-have)
-  - [ ] 21.1 Create Identity_Collector function structure
+- [x] 21. Implement Identity_Collector Lambda function (must-have)
+  - [x] 21.1 Create Identity_Collector function structure
     - Create backend/functions/identity_collector/ directory
     - Create handler.py with lambda_handler entry point
     - Create collector.py with identity profile logic
@@ -290,7 +290,7 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Identity_Collector function skeleton
     - _Requirements: 3.1, 8.10_
   
-  - [ ] 21.2 Implement Identity_Profile creation and updates
+  - [x] 21.2 Implement Identity_Profile creation and updates
     - Extract identity type (IAMUser, AssumedRole, AWSService) from ARN
     - Extract account ID from ARN using standard ARN parsing
     - Create or update Identity_Profile in DynamoDB
@@ -299,7 +299,7 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Identity profile management logic
     - _Requirements: 8.10, 8.11, 8.12, 8.13, 8.14_
   
-  - [ ] 21.3 Implement Trust_Relationship recording
+  - [x] 21.3 Implement Trust_Relationship recording
     - Detect AssumeRole events from CloudTrail
     - Extract source identity ARN (who assumed) and target role ARN (what was assumed)
     - Create Trust_Relationship record with source_arn and target_arn
@@ -307,15 +307,15 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Basic trust relationship recording
     - _Requirements: 8.15, 8.16, 8.17_
   
-  - [ ] 21.4 Implement identity deletion handling
+  - [x] 21.4 Implement identity deletion handling
     - Detect identity deletion events (DeleteUser, DeleteRole)
     - Mark Identity_Profile as inactive rather than deleting record
     - Preserve historical data for audit purposes
     - **Deliverable:** Identity deletion handling
     - _Requirements: 8.18_
 
-- [ ] 22. Implement Incident_Processor Lambda function (must-have)
-  - [ ] 22.1 Create Incident_Processor function structure
+- [x] 22. Implement Incident_Processor Lambda function (must-have)
+  - [x] 22.1 Create Incident_Processor function structure
     - Create backend/functions/incident_processor/ directory
     - Create handler.py with lambda_handler entry point
     - Create processor.py with incident creation logic
@@ -323,7 +323,7 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Incident_Processor function skeleton
     - _Requirements: 3.1, 8.1_
   
-  - [ ] 22.2 Implement incident creation
+  - [x] 22.2 Implement incident creation
     - Validate required fields (identity_arn, detection_type, severity) are present
     - Generate unique incident ID using UUID v4 format
     - Store Incident record in DynamoDB with status "open"
@@ -331,14 +331,14 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Incident creation logic
     - _Requirements: 8.1, 8.2, 8.3, 8.9_
   
-  - [ ] 22.3 Implement incident deduplication
+  - [x] 22.3 Implement incident deduplication
     - Query IdentityIndex GSI for incidents with same identity_arn
     - Filter by detection_type and creation_timestamp within last 24 hours
     - If duplicate found, update existing incident with new event_ids instead of creating new incident
     - **Deliverable:** Incident deduplication logic
     - _Requirements: 8.7_
   
-  - [ ] 22.4 Implement SNS alerting for high-severity incidents
+  - [x] 22.4 Implement SNS alerting for high-severity incidents
     - Publish notification to Alert_Topic for High, Very High, or Critical severity
     - Include incident_id, identity_arn, detection_type, severity, confidence in message
     - Include dashboard link in notification
@@ -346,15 +346,15 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** SNS alerting for high-severity incidents
     - _Requirements: 8.4, 8.5, 8.6_
   
-  - [ ] 22.5 Implement incident status transitions
+  - [x] 22.5 Implement incident status transitions
     - Support status transitions: open → investigating → resolved, open → false_positive
     - Record update_timestamp on status changes
     - Preserve status_history with timestamps
     - **Deliverable:** Incident status management
     - _Requirements: 8.8, 8.9_
 
-- [ ] 23. Implement Score_Engine Lambda function (PLACEHOLDER) (must-have)
-  - [ ] 23.1 Create Score_Engine function structure
+- [x] 23. Implement Score_Engine Lambda function (PLACEHOLDER) (must-have)
+  - [x] 23.1 Create Score_Engine function structure
     - Create backend/functions/score_engine/ directory
     - Create handler.py with lambda_handler entry point
     - Create interfaces.py with scoring rule interface definitions
@@ -362,7 +362,7 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Score_Engine function skeleton
     - _Requirements: 3.1, 7.7_
   
-  - [ ] 23.2 Implement placeholder scoring logic
+  - [x] 23.2 Implement placeholder scoring logic
     - Log invocations with identity_arn and timestamp
     - Define ScoringRule interface class with rule_id, rule_name, and calculate() method signature
     - Define score data structure with identity_arn, score_value, severity_level, calculation_timestamp, contributing_factors
@@ -371,15 +371,15 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Placeholder scoring logic with interface definitions
     - _Requirements: 7.7, 7.8, 7.9, 7.12, 7.13_
   
-  - [ ] 23.3 Create placeholder Blast_Radius_Score records
+  - [x] 23.3 Create placeholder Blast_Radius_Score records
     - Create records with arbitrary default values (score: 50, severity: Moderate)
     - Store in Blast_Radius_Score DynamoDB table
     - Records exist ONLY for testing data pipeline and API endpoints
     - **Deliverable:** Placeholder score records for testing
     - _Requirements: 7.10, 7.11_
 
-- [ ] 24. Configure Lambda functions in Terraform (must-have)
-  - [ ] 24.1 Implement Lambda function resources
+- [x] 24. Configure Lambda functions in Terraform (must-have)
+  - [x] 24.1 Implement Lambda function resources
     - Define aws_lambda_function resources for all 6 functions
     - Configure memory, timeout, and concurrency per function (Event_Normalizer: 512MB/30s, Detection_Engine: 1024MB/60s, Incident_Processor: 512MB/30s, Identity_Collector: 512MB/30s, Score_Engine: 1024MB/60s, API_Handler: 256MB/10s)
     - Configure runtime as python3.11 and architecture as arm64
@@ -388,7 +388,7 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Lambda function Terraform resources
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.12, 3.16_
   
-  - [ ] 24.2 Implement IAM roles and policies
+  - [x] 24.2 Implement IAM roles and policies
     - Create IAM role for Event_Normalizer with EventBridge, DynamoDB, Lambda invoke permissions
     - Create IAM role for Detection_Engine with DynamoDB read, Lambda invoke permissions
     - Create IAM role for Incident_Processor with DynamoDB write, SNS publish permissions
@@ -398,14 +398,14 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** IAM roles and policies for all Lambda functions
     - _Requirements: 3.5, 3.6, 3.7, 3.8, 3.9, 3.10, 3.11_
   
-  - [ ] 24.3 Configure CloudWatch Logs integration
+  - [x] 24.3 Configure CloudWatch Logs integration
     - Create CloudWatch log groups for all Lambda functions
     - Configure log retention periods (dev: 7 days, prod: 30 days)
     - Grant Lambda functions permission to write to CloudWatch Logs
     - **Deliverable:** CloudWatch Logs configuration for Lambda functions
     - _Requirements: 3.13, 3.14_
 
-- [ ] 25. Configure EventBridge routing rules (must-have)
+- [x] 25. Configure EventBridge routing rules (must-have)
   - Define event pattern to filter IAM, STS, Organizations, EC2 management events
   - Set Event_Normalizer Lambda as target
   - Grant EventBridge permission to invoke Event_Normalizer
@@ -414,8 +414,8 @@ This implementation plan translates the Phase 2 requirements and design into act
   - **Deliverable:** EventBridge rule routing CloudTrail events to Event_Normalizer
   - _Requirements: 4.10, 4.11, 4.12, 4.13, 4.14_
 
-- [ ] 26. Configure CloudTrail and S3 storage (must-have)
-  - [ ] 26.1 Create S3 bucket for CloudTrail logs
+- [x] 26. Configure CloudTrail and S3 storage (must-have)
+  - [x] 26.1 Create S3 bucket for CloudTrail logs
     - Create S3 bucket with encryption enabled
     - Configure bucket policy to allow CloudTrail write access
     - Block all public access
@@ -423,13 +423,13 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** S3 bucket for CloudTrail logs
     - _Requirements: 4.5, 4.7, 4.9_
   
-  - [ ] 26.2 Configure S3 lifecycle policies
+  - [x] 26.2 Configure S3 lifecycle policies
     - Transition logs to Glacier after 90 days
     - Delete logs after 365 days
     - **Deliverable:** S3 lifecycle policies for cost optimization
     - _Requirements: 4.8_
   
-  - [ ] 26.3 Create CloudTrail trail
+  - [x] 26.3 Create CloudTrail trail
     - Create organization-wide trail for prod environment
     - Create single-account trail for dev environment
     - Enable EventBridge integration for real-time processing
@@ -438,21 +438,21 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** CloudTrail trail with EventBridge integration
     - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.6, 4.7_
 
-- [ ] 27. Configure SNS alerting infrastructure (must-have)
-  - [ ] 27.1 Create SNS topic for incident alerts
+- [x] 27. Configure SNS alerting infrastructure (must-have)
+  - [x] 27.1 Create SNS topic for incident alerts
     - Create Alert_Topic with KMS encryption
     - Configure message attributes for severity filtering
     - **Deliverable:** SNS topic for incident alerts
     - _Requirements: 10.1, 10.4, 10.5_
   
-  - [ ] 27.2 Configure SNS subscriptions
+  - [x] 27.2 Configure SNS subscriptions
     - Add email subscription endpoints for security team
     - Add HTTPS webhook subscription endpoints for external systems
     - Configure subscription filter policies by severity level
     - **Deliverable:** SNS subscriptions for alerting
     - _Requirements: 10.2, 10.3_
   
-  - [ ] 27.3 Format incident notification messages
+  - [x] 27.3 Format incident notification messages
     - Include incident_id, identity_arn, detection_type, severity, confidence, creation_timestamp
     - Include dashboard link to incident detail page
     - Format severity levels with visual indicators in subject line
@@ -461,8 +461,8 @@ This implementation plan translates the Phase 2 requirements and design into act
 
 ### Milestone 4: API Layer
 
-- [ ] 28. Implement API_Handler Lambda function (must-have)
-  - [ ] 28.1 Create API_Handler function structure
+- [x] 28. Implement API_Handler Lambda function (must-have)
+  - [x] 28.1 Create API_Handler function structure
     - Create backend/functions/api_handler/ directory
     - Create handler.py with lambda_handler entry point
     - Create handlers/ subdirectory for endpoint-specific handlers
@@ -470,7 +470,7 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** API_Handler function skeleton
     - _Requirements: 3.1, 9.1_
   
-  - [ ] 28.2 Implement pagination utilities
+  - [x] 28.2 Implement pagination utilities
     - Encode DynamoDB LastEvaluatedKey as base64 next_token
     - Decode next_token to ExclusiveStartKey for subsequent queries
     - Limit result sets to maximum 100 items per request (default 25)
@@ -478,13 +478,13 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Pagination utilities for API responses
     - _Requirements: 9.12, 9.13_
   
-  - [ ] 28.3 Implement response formatting
+  - [x] 28.3 Implement response formatting
     - Return consistent JSON structure: {data: [...], metadata: {count, next_token, query_time}}
     - Use appropriate HTTP status codes (200, 400, 404, 500)
     - **Deliverable:** Response formatting utilities
     - _Requirements: 5.16, 5.17, 9.14_
   
-  - [ ] 28.4 Implement request validation and error handling
+  - [x] 28.4 Implement request validation and error handling
     - Validate query parameters (data types, ranges)
     - Return 400 for invalid parameters with validation details
     - Return 404 for resources not found
@@ -493,8 +493,8 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Request validation and error handling
     - _Requirements: 9.11, 9.15, 9.16, 9.17, 9.18_
 
-- [ ] 29. Implement identity endpoints (must-have)
-  - [ ] 29.1 Implement GET /identities endpoint
+- [x] 29. Implement identity endpoints (must-have)
+  - [x] 29.1 Implement GET /identities endpoint
     - Query Identity_Profile table using IdentityTypeIndex or AccountIndex based on parameters
     - Support query parameters: identity_type, account_id, limit, next_token
     - Implement pagination using DynamoDB LastEvaluatedKey
@@ -502,15 +502,15 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** GET /identities endpoint
     - _Requirements: 5.5, 9.1_
   
-  - [ ] 29.2 Implement GET /identities/{arn} endpoint
+  - [x] 29.2 Implement GET /identities/{arn} endpoint
     - Retrieve specific Identity_Profile by partition key (identity_arn)
     - URL-decode ARN from path parameter
     - Return 404 if identity not found
     - **Deliverable:** GET /identities/{arn} endpoint
     - _Requirements: 5.6, 9.2_
 
-- [ ] 30. Implement score endpoints (must-have)
-  - [ ] 30.1 Implement GET /scores endpoint
+- [x] 30. Implement score endpoints (must-have)
+  - [x] 30.1 Implement GET /scores endpoint
     - Query Blast_Radius_Score table using ScoreRangeIndex or SeverityIndex based on filters
     - Support query parameters: severity_level, min_score, max_score, limit, next_token
     - Implement pagination using DynamoDB LastEvaluatedKey
@@ -518,15 +518,15 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** GET /scores endpoint
     - _Requirements: 5.7, 9.3_
   
-  - [ ] 30.2 Implement GET /scores/{arn} endpoint
+  - [x] 30.2 Implement GET /scores/{arn} endpoint
     - Retrieve specific Blast_Radius_Score by partition key (identity_arn)
     - URL-decode ARN from path parameter
     - Return 404 if score not found
     - **Deliverable:** GET /scores/{arn} endpoint
     - _Requirements: 5.8, 9.4_
 
-- [ ] 31. Implement incident endpoints (must-have)
-  - [ ] 31.1 Implement GET /incidents endpoint
+- [x] 31. Implement incident endpoints (must-have)
+  - [x] 31.1 Implement GET /incidents endpoint
     - Query Incident table using StatusIndex or SeverityIndex based on filters
     - Support query parameters: status, severity, identity_arn, start_date, end_date, limit, next_token
     - Note: Unsupported query combinations (e.g., identity_arn + status without GSI support) return 400
@@ -535,13 +535,13 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** GET /incidents endpoint
     - _Requirements: 5.9, 9.5_
   
-  - [ ] 31.2 Implement GET /incidents/{id} endpoint
+  - [x] 31.2 Implement GET /incidents/{id} endpoint
     - Retrieve specific Incident by partition key (incident_id)
     - Return 404 if incident not found
     - **Deliverable:** GET /incidents/{id} endpoint
     - _Requirements: 5.10, 9.6_
   
-  - [ ] 31.3 Implement PATCH /incidents/{id} endpoint
+  - [x] 31.3 Implement PATCH /incidents/{id} endpoint
     - Update incident status from request body
     - Validate status transitions (open → investigating → resolved, open → false_positive)
     - Record update_timestamp and preserve status_history
@@ -549,8 +549,8 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** PATCH /incidents/{id} endpoint
     - _Requirements: 5.11, 9.7_
 
-- [ ] 32. Implement event endpoints (must-have)
-  - [ ] 32.1 Implement GET /events endpoint
+- [x] 32. Implement event endpoints (must-have)
+  - [x] 32.1 Implement GET /events endpoint
     - Query Event_Summary table using EventTypeIndex or TimeRangeIndex based on filters
     - Support query parameters: identity_arn, event_type, start_date, end_date, limit, next_token
     - Note: Unsupported query combinations (e.g., identity_arn + event_type without composite GSI) return 400
@@ -559,13 +559,13 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** GET /events endpoint
     - _Requirements: 5.12, 9.8_
   
-  - [ ] 32.2 Implement GET /events/{id} endpoint
+  - [x] 32.2 Implement GET /events/{id} endpoint
     - Query Event_Summary table using EventIdIndex GSI with event_id as partition key
     - Return 404 if event not found
     - **Deliverable:** GET /events/{id} endpoint
     - _Requirements: 5.13, 9.9_
 
-- [ ] 33. Implement trust relationship endpoints (must-have)
+- [x] 33. Implement trust relationship endpoints (must-have)
   - Query Trust_Relationship table using appropriate GSI based on parameters
   - Support query parameters: source_arn, target_account_id, relationship_type, limit, next_token
   - Note: Unsupported query combinations return 400
@@ -574,15 +574,15 @@ This implementation plan translates the Phase 2 requirements and design into act
   - **Deliverable:** GET /trust-relationships endpoint
   - _Requirements: 5.14, 9.10_
 
-- [ ] 34. Configure API Gateway REST API (must-have)
-  - [ ] 34.1 Create API Gateway REST API resource
+- [x] 34. Configure API Gateway REST API (must-have)
+  - [x] 34.1 Create API Gateway REST API resource
     - Define REST API with IAM authorization
     - Enable CloudWatch logging for all requests
     - Configure CORS with appropriate allowed origins
     - **Deliverable:** API Gateway REST API resource
     - _Requirements: 5.1, 5.2, 5.3_
   
-  - [ ] 34.2 Define API Gateway endpoints
+  - [x] 34.2 Define API Gateway endpoints
     - Create resource /identities with GET method
     - Create resource /identities/{arn} with GET method
     - Create resource /scores with GET method
@@ -595,14 +595,14 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** API Gateway endpoint definitions (10 operations total)
     - _Requirements: 5.5-5.14_
   
-  - [ ] 34.3 Configure Lambda integrations
+  - [x] 34.3 Configure Lambda integrations
     - Configure Lambda proxy integration for all endpoints
     - Grant API Gateway permission to invoke API_Handler Lambda
     - Configure request/response transformations for ARN encoding
     - **Deliverable:** Lambda integrations for all endpoints
     - _Requirements: 5.4, 5.15_
   
-  - [ ] 34.4 Deploy API Gateway stage
+  - [x] 34.4 Deploy API Gateway stage
     - Create deployment stage (dev or prod)
     - Enable stage-level logging and metrics
     - Output API Gateway invoke URL
@@ -611,15 +611,15 @@ This implementation plan translates the Phase 2 requirements and design into act
 
 ### Milestone 5: Observability and Monitoring
 
-- [ ] 35. Configure CloudWatch monitoring and alerting (must-have)
-  - [ ] 35.1 Create CloudWatch metrics
+- [x] 35. Configure CloudWatch monitoring and alerting (must-have)
+  - [x] 35.1 Create CloudWatch metrics
     - Define custom metrics for Lambda invocations, errors, duration, throttles
     - Define custom metrics for DynamoDB consumed capacity and throttled requests
     - Define custom metrics for API Gateway request count, latency, 4xx/5xx errors
     - **Deliverable:** CloudWatch metrics for all services
     - _Requirements: 11.3, 11.4, 11.5_
   
-  - [ ] 35.2 Create CloudWatch alarms
+  - [x] 35.2 Create CloudWatch alarms
     - Create alarm for Lambda error rates exceeding 5% over 5 minutes
     - Create alarm for Lambda duration approaching timeout thresholds
     - Create alarm for DynamoDB throttled requests exceeding 10 per minute
@@ -629,7 +629,7 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** CloudWatch alarms for operational issues
     - _Requirements: 11.6, 11.7, 11.8, 11.9, 11.10, 11.12_
   
-  - [ ] 35.3 Create CloudWatch dashboards
+  - [x] 35.3 Create CloudWatch dashboards
     - Create dashboard showing Lambda invocations, errors, duration
     - Create dashboard showing DynamoDB operations, consumed capacity, throttles
     - Create dashboard showing API Gateway requests, latency, error rates
@@ -637,8 +637,8 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** CloudWatch dashboards for system observability
     - _Requirements: 11.11_
 
-- [ ] 36. Create deployment automation scripts (must-have)
-  - [ ] 36.1 Create Lambda build script
+- [x] 36. Create deployment automation scripts (must-have)
+  - [x] 36.1 Create Lambda build script
     - Create scripts/build-lambdas.sh to package Lambda functions
     - Install Python dependencies for each function
     - Create deployment zip files with function code and dependencies
@@ -646,7 +646,7 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Lambda build and packaging script
     - _Requirements: 1.11_
   
-  - [ ] 36.2 Create Terraform deployment script
+  - [x] 36.2 Create Terraform deployment script
     - Create scripts/deploy-infra.sh with environment selection
     - Initialize Terraform with backend configuration
     - Run terraform plan and display resource summary
@@ -655,7 +655,7 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Terraform deployment automation script
     - _Requirements: 1.11, 1.12_
   
-  - [ ] 36.3 Create verification script
+  - [x] 36.3 Create verification script
     - Create scripts/verify-deployment.sh to test deployed resources
     - Verify Lambda functions are invocable
     - Verify DynamoDB tables exist with correct GSIs
@@ -664,7 +664,7 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Deployment verification script
     - _Requirements: 1.12_
 
-- [ ] 37. Verify infrastructure deployment to dev environment (must-have)
+- [x] 37. Verify infrastructure deployment to dev environment (must-have)
   - Run scripts/build-lambdas.sh to package all Lambda functions
   - Run scripts/deploy-infra.sh --env dev to deploy infrastructure
   - Run scripts/verify-deployment.sh --env dev to validate deployment
@@ -677,45 +677,45 @@ This implementation plan translates the Phase 2 requirements and design into act
 
 ### Milestone 6: Testing, Documentation, and Validation
 
-- [ ] 38. Create sample CloudTrail events for testing (must-have)
-  - [ ] 38.1 Create sample IAM events
+- [x] 38. Create sample CloudTrail events for testing (must-have)
+  - [x] 38.1 Create sample IAM events
     - Create sample-data/iam-create-user.json
     - Create sample-data/iam-attach-policy.json
     - Create sample-data/iam-delete-user.json
     - **Deliverable:** Sample IAM CloudTrail events
     - _Requirements: 12.1_
   
-  - [ ] 38.2 Create sample STS events
+  - [x] 38.2 Create sample STS events
     - Create sample-data/sts-assume-role.json
     - Create sample-data/sts-get-session-token.json
     - Create sample-data/sts-get-federation-token.json
     - **Deliverable:** Sample STS CloudTrail events
     - _Requirements: 12.1, 12.2_
   
-  - [ ] 38.3 Create sample Organizations events
+  - [x] 38.3 Create sample Organizations events
     - Create sample-data/orgs-create-account.json
     - Create sample-data/orgs-invite-account.json
     - **Deliverable:** Sample Organizations CloudTrail events
     - _Requirements: 12.1, 12.3_
   
-  - [ ] 38.4 Create sample EC2 events
+  - [x] 38.4 Create sample EC2 events
     - Create sample-data/ec2-run-instances.json with IAM instance profile
     - **Deliverable:** Sample EC2 CloudTrail events
     - _Requirements: 12.1, 12.4_
   
-  - [ ] 38.5 Create suspicious activity samples
+  - [x] 38.5 Create suspicious activity samples
     - Create sample-data/suspicious-privilege-escalation.json
     - Create sample-data/suspicious-cross-account-access.json
     - **Deliverable:** Sample suspicious activity events
     - _Requirements: 12.1, 12.5_
   
-  - [ ] 38.6 Create normal activity samples
+  - [x] 38.6 Create normal activity samples
     - Create sample-data/normal-admin-operations.json
     - **Deliverable:** Sample normal activity events
     - _Requirements: 12.1, 12.6_
 
-- [ ] 39. Create event injection and testing scripts (must-have)
-  - [ ] 39.1 Create event injection script
+- [x] 39. Create event injection and testing scripts (must-have)
+  - [x] 39.1 Create event injection script
     - Create scripts/inject-events.py to inject sample events into EventBridge
     - Support injecting individual event files or entire directories
     - Validate event JSON structure before injection
@@ -724,7 +724,7 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Event injection script for testing
     - _Requirements: 12.7, 12.8, 12.9, 12.10, 12.11_
   
-  - [ ] 39.2 Create test data seeding script
+  - [x] 39.2 Create test data seeding script
     - Create scripts/seed-dev-data.py to populate DynamoDB tables with test data
     - Create sample Identity_Profile records
     - Create sample Blast_Radius_Score records
@@ -734,7 +734,7 @@ This implementation plan translates the Phase 2 requirements and design into act
     - **Deliverable:** Test data seeding script
     - _Requirements: 12.1_
 
-- [ ] 40. Complete architecture documentation (must-have)
+- [x] 40. Complete architecture documentation (must-have)
   - Update docs/architecture.md with event processing pipeline description
   - Include data flow diagrams showing CloudTrail → EventBridge → Lambda → DynamoDB
   - Include Lambda function interaction diagrams
@@ -743,7 +743,7 @@ This implementation plan translates the Phase 2 requirements and design into act
   - **Deliverable:** Complete architecture documentation
   - _Requirements: 13.1, 13.8_
 
-- [ ] 41. Complete database schema documentation (must-have)
+- [x] 41. Complete database schema documentation (must-have)
   - Update docs/database-schema.md with all table definitions
   - Document primary keys, GSIs, and field definitions for each table
   - Include access patterns and query examples
@@ -751,7 +751,7 @@ This implementation plan translates the Phase 2 requirements and design into act
   - **Deliverable:** Complete database schema documentation
   - _Requirements: 13.2_
 
-- [ ] 42. Complete API reference documentation (must-have)
+- [x] 42. Complete API reference documentation (must-have)
   - Update docs/api-reference.md with all endpoint definitions
   - Document HTTP methods, request parameters, response formats
   - Include example requests and responses for each endpoint
@@ -760,7 +760,7 @@ This implementation plan translates the Phase 2 requirements and design into act
   - **Deliverable:** Complete API reference documentation
   - _Requirements: 13.3_
 
-- [ ] 43. Complete Terraform module documentation (must-have)
+- [x] 43. Complete Terraform module documentation (must-have)
   - Update docs/terraform-modules.md describing module structure
   - Document module inputs, outputs, and composition patterns
   - Include logical dependency relationships (Terraform resolves automatically)
@@ -768,7 +768,7 @@ This implementation plan translates the Phase 2 requirements and design into act
   - **Deliverable:** Complete Terraform module documentation
   - _Requirements: 13.4_
 
-- [ ] 44. Complete deployment documentation (must-have)
+- [x] 44. Complete deployment documentation (must-have)
   - Update docs/deployment.md with deployment procedures
   - Document prerequisites (AWS credentials, Terraform, Python)
   - Document deployment steps for dev and prod environments
@@ -777,7 +777,7 @@ This implementation plan translates the Phase 2 requirements and design into act
   - **Deliverable:** Complete deployment documentation
   - _Requirements: 13.5_
 
-- [ ] 45. Complete monitoring documentation (must-have)
+- [x] 45. Complete monitoring documentation (must-have)
   - Update docs/monitoring.md describing monitoring setup
   - Document CloudWatch dashboards and their metrics
   - Document alarm configurations and thresholds
@@ -786,7 +786,7 @@ This implementation plan translates the Phase 2 requirements and design into act
   - **Deliverable:** Complete monitoring documentation
   - _Requirements: 13.6_
 
-- [ ] 46. Complete Phase 2 scope documentation (must-have)
+- [x] 46. Complete Phase 2 scope documentation (must-have)
   - Update docs/phase-2-scope.md explicitly stating Phase 2 scope
   - Document that Detection_Engine and Score_Engine are placeholders
   - Document that detection and scoring logic is deferred to later phases
@@ -795,7 +795,7 @@ This implementation plan translates the Phase 2 requirements and design into act
   - **Deliverable:** Complete Phase 2 scope documentation
   - _Requirements: 13.7_
 
-- [ ] 47. End-to-end pipeline verification (must-have)
+- [x] 47. End-to-end pipeline verification (must-have)
   - Inject sample CloudTrail events using scripts/inject-events.py
   - Verify events flow through Event_Normalizer → Detection_Engine → Incident_Processor
   - Verify Event_Normalizer invokes Identity_Collector asynchronously

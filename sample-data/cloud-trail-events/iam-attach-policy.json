@@ -1,0 +1,27 @@
+{
+  "eventVersion": "1.08",
+  "userIdentity": {
+    "type": "IAMUser",
+    "principalId": "AIDAEXAMPLEADMINUSER1",
+    "arn": "arn:aws:iam::123456789012:user/admin-user",
+    "accountId": "123456789012",
+    "userName": "admin-user"
+  },
+  "eventTime": "2026-03-16T10:05:00Z",
+  "eventSource": "iam.amazonaws.com",
+  "eventName": "AttachUserPolicy",
+  "awsRegion": "us-east-1",
+  "sourceIPAddress": "203.0.113.10",
+  "userAgent": "aws-cli/2.15.0",
+  "requestParameters": {
+    "userName": "new-service-account",
+    "policyArn": "arn:aws:iam::aws:policy/AdministratorAccess"
+  },
+  "responseElements": null,
+  "requestID": "a1b2c3d4-0002-0002-0002-000000000002",
+  "eventID": "e1f2a3b4-0002-0002-0002-000000000002",
+  "readOnly": false,
+  "eventType": "AwsApiCall",
+  "managementEvent": true,
+  "recipientAccountId": "123456789012"
+}
