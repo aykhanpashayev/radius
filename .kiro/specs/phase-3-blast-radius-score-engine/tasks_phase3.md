@@ -238,7 +238,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
 
 ### Milestone 5: Testing
 
-- [ ] 21. Write unit tests for ScoringContext (must-have)
+- [x] 21. Write unit tests for ScoringContext (must-have)
   - Create `backend/tests/test_scoring_context.py`
   - Mock DynamoDB responses using `unittest.mock.patch`
   - Test `build()` returns correct `ScoringContext` fields from mocked DynamoDB responses
@@ -249,7 +249,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
   - **Deliverable:** Unit tests for `ScoringContext.build()`
   - _Requirements: 4.1, 4.2, 4.3_
 
-- [ ] 22. Write unit tests for each scoring rule (must-have)
+- [x] 22. Write unit tests for each scoring rule (must-have)
   - Create `backend/tests/test_scoring_rules.py`
   - For each of the 8 rules, test:
     - Zero input → 0 points
@@ -260,7 +260,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
   - **Deliverable:** Unit tests covering all 8 scoring rules
   - _Requirements: 2.1–2.33_
 
-- [ ] 23. Write unit tests for RuleEngine (must-have)
+- [x] 23. Write unit tests for RuleEngine (must-have)
   - Create `backend/tests/test_rule_engine.py`
   - Test that total score is capped at 100 when rule contributions sum > 100
   - Test that `contributing_factors` only includes rules with non-zero contributions
@@ -270,7 +270,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
   - **Deliverable:** Unit tests for `RuleEngine.evaluate()`
   - _Requirements: 1.2, 1.3, 1.7, 1.8, 9.1, 9.2_
 
-- [ ] 24. Write property-based tests for scoring correctness (must-have)
+- [x] 24. Write property-based tests for scoring correctness (must-have)
   - Create `backend/tests/test_score_engine_properties.py`
   - Install `hypothesis` in `backend/functions/score_engine/requirements.txt` (test dependency only)
   - Implement Hypothesis strategies: `event_summary_strategy`, `trust_relationship_strategy`, `scoring_context_strategy`
