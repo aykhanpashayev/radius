@@ -66,21 +66,21 @@ This implementation plan translates the Phase 2 requirements and design into act
 
 ### Milestone 2: Infrastructure Core (Terraform Modules)
 
-- [ ] 3. Create KMS module for encryption keys (must-have)
+- [x] 3. Create KMS module for encryption keys (must-have)
   - Create infra/modules/kms/ with main.tf, variables.tf, outputs.tf
   - Define KMS key resources for DynamoDB, Lambda, SNS, CloudTrail
   - Configure key rotation and key policies
   - **Deliverable:** KMS module with encryption keys for all services
   - _Requirements: 1.2, 2.27_
 
-- [ ] 4. Create DynamoDB module skeleton (must-have)
+- [x] 4. Create DynamoDB module skeleton (must-have)
   - Create infra/modules/dynamodb/ with main.tf, variables.tf, outputs.tf, gsi.tf
   - Define module inputs for table configuration and environment settings
   - Define module outputs for table names, ARNs, and GSI names
   - **Deliverable:** DynamoDB module structure ready for table definitions
   - _Requirements: 1.2, 1.3, 1.4, 2.23_
 
-- [ ] 5. Implement Identity_Profile table (must-have)
+- [x] 5. Implement Identity_Profile table (must-have)
   - Define table resource with identity_arn as partition key
   - Add IdentityTypeIndex GSI (identity_type, account_id) with ALL projection
   - Add AccountIndex GSI (account_id, last_activity_timestamp) with ALL projection
@@ -88,7 +88,7 @@ This implementation plan translates the Phase 2 requirements and design into act
   - **Deliverable:** Identity_Profile table with 2 GSIs
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.23, 2.24, 2.27_
 
-- [ ] 6. Implement Blast_Radius_Score table (must-have)
+- [x] 6. Implement Blast_Radius_Score table (must-have)
   - Define table resource with identity_arn as partition key
   - Add ScoreRangeIndex GSI (severity_level, score_value) with ALL projection
   - Add SeverityIndex GSI (severity_level, calculation_timestamp) with KEYS_ONLY projection
@@ -96,7 +96,7 @@ This implementation plan translates the Phase 2 requirements and design into act
   - **Deliverable:** Blast_Radius_Score table with 2 GSIs
   - _Requirements: 2.5, 2.6, 2.7, 2.8, 2.23, 2.24, 2.27_
 
-- [ ] 7. Implement Incident table (must-have)
+- [x] 7. Implement Incident table (must-have)
   - Define table resource with incident_id as partition key
   - Add StatusIndex GSI (status, creation_timestamp) with ALL projection
   - Add SeverityIndex GSI (severity, creation_timestamp) with ALL projection
@@ -105,7 +105,7 @@ This implementation plan translates the Phase 2 requirements and design into act
   - **Deliverable:** Incident table with 3 GSIs and TTL configuration
   - _Requirements: 2.9, 2.10, 2.11, 2.12, 2.13, 2.23, 2.24, 2.26, 2.27_
 
-- [ ] 8. Implement Event_Summary table (must-have)
+- [x] 8. Implement Event_Summary table (must-have)
   - Define table resource with composite key (identity_arn, timestamp)
   - Add EventIdIndex GSI (event_id) with ALL projection for direct event lookup
   - Add EventTypeIndex GSI (event_type, timestamp) with KEYS_ONLY projection
@@ -114,7 +114,7 @@ This implementation plan translates the Phase 2 requirements and design into act
   - **Deliverable:** Event_Summary table with 3 GSIs and TTL configuration
   - _Requirements: 2.14, 2.15, 2.16, 2.17, 2.18, 2.23, 2.25, 2.27_
 
-- [ ] 9. Implement Trust_Relationship table (must-have)
+- [x] 9. Implement Trust_Relationship table (must-have)
   - Define table resource with composite key (source_arn, target_arn)
   - Add RelationshipTypeIndex GSI (relationship_type, discovery_timestamp) with ALL projection
   - Add TargetAccountIndex GSI (target_account_id, discovery_timestamp) with KEYS_ONLY projection
