@@ -127,7 +127,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
   - **Deliverable:** `LoggingDisruptionRule` implementation
   - _Requirements: 2.13, 2.14, 2.15, 2.16_
 
-- [ ] 9. Implement CrossAccountTrust rule (must-have)
+- [x] 9. Implement CrossAccountTrust rule (must-have)
   - Create `backend/functions/score_engine/rules/cross_account_trust.py`
   - Define `CrossAccountTrustRule` with `rule_id = "cross_account_trust"`, `rule_name = "CrossAccountTrust"`, `max_contribution = 15`
   - Filter `context.trust_relationships` where `relationship_type == "CrossAccount"`
@@ -135,7 +135,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
   - **Deliverable:** `CrossAccountTrustRule` implementation
   - _Requirements: 2.17, 2.18, 2.19, 2.20_
 
-- [ ] 10. Implement RoleChaining rule (must-have)
+- [x] 10. Implement RoleChaining rule (must-have)
   - Create `backend/functions/score_engine/rules/role_chaining.py`
   - Define `RoleChainingRule` with `rule_id = "role_chaining"`, `rule_name = "RoleChaining"`, `max_contribution = 10`
   - Count events where event name is in `{AssumeRole, AssumeRoleWithSAML, AssumeRoleWithWebIdentity}`
@@ -143,7 +143,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
   - **Deliverable:** `RoleChainingRule` implementation
   - _Requirements: 2.21, 2.22, 2.23, 2.24_
 
-- [ ] 11. Implement PrivilegeEscalation rule (must-have)
+- [x] 11. Implement PrivilegeEscalation rule (must-have)
   - Create `backend/functions/score_engine/rules/privilege_escalation.py`
   - Define `PrivilegeEscalationRule` with `rule_id = "privilege_escalation"`, `rule_name = "PrivilegeEscalation"`, `max_contribution = 15`
   - Collect all event names from context events into a set
@@ -152,7 +152,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
   - **Deliverable:** `PrivilegeEscalationRule` implementation
   - _Requirements: 2.25, 2.26, 2.27, 2.28, 2.29_
 
-- [ ] 12. Implement LateralMovement rule (must-have)
+- [x] 12. Implement LateralMovement rule (must-have)
   - Create `backend/functions/score_engine/rules/lateral_movement.py`
   - Define `LateralMovementRule` with `rule_id = "lateral_movement"`, `rule_name = "LateralMovement"`, `max_contribution = 10`
   - Extract identity account ID from `identity_arn` using `extract_account_id()` from `backend/common/aws_utils.py` (moved from `identity_collector/collector.py` — see Task 12a below)
