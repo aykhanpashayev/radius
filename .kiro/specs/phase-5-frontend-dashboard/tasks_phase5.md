@@ -54,7 +54,7 @@ Phase 5 builds the Radius security dashboard — a React SPA hosted on S3 + Clou
 
 ### Milestone 2: Shared Components and API Client
 
-- [ ] 3. Implement API client (must-have)
+- [x] 3. Implement API client (must-have)
   - Create `frontend/src/api.js`
   - Read base URL from `import.meta.env.VITE_API_BASE_URL`
   - Implement `request(path, options)` — throws on non-2xx
@@ -64,7 +64,7 @@ Phase 5 builds the Radius security dashboard — a React SPA hosted on S3 + Clou
   - **Deliverable:** `api.js` with all 6 exported functions
   - _Requirements: 7.1, 7.2, 7.3_
 
-- [ ] 4. Implement NavBar component (must-have)
+- [x] 4. Implement NavBar component (must-have)
   - Create `frontend/src/components/NavBar.jsx`
   - Render app name "Radius" and nav links to `/` ("Dashboard") and `/incidents` ("Incidents")
   - Use `NavLink` from `react-router-dom` for active-state class
@@ -72,7 +72,7 @@ Phase 5 builds the Radius security dashboard — a React SPA hosted on S3 + Clou
   - **Deliverable:** `NavBar` rendered on all pages
   - _Requirements: 5.1, 5.2, 5.3_
 
-- [ ] 5. Implement SeverityBadge, StatusBadge, and SummaryStrip components (must-have)
+- [x] 5. Implement SeverityBadge, StatusBadge, and SummaryStrip components (must-have)
   - Create `frontend/src/components/SeverityBadge.jsx`
   - Color map: Critical=`#dc2626`, Very High=`#ea580c`, High=`#f97316`, Moderate=`#ca8a04`, Low=`#16a34a`, unknown=`#6b7280`
   - Create `frontend/src/components/StatusBadge.jsx`
