@@ -4,6 +4,7 @@ import re
 from datetime import datetime, timezone
 from typing import Any
 
+from backend.common.aws_utils import extract_account_id
 from backend.common.dynamodb_utils import put_item, update_item
 from backend.common.errors import ValidationError
 from backend.common.logging_utils import get_logger
@@ -37,21 +38,6 @@ def extract_identity_type(arn: str) -> str:
     if ":service/" in arn or ":root" in arn:
         return "AWSService"
     return "AWSService"
-
-
-def extract_account_id(arn: str) -> str:
-    """Extract AWS account ID from an ARN.
-
-    Args:
-        arn: Full ARN string.
-
-    Returns:
-        12-digit account ID string, or empty string if not found.
-    """
-    parts = arn.split(":")
-    if len(parts) >= 5 and parts[4].isdigit():
-        return parts[4]
-    return ""
 
 
 def upsert_identity_profile(

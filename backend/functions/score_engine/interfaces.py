@@ -1,13 +1,11 @@
 """Scoring rule interfaces for Score_Engine.
 
-These define the contracts that future scoring rules must implement.
-Phase 2: interfaces and severity classification only — no scoring logic.
+These define the contracts that scoring rules must implement.
+Phase 3: real scoring logic — ScoringRule extended with max_contribution.
 """
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any
 
 
 def classify_severity(score: int | float) -> str:
@@ -50,36 +48,22 @@ class ScoreResult:
     previous_score: int | None = None
     score_change: int | None = None
 
-    @classmethod
-    def placeholder(cls, identity_arn: str) -> "ScoreResult":
-        """Create a placeholder score record for pipeline testing."""
-        score = 50
-        return cls(
-            identity_arn=identity_arn,
-            score_value=score,
-            severity_level=classify_severity(score),
-            calculation_timestamp=datetime.now(timezone.utc).isoformat(timespec="microseconds"),
-            contributing_factors=["PLACEHOLDER — scoring not yet implemented"],
-        )
-
 
 class ScoringRule(ABC):
-    """Base interface for all scoring rules.
-
-    Future phases will implement concrete subclasses of this interface.
-    """
+    """Base interface for all scoring rules."""
 
     rule_id: str
     rule_name: str
+    max_contribution: int
 
     @abstractmethod
-    def calculate(self, identity_arn: str, context: dict[str, Any]) -> int:
+    def calculate(self, identity_arn: str, context: "ScoringContext") -> int:
         """Calculate a score contribution for this rule.
 
         Args:
             identity_arn: Identity ARN being scored.
-            context: Relevant data (events, incidents, trust relationships).
+            context: ScoringContext with all data needed for scoring.
 
         Returns:
-            Integer score contribution (0-100).
+            Integer score contribution (0 to max_contribution).
         """

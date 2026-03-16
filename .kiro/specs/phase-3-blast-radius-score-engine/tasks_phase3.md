@@ -38,7 +38,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
 
 ### Milestone 1: Scoring Foundation
 
-- [ ] 1. Extend ScoringRule interface and ScoreResult (must-have)
+- [x] 1. Extend ScoringRule interface and ScoreResult (must-have)
   - Add `max_contribution: int` class attribute to `ScoringRule` ABC in `interfaces.py`
   - Update `calculate()` signature: change `context: dict[str, Any]` to `context: "ScoringContext"`
   - Add forward reference import guard so `interfaces.py` does not import `context.py` (avoid circular import)
@@ -47,7 +47,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
   - **Deliverable:** Updated `interfaces.py` with extended `ScoringRule` contract
   - _Requirements: 1.4, 1.5_
 
-- [ ] 2. Implement ScoringContext (must-have)
+- [x] 2. Implement ScoringContext (must-have)
   - Create `backend/functions/score_engine/context.py`
   - Define `ScoringContext` dataclass with fields: `identity_arn`, `identity_profile`, `events`, `trust_relationships`, `open_incidents`
   - Implement `ScoringContext.build(identity_arn, tables)` classmethod that fetches all data from DynamoDB
@@ -60,7 +60,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
   - **Deliverable:** `ScoringContext` with `build()` factory that retrieves all scoring data
   - _Requirements: 1.6, 4.1, 4.2, 4.3, 4.4_
 
-- [ ] 3. Implement RuleEngine (must-have)
+- [x] 3. Implement RuleEngine (must-have)
   - Create `backend/functions/score_engine/engine.py`
   - Define `RuleEngine` class with `rules: list[ScoringRule]` attribute
   - Implement `evaluate(context: ScoringContext) -> ScoreResult` method
@@ -73,13 +73,13 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
   - **Deliverable:** `RuleEngine` that orchestrates all rules and produces a `ScoreResult`
   - _Requirements: 1.2, 1.3, 1.7, 1.8, 9.1, 9.2_
 
-- [ ] 4. Create rules package skeleton (must-have)
+- [x] 4. Create rules package skeleton (must-have)
   - Create `backend/functions/score_engine/rules/` directory
   - Create `backend/functions/score_engine/rules/__init__.py` that exports all 8 rule classes
   - **Deliverable:** Rules package ready for rule implementations
   - _Requirements: 1.5_
 
-- [ ] 4a. Move extract_account_id to shared utils (should-have)
+- [x] 4a. Move extract_account_id to shared utils (should-have)
   - Create `backend/common/aws_utils.py`
   - Move `extract_account_id()` from `backend/functions/identity_collector/collector.py` into `aws_utils.py`
   - Update `identity_collector/collector.py` to import `extract_account_id` from `backend.common.aws_utils`
