@@ -25,6 +25,16 @@ variable "event_filters" {
   default     = []
 }
 
+variable "score_engine_schedule" {
+  description = "EventBridge schedule expression for batch scoring (e.g. rate(6 hours))"
+  type        = string
+}
+
+variable "score_engine_function_arn" {
+  description = "ARN of the Score_Engine Lambda function for batch scheduling"
+  type        = string
+}
+
 variable "tags" {
   description = "Additional tags for EventBridge resources"
   type        = map(string)

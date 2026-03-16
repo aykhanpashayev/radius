@@ -21,6 +21,7 @@ logger = get_logger(__name__)
 _EVENT_SUMMARY_TABLE = os.environ["EVENT_SUMMARY_TABLE"]
 _DETECTION_ENGINE_ARN = os.environ["DETECTION_ENGINE_ARN"]
 _IDENTITY_COLLECTOR_ARN = os.environ["IDENTITY_COLLECTOR_ARN"]
+_SCORE_ENGINE_FUNCTION_NAME = os.environ.get("SCORE_ENGINE_FUNCTION_NAME", "")
 
 _lambda_client = boto3.client("lambda")
 
@@ -73,6 +74,14 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         {"event_summary": event_summary, "raw_event": event.get("detail", event)},
         correlation_id=correlation_id, target="Identity_Collector",
     )
+
+    # Invoke Score_Engine asynchronously to rescore this identity
+    if _SCORE_ENGINE_FUNCTION_NAME:
+        _invoke_async(
+            log, _SCORE_ENGINE_FUNCTION_NAME,
+            {"identity_arn": event_summary["identity_arn"]},
+            correlation_id=correlation_id, target="Score_Engine",
+        )
 
     return {"status": "ok", "event_id": event_summary["event_id"]}
 

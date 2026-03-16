@@ -165,7 +165,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
 
 ### Milestone 3: Score_Engine Handler and Integration
 
-- [ ] 13. Rewrite Score_Engine handler with real scoring logic (must-have)
+- [x] 13. Rewrite Score_Engine handler with real scoring logic (must-have)
   - Update `backend/functions/score_engine/handler.py`
   - Import `RuleEngine` from `engine.py` and `ScoringContext` from `context.py`
   - Instantiate `RuleEngine` once outside `lambda_handler` (module-level, for Lambda warm reuse)
@@ -180,7 +180,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
   - **Deliverable:** Score_Engine handler with real scoring logic, same external interface
   - _Requirements: 1.1, 1.9, 3.1, 3.2, 3.5, 3.6, 5.1, 5.2, 5.3, 5.4, 5.5, 8.1, 8.2, 8.3_
 
-- [ ] 14. Extend Event_Normalizer to invoke Score_Engine (must-have)
+- [x] 14. Extend Event_Normalizer to invoke Score_Engine (must-have)
   - Update `backend/functions/event_normalizer/handler.py`
   - Add async invocation of Score_Engine after existing Detection_Engine and Identity_Collector invocations
   - Pass `{"identity_arn": identity_arn}` as payload
@@ -193,7 +193,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
 
 ### Milestone 4: Infrastructure Updates
 
-- [ ] 15. Add Score_Engine IAM permissions (must-have)
+- [x] 15. Add Score_Engine IAM permissions (must-have)
   - Update `infra/modules/lambda/iam.tf`
   - Add `dynamodb:Query` and `dynamodb:GetItem` permissions on `Event_Summary` table ARN to Score_Engine IAM policy
   - Add `dynamodb:Query` and `dynamodb:GetItem` permissions on `Trust_Relationship` table ARN to Score_Engine IAM policy
@@ -202,19 +202,19 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
   - **Deliverable:** Score_Engine IAM role with read access to all required tables
   - _Requirements: 4.4_
 
-- [ ] 16. Add Event_Normalizer permission to invoke Score_Engine (must-have)
+- [x] 16. Add Event_Normalizer permission to invoke Score_Engine (must-have)
   - Update `infra/modules/lambda/iam.tf`
   - Add `lambda:InvokeFunction` permission on Score_Engine function ARN to Event_Normalizer IAM policy
   - **Deliverable:** Event_Normalizer IAM role with permission to invoke Score_Engine
   - _Requirements: 6.1_
 
-- [ ] 17. Add SCORE_ENGINE_FUNCTION_NAME environment variable to Event_Normalizer (must-have)
+- [x] 17. Add SCORE_ENGINE_FUNCTION_NAME environment variable to Event_Normalizer (must-have)
   - Update `infra/modules/lambda/main.tf`
   - Add `SCORE_ENGINE_FUNCTION_NAME = aws_lambda_function.score_engine.function_name` to Event_Normalizer environment block
   - **Deliverable:** Event_Normalizer Lambda configured with Score_Engine function name
   - _Requirements: 6.1_
 
-- [ ] 18. Add EventBridge scheduled rule for batch scoring (must-have)
+- [x] 18. Add EventBridge scheduled rule for batch scoring (must-have)
   - Update `infra/modules/eventbridge/main.tf`
   - Add `aws_cloudwatch_event_rule` resource with `schedule_expression = var.score_engine_schedule`
   - Add `aws_cloudwatch_event_target` pointing to Score_Engine Lambda ARN with empty JSON input `"{}"`
@@ -223,14 +223,14 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
   - **Deliverable:** EventBridge scheduled rule invoking Score_Engine in batch mode
   - _Requirements: 7.1, 7.3, 7.4_
 
-- [ ] 19. Configure schedule per environment (must-have)
+- [x] 19. Configure schedule per environment (must-have)
   - Update `infra/envs/dev/terraform.tfvars`: add `score_engine_schedule = "rate(24 hours)"`
   - Update `infra/envs/prod/terraform.tfvars`: add `score_engine_schedule = "rate(6 hours)"`
   - Pass `score_engine_schedule` and `score_engine_function_arn` through environment `main.tf` to eventbridge module
   - **Deliverable:** Environment-specific batch scoring schedules
   - _Requirements: 7.2_
 
-- [ ] 20. Run terraform validate (must-have)
+- [x] 20. Run terraform validate (must-have)
   - Run `terraform init` and `terraform validate` in `infra/envs/dev/`
   - Resolve any variable reference or resource dependency errors
   - **Deliverable:** Validated Terraform configuration with no errors

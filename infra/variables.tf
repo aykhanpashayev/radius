@@ -106,3 +106,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "score_engine_schedule" {
+  description = "EventBridge schedule expression for batch scoring (e.g. rate(6 hours))"
+  type        = string
+  default     = "rate(24 hours)"
+}

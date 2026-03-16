@@ -26,6 +26,7 @@ module "radius" {
   email_subscriptions             = var.email_subscriptions
   https_subscriptions             = var.https_subscriptions
   tags                            = var.tags
+  score_engine_schedule           = var.score_engine_schedule
 }
 
 # ---------------------------------------------------------------------------
@@ -53,6 +54,10 @@ variable "https_subscriptions" {
   default = []
 }
 variable "tags"                            { type = map(string) }
+variable "score_engine_schedule" {
+  type    = string
+  default = "rate(6 hours)"
+}
 
 # ---------------------------------------------------------------------------
 # Outputs

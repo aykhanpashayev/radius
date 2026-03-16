@@ -113,6 +113,9 @@ module "eventbridge" {
     event_normalizer = module.lambda.function_arns.event_normalizer
   }
 
+  score_engine_schedule     = var.score_engine_schedule
+  score_engine_function_arn = module.lambda.function_arns.score_engine
+
   tags = var.tags
 }
 

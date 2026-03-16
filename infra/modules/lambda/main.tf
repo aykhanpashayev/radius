@@ -102,11 +102,12 @@ resource "aws_lambda_function" "event_normalizer" {
 
   environment {
     variables = {
-      ENVIRONMENT              = var.environment
-      AWS_ACCOUNT_REGION       = var.aws_region
-      EVENT_SUMMARY_TABLE      = var.dynamodb_table_names.event_summary
-      DETECTION_ENGINE_ARN     = aws_lambda_function.detection_engine.arn
-      IDENTITY_COLLECTOR_ARN   = aws_lambda_function.identity_collector.arn
+      ENVIRONMENT                  = var.environment
+      AWS_ACCOUNT_REGION           = var.aws_region
+      EVENT_SUMMARY_TABLE          = var.dynamodb_table_names.event_summary
+      DETECTION_ENGINE_ARN         = aws_lambda_function.detection_engine.arn
+      IDENTITY_COLLECTOR_ARN       = aws_lambda_function.identity_collector.arn
+      SCORE_ENGINE_FUNCTION_NAME   = aws_lambda_function.score_engine.function_name
     }
   }
 

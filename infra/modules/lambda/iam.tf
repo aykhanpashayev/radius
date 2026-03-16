@@ -49,6 +49,7 @@ resource "aws_iam_role_policy" "event_normalizer" {
         Resource = [
           aws_lambda_function.detection_engine.arn,
           aws_lambda_function.identity_collector.arn,
+          aws_lambda_function.score_engine.arn,
         ]
       },
       {
@@ -261,8 +262,35 @@ resource "aws_iam_role_policy" "score_engine" {
       {
         Sid    = "WriteBlastRadiusScore"
         Effect = "Allow"
-        Action = ["dynamodb:PutItem", "dynamodb:UpdateItem"]
+        Action = ["dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:GetItem"]
         Resource = var.dynamodb_table_arns.blast_radius_score
+      },
+      {
+        Sid    = "ReadEventSummary"
+        Effect = "Allow"
+        Action = ["dynamodb:GetItem", "dynamodb:Query"]
+        Resource = concat(
+          [var.dynamodb_table_arns.event_summary],
+          var.dynamodb_gsi_arns["event_summary"]
+        )
+      },
+      {
+        Sid    = "ReadTrustRelationship"
+        Effect = "Allow"
+        Action = ["dynamodb:GetItem", "dynamodb:Query"]
+        Resource = concat(
+          [var.dynamodb_table_arns.trust_relationship],
+          var.dynamodb_gsi_arns["trust_relationship"]
+        )
+      },
+      {
+        Sid    = "ReadIncident"
+        Effect = "Allow"
+        Action = ["dynamodb:GetItem", "dynamodb:Query"]
+        Resource = concat(
+          [var.dynamodb_table_arns.incident],
+          var.dynamodb_gsi_arns["incident"]
+        )
       },
       {
         Sid    = "KMS"

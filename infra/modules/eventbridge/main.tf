@@ -88,3 +88,28 @@ resource "aws_sqs_queue_policy" "eventbridge_dlq" {
     ]
   })
 }
+
+# ---------------------------------------------------------------------------
+# EventBridge Scheduled Rule — periodic batch scoring via Score_Engine
+# ---------------------------------------------------------------------------
+resource "aws_cloudwatch_event_rule" "score_engine_schedule" {
+  name                = "${var.prefix}-score-engine-schedule"
+  description         = "Trigger Score_Engine in batch mode on a schedule"
+  schedule_expression = var.score_engine_schedule
+  tags                = local.common_tags
+}
+
+resource "aws_cloudwatch_event_target" "score_engine_batch" {
+  rule      = aws_cloudwatch_event_rule.score_engine_schedule.name
+  target_id = "ScoreEngineBatch"
+  arn       = var.score_engine_function_arn
+  input     = "{}"
+}
+
+resource "aws_lambda_permission" "allow_eventbridge_score_engine" {
+  statement_id  = "AllowEventBridgeInvokeScoreEngine"
+  action        = "lambda:InvokeFunction"
+  function_name = var.score_engine_function_arn
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.score_engine_schedule.arn
+}

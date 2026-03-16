@@ -1,71 +1,105 @@
-"""Score_Engine Lambda handler — PLACEHOLDER.
+"""Score_Engine Lambda handler.
 
-Phase 2: logs invocations and writes placeholder Blast_Radius_Score records
-(score=50, severity=Moderate) to keep the data pipeline and API endpoints
-testable. No real scoring algorithms are implemented here.
+Phase 3: real rule-based Blast Radius Score calculation.
+Supports single-identity mode (event contains identity_arn) and
+batch mode (empty payload — scans all active identities).
 """
 
 import os
-from datetime import datetime, timezone
+import time
 from typing import Any
 
-from backend.common.dynamodb_utils import put_item, get_dynamodb_client
+from backend.common.dynamodb_utils import get_dynamodb_client, get_item, put_item
 from backend.common.logging_utils import generate_correlation_id, get_logger, log_error
-from backend.functions.score_engine.interfaces import ScoreResult, classify_severity
-
-logger = get_logger(__name__)
+from backend.functions.score_engine.context import ScoringContext
+from backend.functions.score_engine.engine import RuleEngine
+from backend.functions.score_engine.interfaces import ScoreResult
 
 _IDENTITY_PROFILE_TABLE = os.environ["IDENTITY_PROFILE_TABLE"]
 _BLAST_RADIUS_SCORE_TABLE = os.environ["BLAST_RADIUS_SCORE_TABLE"]
+_EVENT_SUMMARY_TABLE = os.environ["EVENT_SUMMARY_TABLE"]
+_TRUST_RELATIONSHIP_TABLE = os.environ["TRUST_RELATIONSHIP_TABLE"]
+_INCIDENT_TABLE = os.environ["INCIDENT_TABLE"]
+
+# Instantiated once at module level for Lambda warm-start reuse.
+_rule_engine = RuleEngine()
 
 
 def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
-    """Calculate (placeholder) blast radius scores.
+    """Calculate blast radius scores for one or all active identities.
 
     Can be invoked:
-    - With a specific identity_arn to score one identity.
-    - With an empty payload to score all active identities (scan).
+    - With a specific identity_arn to score one identity (single mode).
+    - With an empty payload to score all active identities (batch mode).
 
     Args:
         event: Dict optionally containing 'identity_arn'.
         context: Lambda context object.
 
     Returns:
-        Status dict with count of records written.
+        Status dict: {"status": "ok", "records_written": N, "failures": M}
     """
     correlation_id = generate_correlation_id()
     log = get_logger(__name__, correlation_id)
+    t0 = time.monotonic()
 
     identity_arn = event.get("identity_arn")
-
-    log.info(
-        "Score_Engine invoked (PLACEHOLDER — no scoring logic)",
-        extra={
-            "identity_arn": identity_arn or "all",
-            "correlation_id": correlation_id,
-        },
-    )
-
-    if identity_arn:
-        arns = [identity_arn]
-    else:
-        arns = _scan_active_identities()
-
-    written = 0
-    for arn in arns:
-        try:
-            result = ScoreResult.placeholder(arn)
-            _write_score(result)
-            written += 1
-        except Exception as exc:
-            log_error(log, "Failed to write placeholder score", exc, correlation_id,
-                      identity_arn=arn)
-
-    log.info("Score_Engine completed", extra={
-        "records_written": written,
+    log.info("Score_Engine invoked", extra={
+        "mode": "single" if identity_arn else "batch",
+        "identity_arn": identity_arn or "all",
         "correlation_id": correlation_id,
     })
-    return {"status": "ok", "records_written": written, "placeholder": True}
+
+    arns = [identity_arn] if identity_arn else _scan_active_identities()
+
+    tables = {
+        "identity_profile": _IDENTITY_PROFILE_TABLE,
+        "event_summary": _EVENT_SUMMARY_TABLE,
+        "trust_relationship": _TRUST_RELATIONSHIP_TABLE,
+        "incident": _INCIDENT_TABLE,
+    }
+
+    written, failures = 0, 0
+    for arn in arns:
+        try:
+            ctx = ScoringContext.build(arn, tables)
+            if not ctx.identity_profile:
+                log.warning("Identity_Profile not found, skipping", extra={"identity_arn": arn})
+                continue
+            previous = _get_previous_score(arn)
+            result = _rule_engine.evaluate(ctx)
+            if previous is not None:
+                result.previous_score = previous
+                result.score_change = result.score_value - previous
+            _write_score(result)
+            log.info("Score calculated", extra={
+                "identity_arn": arn,
+                "score_value": result.score_value,
+                "severity_level": result.severity_level,
+                "contributing_factors": result.contributing_factors,
+                "correlation_id": correlation_id,
+            })
+            written += 1
+        except Exception as exc:
+            log_error(log, "Failed to score identity", exc, correlation_id, identity_arn=arn)
+            failures += 1
+
+    duration_ms = int((time.monotonic() - t0) * 1000)
+    log.info("Score_Engine completed", extra={
+        "records_written": written,
+        "failures": failures,
+        "duration_ms": duration_ms,
+        "correlation_id": correlation_id,
+    })
+    return {"status": "ok", "records_written": written, "failures": failures}
+
+
+def _get_previous_score(identity_arn: str) -> int | None:
+    """Read the current score_value from Blast_Radius_Score table, or None if not found."""
+    item = get_item(_BLAST_RADIUS_SCORE_TABLE, {"identity_arn": identity_arn})
+    if item and "score_value" in item:
+        return int(item["score_value"])
+    return None
 
 
 def _write_score(result: ScoreResult) -> None:
