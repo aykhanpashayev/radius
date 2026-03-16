@@ -122,7 +122,7 @@ This implementation plan translates the Phase 2 requirements and design into act
   - **Deliverable:** Trust_Relationship table with 2 GSIs
   - _Requirements: 2.19, 2.20, 2.21, 2.22, 2.23, 2.27_
 
-- [ ] 10. Create Lambda module for function provisioning (must-have)
+- [x] 10. Create Lambda module for function provisioning (must-have)
   - Create infra/modules/lambda/ with main.tf, variables.tf, outputs.tf, iam.tf
   - Define module inputs for function configurations (memory, timeout, concurrency)
   - Define IAM role and policy resources with least-privilege permissions
@@ -130,21 +130,21 @@ This implementation plan translates the Phase 2 requirements and design into act
   - **Deliverable:** Lambda module structure ready for function definitions
   - _Requirements: 1.2, 1.3, 1.4, 3.1, 3.5_
 
-- [ ] 11. Create EventBridge module for event routing (must-have)
+- [x] 11. Create EventBridge module for event routing (must-have)
   - Create infra/modules/eventbridge/ with main.tf, variables.tf, outputs.tf
   - Define module inputs for event patterns and Lambda target ARNs
   - Define module outputs for rule ARNs and event bus ARN
   - **Deliverable:** EventBridge module ready for rule definitions
   - _Requirements: 1.2, 1.3, 1.4, 4.10_
 
-- [ ] 12. Create API Gateway module for REST endpoints (must-have)
+- [x] 12. Create API Gateway module for REST endpoints (must-have)
   - Create infra/modules/apigateway/ with main.tf, variables.tf, outputs.tf, endpoints.tf
   - Define module inputs for Lambda function ARN and CORS configuration
   - Define module outputs for API endpoint URL, API ID, and API ARN
   - **Deliverable:** API Gateway module ready for endpoint definitions
   - _Requirements: 1.2, 1.3, 1.4, 5.1_
 
-- [ ] 13. Create CloudTrail module for audit logging (must-have)
+- [x] 13. Create CloudTrail module for audit logging (must-have)
   - Create infra/modules/cloudtrail/ with main.tf, variables.tf, outputs.tf, s3.tf
   - Define module inputs for organization-wide vs single-account configuration
   - Define S3 bucket resources with lifecycle policies and encryption
@@ -152,34 +152,34 @@ This implementation plan translates the Phase 2 requirements and design into act
   - **Deliverable:** CloudTrail module with S3 bucket and trail configuration
   - _Requirements: 1.2, 1.3, 1.4, 4.1, 4.5_
 
-- [ ] 14. Create SNS module for alerting (must-have)
+- [x] 14. Create SNS module for alerting (must-have)
   - Create infra/modules/sns/ with main.tf, variables.tf, outputs.tf
   - Define module inputs for subscription endpoints
   - Define module outputs for topic ARNs
   - **Deliverable:** SNS module ready for topic and subscription definitions
   - _Requirements: 1.2, 1.3, 1.4, 10.1_
 
-- [ ] 15. Create CloudWatch module for observability (must-have)
+- [x] 15. Create CloudWatch module for observability (must-have)
   - Create infra/modules/cloudwatch/ with main.tf, variables.tf, outputs.tf, alarms.tf, dashboards.tf
   - Define module inputs for resource ARNs and alarm thresholds
   - Define module outputs for log group names
   - **Deliverable:** CloudWatch module ready for log groups, alarms, and dashboards
   - _Requirements: 1.2, 1.3, 1.4, 11.1_
 
-- [ ] 16. Configure environment-specific Terraform (must-have)
-  - [ ] 16.1 Configure dev environment
+- [x] 16. Configure environment-specific Terraform (must-have)
+  - [x] 16.1 Configure dev environment
     - Create infra/envs/dev/main.tf with module instantiations
     - Create infra/envs/dev/terraform.tfvars with dev-specific values (single-account CloudTrail, minimal resources, 7-day logs)
     - **Deliverable:** Dev environment Terraform configuration
     - _Requirements: 1.7, 1.8, 1.9_
   
-  - [ ] 16.2 Configure prod environment
+  - [x] 16.2 Configure prod environment
     - Create infra/envs/prod/main.tf with module instantiations
     - Create infra/envs/prod/terraform.tfvars with prod-specific values (org-wide CloudTrail, high availability, 30-day logs)
     - **Deliverable:** Prod environment Terraform configuration
     - _Requirements: 1.7, 1.8, 1.10_
 
-- [ ] 17. Verify Terraform module dependencies and composition (must-have)
+- [x] 17. Verify Terraform module dependencies and composition (must-have)
   - Review module composition in root main.tf to ensure correct dependency flow
   - Verify KMS → DynamoDB/SNS → Lambda → EventBridge/API Gateway → CloudTrail → CloudWatch
   - Run terraform init and terraform validate in dev environment

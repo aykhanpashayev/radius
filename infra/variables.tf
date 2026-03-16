@@ -22,12 +22,12 @@ variable "aws_region" {
 variable "lambda_memory" {
   description = "Memory allocation for Lambda functions (MB)"
   type = object({
-    event_normalizer    = number
-    detection_engine    = number
-    incident_processor  = number
-    identity_collector  = number
-    score_engine        = number
-    api_handler         = number
+    event_normalizer   = number
+    detection_engine   = number
+    incident_processor = number
+    identity_collector = number
+    score_engine       = number
+    api_handler        = number
   })
   default = {
     event_normalizer   = 512
@@ -42,12 +42,12 @@ variable "lambda_memory" {
 variable "lambda_timeout" {
   description = "Timeout for Lambda functions (seconds)"
   type = object({
-    event_normalizer    = number
-    detection_engine    = number
-    incident_processor  = number
-    identity_collector  = number
-    score_engine        = number
-    api_handler         = number
+    event_normalizer   = number
+    detection_engine   = number
+    incident_processor = number
+    identity_collector = number
+    score_engine       = number
+    api_handler        = number
   })
   default = {
     event_normalizer   = 30
@@ -81,6 +81,24 @@ variable "enable_pitr" {
   description = "Enable point-in-time recovery for DynamoDB tables"
   type        = bool
   default     = false
+}
+
+variable "lambda_s3_bucket" {
+  description = "S3 bucket name containing Lambda deployment packages"
+  type        = string
+  default     = ""
+}
+
+variable "email_subscriptions" {
+  description = "Email addresses to subscribe to the SNS alert topic"
+  type        = list(string)
+  default     = []
+}
+
+variable "https_subscriptions" {
+  description = "HTTPS webhook URLs to subscribe to the SNS alert topic"
+  type        = list(string)
+  default     = []
 }
 
 variable "tags" {

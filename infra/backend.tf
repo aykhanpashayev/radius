@@ -6,7 +6,7 @@ terraform {
   backend "s3" {
     # Backend configuration is provided via -backend-config flag during terraform init
     # See infra/envs/dev/backend.tfvars and infra/envs/prod/backend.tfvars
-    
+
     # Required values (provided via backend.tfvars):
     # - bucket: S3 bucket name for state storage
     # - key: Path to state file within bucket

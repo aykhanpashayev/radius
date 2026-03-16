@@ -1,0 +1,47 @@
+variable "environment" {
+  description = "Environment name (dev or prod)"
+  type        = string
+  validation {
+    condition     = contains(["dev", "prod"], var.environment)
+    error_message = "Environment must be either 'dev' or 'prod'."
+  }
+}
+
+variable "prefix" {
+  description = "Resource naming prefix (e.g. radius-dev)"
+  type        = string
+}
+
+variable "lambda_function_arn" {
+  description = "ARN of the API_Handler Lambda function"
+  type        = string
+}
+
+variable "lambda_function_name" {
+  description = "Name of the API_Handler Lambda function (for permission resource)"
+  type        = string
+}
+
+variable "cors_allowed_origins" {
+  description = "List of allowed CORS origins"
+  type        = list(string)
+  default     = ["*"]
+}
+
+variable "enable_logging" {
+  description = "Enable CloudWatch access logging for API Gateway"
+  type        = bool
+  default     = true
+}
+
+variable "log_retention_days" {
+  description = "CloudWatch log retention in days"
+  type        = number
+  default     = 7
+}
+
+variable "tags" {
+  description = "Additional tags for API Gateway resources"
+  type        = map(string)
+  default     = {}
+}

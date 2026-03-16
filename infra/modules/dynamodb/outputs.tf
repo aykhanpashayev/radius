@@ -2,11 +2,11 @@
 output "table_names" {
   description = "Map of logical table name to actual DynamoDB table name"
   value = {
-    identity_profile    = aws_dynamodb_table.identity_profile.name
-    blast_radius_score  = aws_dynamodb_table.blast_radius_score.name
-    incident            = aws_dynamodb_table.incident.name
-    event_summary       = aws_dynamodb_table.event_summary.name
-    trust_relationship  = aws_dynamodb_table.trust_relationship.name
+    identity_profile   = aws_dynamodb_table.identity_profile.name
+    blast_radius_score = aws_dynamodb_table.blast_radius_score.name
+    incident           = aws_dynamodb_table.incident.name
+    event_summary      = aws_dynamodb_table.event_summary.name
+    trust_relationship = aws_dynamodb_table.trust_relationship.name
   }
 }
 
@@ -14,11 +14,11 @@ output "table_names" {
 output "table_arns" {
   description = "Map of logical table name to DynamoDB table ARN"
   value = {
-    identity_profile    = aws_dynamodb_table.identity_profile.arn
-    blast_radius_score  = aws_dynamodb_table.blast_radius_score.arn
-    incident            = aws_dynamodb_table.incident.arn
-    event_summary       = aws_dynamodb_table.event_summary.arn
-    trust_relationship  = aws_dynamodb_table.trust_relationship.arn
+    identity_profile   = aws_dynamodb_table.identity_profile.arn
+    blast_radius_score = aws_dynamodb_table.blast_radius_score.arn
+    incident           = aws_dynamodb_table.incident.arn
+    event_summary      = aws_dynamodb_table.event_summary.arn
+    trust_relationship = aws_dynamodb_table.trust_relationship.arn
   }
 }
 

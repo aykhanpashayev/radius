@@ -1,63 +1,54 @@
-# Dev environment configuration for Radius
-# This file instantiates the root module with dev-specific values
+# Dev environment entry point for Radius.
+# Run: terraform init -backend-config=backend.tfvars
+#      terraform apply -var-file=terraform.tfvars
+
+terraform {
+  required_version = ">= 1.5.0"
+
+  backend "s3" {
+    # Values supplied via backend.tfvars at init time
+  }
+}
 
 module "radius" {
   source = "../.."
 
-  environment = "dev"
-  aws_region  = "us-east-1"
-  
-  resource_prefix = "radius-dev"
-
-  # Lambda configuration - minimal resources for cost savings
-  lambda_memory = {
-    event_normalizer   = 512
-    detection_engine   = 1024
-    incident_processor = 512
-    identity_collector = 512
-    score_engine       = 1024
-    api_handler        = 256
-  }
-
-  lambda_timeout = {
-    event_normalizer   = 30
-    detection_engine   = 60
-    incident_processor = 30
-    identity_collector = 30
-    score_engine       = 60
-    api_handler        = 10
-  }
-
-  # Concurrency limits for cost control
-  lambda_concurrency_limit = 10
-
-  # Short log retention for dev
-  log_retention_days = 7
-
-  # Single-account CloudTrail for dev
-  cloudtrail_organization_enabled = false
-
-  # Disable PITR for dev to reduce costs
-  enable_pitr = false
-
-  tags = {
-    CostCenter = "Development"
-    Owner      = "DevOps"
-  }
+  environment                     = var.environment
+  aws_region                      = var.aws_region
+  resource_prefix                 = var.resource_prefix
+  lambda_memory                   = var.lambda_memory
+  lambda_timeout                  = var.lambda_timeout
+  lambda_concurrency_limit        = var.lambda_concurrency_limit
+  log_retention_days              = var.log_retention_days
+  cloudtrail_organization_enabled = var.cloudtrail_organization_enabled
+  enable_pitr                     = var.enable_pitr
+  lambda_s3_bucket                = var.lambda_s3_bucket
+  email_subscriptions             = var.email_subscriptions
+  https_subscriptions             = var.https_subscriptions
+  tags                            = var.tags
 }
 
+# ---------------------------------------------------------------------------
+# Pass-through variables (values come from terraform.tfvars)
+# ---------------------------------------------------------------------------
+variable "environment"                     { type = string }
+variable "aws_region"                      { type = string }
+variable "resource_prefix"                 { type = string }
+variable "lambda_memory"                   { type = map(number) }
+variable "lambda_timeout"                  { type = map(number) }
+variable "lambda_concurrency_limit"        { type = number }
+variable "log_retention_days"              { type = number }
+variable "cloudtrail_organization_enabled" { type = bool }
+variable "enable_pitr"                     { type = bool }
+variable "lambda_s3_bucket"                { type = string; default = "" }
+variable "email_subscriptions"             { type = list(string); default = [] }
+variable "https_subscriptions"             { type = list(string); default = [] }
+variable "tags"                            { type = map(string) }
+
+# ---------------------------------------------------------------------------
 # Outputs
-output "environment" {
-  description = "Deployment environment"
-  value       = module.radius.environment
-}
-
-output "aws_region" {
-  description = "AWS region"
-  value       = module.radius.aws_region
-}
-
-output "resource_prefix" {
-  description = "Resource naming prefix"
-  value       = module.radius.resource_prefix
-}
+# ---------------------------------------------------------------------------
+output "environment"     { value = module.radius.environment }
+output "aws_region"      { value = module.radius.aws_region }
+output "resource_prefix" { value = module.radius.resource_prefix }
+output "api_endpoint"    { value = module.radius.api_endpoint }
