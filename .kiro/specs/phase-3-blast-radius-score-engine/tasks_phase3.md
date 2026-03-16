@@ -286,7 +286,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
 
 ### Milestone 6: Documentation
 
-- [ ] 25. Write scoring model documentation (must-have)
+- [x] 25. Write scoring model documentation (must-have)
   - Create `docs/scoring-model.md`
   - Document the scoring model overview: rule-based, deterministic, 0–100 range
   - Document each of the 8 rules: rule_id, rule_name, max_contribution, trigger conditions, point allocation
@@ -298,7 +298,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
   - **Deliverable:** `docs/scoring-model.md` with complete scoring model reference
   - _Requirements: 9.4_
 
-- [ ] 26. Update Phase 2 scope documentation (should-have)
+- [x] 26. Update Phase 2 scope documentation (should-have)
   - Update `docs/phase-2-scope.md` to note that Score_Engine placeholder has been replaced in Phase 3
   - Add a brief Phase 3 summary section referencing `docs/scoring-model.md`
   - **Deliverable:** Updated scope documentation reflecting Phase 3 completion
