@@ -34,7 +34,7 @@ Phase 5 builds the Radius security dashboard — a React SPA hosted on S3 + Clou
 
 ### Milestone 1: Project Scaffold
 
-- [ ] 1. Initialize Vite + React project (must-have)
+- [x] 1. Initialize Vite + React project (must-have)
   - Create `frontend/package.json` with dependencies: `react`, `react-dom`, `react-router-dom`; devDependencies: `vite`, `@vitejs/plugin-react`
   - Create `frontend/vite.config.js` with React plugin
   - Create `frontend/index.html` — root HTML with `<div id="root">` and script entry
@@ -44,7 +44,7 @@ Phase 5 builds the Radius security dashboard — a React SPA hosted on S3 + Clou
   - **Deliverable:** Working Vite dev server (`npm run dev`) and build (`npm run build`)
   - _Requirements: 1.1, 1.2, 1.3, 1.5_
 
-- [ ] 2. Implement global CSS and dark theme (must-have)
+- [x] 2. Implement global CSS and dark theme (must-have)
   - Create `frontend/src/index.css`
   - Define CSS custom properties: `--bg`, `--surface`, `--border`, `--text`, `--text-muted`, `--accent`
   - Dark theme base: `body { background: var(--bg); color: var(--text); }`
