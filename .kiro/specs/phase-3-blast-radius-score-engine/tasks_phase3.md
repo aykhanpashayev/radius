@@ -89,7 +89,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
 
 ### Milestone 2: Scoring Rules Implementation
 
-- [ ] 5. Implement AdminPrivileges rule (must-have)
+- [x] 5. Implement AdminPrivileges rule (must-have)
   - Create `backend/functions/score_engine/rules/admin_privileges.py`
   - Define `AdminPrivilegesRule` with `rule_id = "admin_privileges"`, `rule_name = "AdminPrivileges"`, `max_contribution = 25`
   - Detect IAM write events: `{CreateUser, CreateRole, AttachUserPolicy, AttachRolePolicy, PutUserPolicy, PutRolePolicy, CreatePolicy, CreatePolicyVersion}`
@@ -100,7 +100,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
   - **Deliverable:** `AdminPrivilegesRule` implementation
   - _Requirements: 2.1, 2.2, 2.3, 2.4_
 
-- [ ] 6. Implement IAMPermissionsScope rule (must-have)
+- [x] 6. Implement IAMPermissionsScope rule (must-have)
   - Create `backend/functions/score_engine/rules/iam_permissions_scope.py`
   - Define `IAMPermissionsScopeRule` with `rule_id = "iam_permissions_scope"`, `rule_name = "IAMPermissionsScope"`, `max_contribution = 20`
   - Filter events where `event_type` starts with `"iam:"`
@@ -109,7 +109,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
   - **Deliverable:** `IAMPermissionsScopeRule` implementation
   - _Requirements: 2.5, 2.6, 2.7, 2.8_
 
-- [ ] 7. Implement IAMModification rule (must-have)
+- [x] 7. Implement IAMModification rule (must-have)
   - Create `backend/functions/score_engine/rules/iam_modification.py`
   - Define `IAMModificationRule` with `rule_id = "iam_modification"`, `rule_name = "IAMModification"`, `max_contribution = 20`
   - Define mutation event set: `{AttachUserPolicy, AttachRolePolicy, AttachGroupPolicy, PutUserPolicy, PutRolePolicy, PutGroupPolicy, CreatePolicyVersion, SetDefaultPolicyVersion, AddUserToGroup}`
@@ -119,7 +119,7 @@ Phase 3 replaces the placeholder scoring logic in Score_Engine with a real, rule
   - **Deliverable:** `IAMModificationRule` implementation
   - _Requirements: 2.9, 2.10, 2.11, 2.12_
 
-- [ ] 8. Implement LoggingDisruption rule (must-have)
+- [x] 8. Implement LoggingDisruption rule (must-have)
   - Create `backend/functions/score_engine/rules/logging_disruption.py`
   - Define `LoggingDisruptionRule` with `rule_id = "logging_disruption"`, `rule_name = "LoggingDisruption"`, `max_contribution = 20`
   - Define disruption event set: `{StopLogging, DeleteTrail, UpdateTrail, PutEventSelectors, DeleteFlowLogs, DeleteLogGroup, DeleteLogStream}`
