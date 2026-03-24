@@ -193,7 +193,7 @@ Phase 6 brings Radius to production quality through two parallel workstreams: a 
 
 ### Milestone 7: Architecture Documentation
 
-- [ ] 15. Update docs/architecture.md
+- [x] 15. Update docs/architecture.md
   - Rewrite `docs/architecture.md` to include:
     - Full text-based pipeline diagram showing: CloudTrail → EventBridge → Event_Normalizer → (Detection_Engine → Incident_Processor, Identity_Collector, Score_Engine) → API_Handler → Dashboard
     - All 5 DynamoDB tables with PK, SK, and purpose: `Identity_Profile`, `Blast_Radius_Score`, `Incident`, `Event_Summary`, `Trust_Relationship`
@@ -204,7 +204,7 @@ Phase 6 brings Radius to production quality through two parallel workstreams: a 
 
 ### Milestone 8: Deployment Documentation
 
-- [ ] 16. Update docs/deployment.md
+- [x] 16. Update docs/deployment.md
   - Update `docs/deployment.md` to include:
     - Prerequisites section: AWS CLI version, Terraform version, Python version (3.11+), required IAM permissions
     - Step-by-step first-time setup: S3 state bucket creation, backend configuration in `infra/envs/dev/main.tf`, variable configuration in `terraform.tfvars`
@@ -218,7 +218,7 @@ Phase 6 brings Radius to production quality through two parallel workstreams: a 
 
 ### Milestone 9: Scoring and Detection Rule Documentation
 
-- [ ] 17. Verify and update docs/scoring-model.md
+- [x] 17. Verify and update docs/scoring-model.md
   - Review `backend/functions/score_engine/rules/` to confirm all 8 rules are documented
   - Verify `docs/scoring-model.md` documents each rule with: `rule_id`, `max_contribution`, trigger conditions, point values
   - Verify the 5 severity thresholds are documented: 0–19 Low, 20–39 Moderate, 40–59 High, 60–79 Very High, 80–100 Critical
@@ -228,7 +228,7 @@ Phase 6 brings Radius to production quality through two parallel workstreams: a 
   - Verify ScoringContext data sources are documented: Identity_Profile, Event_Summary (last 90 days, max 1,000 events), Trust_Relationship, Incident
   - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5, 10.6_
 
-- [ ] 18. Verify and update docs/detection-rules.md
+- [x] 18. Verify and update docs/detection-rules.md
   - Review `backend/functions/detection_engine/rules/` to confirm all 7 rules are documented
   - Verify `docs/detection-rules.md` documents each rule with: `rule_id`, `rule_name`, severity, confidence, rule type (single-event or context-aware), trigger conditions
   - Verify each rule has an example triggering event or context
@@ -240,7 +240,7 @@ Phase 6 brings Radius to production quality through two parallel workstreams: a 
 
 ### Milestone 10: New Documentation Files
 
-- [ ] 19. Create docs/dashboard.md
+- [x] 19. Create docs/dashboard.md
   - Create `docs/dashboard.md` documenting:
     - All 5 dashboard pages: Identity List (`/`), Identity Detail (`/identities/:arn`), Incident List (`/incidents`), Incident Detail, Score Overview
     - How to filter identities by severity level and account ID using the UI controls
@@ -250,7 +250,7 @@ Phase 6 brings Radius to production quality through two parallel workstreams: a 
     - Production build and S3 deployment: `npm run build`, `aws s3 sync`, CloudFront cache invalidation command
   - _Requirements: 12.1, 12.2, 12.3, 12.4, 12.5, 12.6_
 
-- [ ] 20. Create docs/developer-guide.md
+- [x] 20. Create docs/developer-guide.md
   - Create `docs/developer-guide.md` documenting:
     - Steps to add a new detection rule: create file in `backend/functions/detection_engine/rules/`, implement `DetectionRule` or `ContextAwareDetectionRule` interface, register in `rules/__init__.py`, add unit tests in `backend/tests/`
     - Steps to add a new scoring rule: create file in `backend/functions/score_engine/rules/`, implement `ScoringRule` interface, register in `rules/__init__.py`, add unit tests
@@ -260,7 +260,7 @@ Phase 6 brings Radius to production quality through two parallel workstreams: a 
     - Lambda packaging and deployment workflow: `build-lambdas.sh` then `deploy-infra.sh`
   - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, 13.6_
 
-- [ ] 21. Final checkpoint — Ensure all tests pass and docs are complete
+- [-] 21. Final checkpoint — Ensure all tests pass and docs are complete
   - Ensure all tests pass with `pytest backend/tests/ -v`, ask the user if questions arise.
 
 ---
