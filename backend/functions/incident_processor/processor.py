@@ -69,14 +69,20 @@ def find_duplicate(
             Key("identity_arn").eq(identity_arn)
             & Key("creation_timestamp").gte(cutoff)
         ),
-        FilterExpression=(
-            Attr("detection_type").eq(detection_type)
-            & Attr("status").is_in(["open", "investigating"])
-        ),
     )
 
-    items = response.get("Items", [])
-    return items[0] if items else None
+    # IdentityIndex is KEYS_ONLY — fetch full items from the base table to filter
+    for item in response.get("Items", []):
+        full_item = table.get_item(Key={"incident_id": item["incident_id"]}).get("Item")
+        if full_item is None:
+            continue
+        if (
+            full_item.get("detection_type") == detection_type
+            and full_item.get("status") in ("open", "investigating")
+        ):
+            return full_item
+
+    return None
 
 
 def create_incident(

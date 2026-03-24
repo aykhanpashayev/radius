@@ -91,7 +91,7 @@ Phase 6 brings Radius to production quality through two parallel workstreams: a 
 
 ### Milestone 3: Detection Rule Integration Tests
 
-- [ ] 5. Write detection rule accuracy tests
+- [x] 5. Write detection rule accuracy tests
   - Create `backend/tests/integration/test_detection_integration.py`
   - Load sample events from `sample-data/cloud-trail-events/` using a `_load_sample(filename)` helper
   - Write example-based tests:
@@ -103,7 +103,7 @@ Phase 6 brings Radius to production quality through two parallel workstreams: a 
     - `test_finding_detection_type_matches_rule_id` — for each of the 5 triggering events above, assert `finding.detection_type == rule.rule_id` for the matched finding
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7_
 
-- [ ]* 6. Write property test P5 for detection finding validity
+- [x]* 6. Write property test P5 for detection finding validity
   - Add to `test_detection_integration.py`:
   - `test_detection_finding_validity` — Property 5: for any `(event_summary, DetectionContext)` pair that produces a Finding, assert `finding.detection_type` equals the rule's `rule_id` and `finding.confidence` is an integer in `[0, 100]`
     - `# Feature: phase-6-testing-and-documentation, Property 5: Detection finding validity`
@@ -113,7 +113,7 @@ Phase 6 brings Radius to production quality through two parallel workstreams: a 
 
 ### Milestone 4: Scoring Integration Tests
 
-- [ ] 7. Write scoring correctness and DynamoDB write tests
+- [x] 7. Write scoring correctness and DynamoDB write tests
   - Create `backend/tests/integration/test_scoring_integration.py`
   - Write example-based tests:
     - `test_iam_write_events_produce_nonzero_score` — build `ScoringContext` with `AttachUserPolicy` events, call `_run_score_engine`, assert `score_value > 0` and `severity_level != "Low"`
@@ -126,7 +126,7 @@ Phase 6 brings Radius to production quality through two parallel workstreams: a 
     - `test_severity_level_consistent_with_score` — assert `severity_level` matches documented thresholds for the written `score_value`
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 7.4_
 
-- [ ]* 8. Write property test P6 for score write round-trip
+- [x]* 8. Write property test P6 for score write round-trip
   - Add to `test_scoring_integration.py`:
   - `test_score_write_round_trip` — Property 6: for any valid `ScoringContext`, assert written `Blast_Radius_Score` record has `score_value` in `[0, 100]` and `severity_level` is the correct classification per documented thresholds
     - `# Feature: phase-6-testing-and-documentation, Property 6: Score write round-trip`
@@ -134,12 +134,12 @@ Phase 6 brings Radius to production quality through two parallel workstreams: a 
   - Implement `scoring_context_strategy()` Hypothesis strategy (can reuse/adapt from `test_score_engine_properties.py`)
   - _Requirements: 4.5, 4.6, 4.7, 7.4_
 
-- [ ] 9. Checkpoint — Ensure detection and scoring tests pass
+- [x] 9. Checkpoint — Ensure detection and scoring tests pass
   - Ensure all tests pass, ask the user if questions arise.
 
 ### Milestone 5: Attack Scenario Tests
 
-- [ ] 10. Write attack scenario simulation tests
+- [x] 10. Write attack scenario simulation tests
   - Create `backend/tests/integration/test_attack_scenarios.py`
   - Import `_make_cloudtrail_event` and pipeline helpers from `test_pipeline_e2e.py` (or extract to a shared `helpers.py` module in `integration/`)
   - Write one test per scenario:
@@ -150,14 +150,14 @@ Phase 6 brings Radius to production quality through two parallel workstreams: a 
     - `test_root_user_activity_scenario` — inject event with `identity_arn = "arn:aws:iam::111111111111:root"` and `identity_type = "Root"`; assert `Incident` with `detection_type == "root_user_activity"`
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [ ] 11. Write deduplication scenario test
+- [x] 11. Write deduplication scenario test
   - Add to `test_attack_scenarios.py`:
   - `test_deduplication_prevents_duplicate_incident` — inject `cloudtrail:StopLogging` twice for the same identity within 24 hours; run both through full pipeline including `_run_incident_processor`; scan `Incident` table and assert exactly 1 record exists for that `identity_arn` + `detection_type` pair; assert the existing record's `related_event_ids` contains both event IDs
   - _Requirements: 5.6, 6.4_
 
 ### Milestone 6: Incident Processor Integration Tests
 
-- [ ] 12. Write incident lifecycle and SNS routing tests
+- [x] 12. Write incident lifecycle and SNS routing tests
   - Create `backend/tests/integration/test_incident_processor.py`
   - Set up SQS queue subscribed to the mocked SNS topic for SNS message assertion (moto pattern)
   - Write example-based tests:
@@ -174,7 +174,7 @@ Phase 6 brings Radius to production quality through two parallel workstreams: a 
     - `test_status_transition_open_to_investigating` — call `transition_status` from `open` to `investigating`; assert `status == "investigating"`, `len(status_history) == 2`, `update_timestamp` updated
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 6.7, 7.5_
 
-- [ ]* 13. Write property tests P7–P9 for incident processor invariants
+- [x]* 13. Write property tests P7–P9 for incident processor invariants
   - Add to `test_incident_processor.py`:
   - `test_incident_structure_invariant` — Property 7: for any valid Finding generated by `valid_finding_strategy()`, assert created Incident record contains all required fields, `incident_id` matches UUID v4 format, `status == "open"`, `len(status_history) == 1`
     - `# Feature: phase-6-testing-and-documentation, Property 7: Incident structure invariant`
@@ -188,7 +188,7 @@ Phase 6 brings Radius to production quality through two parallel workstreams: a 
   - Implement `valid_finding_strategy()` Hypothesis strategy as specified in the design document
   - _Requirements: 5.6, 6.1, 6.2, 6.3, 6.4, 6.5, 6.6, 7.5_
 
-- [ ] 14. Final integration test checkpoint
+- [x] 14. Final integration test checkpoint
   - Ensure all tests pass with `pytest backend/tests/integration/ -v`, ask the user if questions arise.
 
 ### Milestone 7: Architecture Documentation
