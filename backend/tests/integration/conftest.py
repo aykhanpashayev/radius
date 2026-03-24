@@ -4,6 +4,8 @@ All integration tests run inside a moto mock_aws() context with fake AWS
 credentials — no live AWS environment is required.
 """
 
+import os
+
 import boto3
 import pytest
 from moto import mock_aws
@@ -237,24 +239,66 @@ def _create_trust_relationship(dynamodb):
 
 
 # ---------------------------------------------------------------------------
-# DynamoDB tables fixture
+# Session-scoped mock + table creation (created once per test session)
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(scope="session")
+def _mock_aws_session():
+    """Start a single moto mock_aws context for the entire test session."""
+    # Set credentials at session level (monkeypatch is function-scoped, so use os.environ)
+    os.environ.setdefault("AWS_ACCESS_KEY_ID", "testing")
+    os.environ.setdefault("AWS_SECRET_ACCESS_KEY", "testing")
+    os.environ.setdefault("AWS_DEFAULT_REGION", "us-east-1")
+    os.environ.setdefault("AWS_SECURITY_TOKEN", "testing")
+    os.environ.setdefault("AWS_SESSION_TOKEN", "testing")
+    with mock_aws():
+        yield
+
+
+@pytest.fixture(scope="session")
+def _session_dynamodb_tables(_mock_aws_session):
+    """Create all 5 DynamoDB tables once for the entire session."""
+    dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
+    _create_identity_profile(dynamodb)
+    _create_blast_radius_score(dynamodb)
+    _create_incident(dynamodb)
+    _create_event_summary(dynamodb)
+    _create_trust_relationship(dynamodb)
+    return dict(_TABLE_NAMES)
+
+
+@pytest.fixture(scope="session")
+def _session_sns_topic(_session_dynamodb_tables):
+    """Create a single SNS topic for the entire session."""
+    sns = boto3.client("sns", region_name="us-east-1")
+    response = sns.create_topic(Name="test-alert-topic")
+    return response["TopicArn"]
+
+
+def _clear_all_tables():
+    """Delete all items from every table between tests."""
+    dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
+    for table_name in _TABLE_NAMES.values():
+        table = dynamodb.Table(table_name)
+        # Determine key schema
+        key_names = [k["AttributeName"] for k in table.key_schema]
+        scan = table.scan(ProjectionExpression=", ".join(f"#k{i}" for i in range(len(key_names))),
+                          ExpressionAttributeNames={f"#k{i}": k for i, k in enumerate(key_names)})
+        with table.batch_writer() as batch:
+            for item in scan.get("Items", []):
+                batch.delete_item(Key={k: item[k] for k in key_names})
+
+
+# ---------------------------------------------------------------------------
+# Function-scoped fixtures — reuse session tables but clear data each test
 # ---------------------------------------------------------------------------
 
 @pytest.fixture
-def dynamodb_tables(aws_credentials):
-    """Create all 5 DynamoDB tables inside a moto mock context.
-
-    Yields a dict of logical name → table name. The mock_aws() context is
-    torn down on exit (even on test failure) via yield inside the with block.
-    """
-    with mock_aws():
-        dynamodb = boto3.resource("dynamodb", region_name="us-east-1")
-        _create_identity_profile(dynamodb)
-        _create_blast_radius_score(dynamodb)
-        _create_incident(dynamodb)
-        _create_event_summary(dynamodb)
-        _create_trust_relationship(dynamodb)
-        yield dict(_TABLE_NAMES)
+def dynamodb_tables(aws_credentials, _session_dynamodb_tables):
+    """Yield table names dict; clear all table data before and after each test."""
+    _clear_all_tables()
+    yield dict(_TABLE_NAMES)
+    _clear_all_tables()
 
 
 # ---------------------------------------------------------------------------
@@ -262,8 +306,6 @@ def dynamodb_tables(aws_credentials):
 # ---------------------------------------------------------------------------
 
 @pytest.fixture
-def sns_topic(dynamodb_tables):
-    """Create a mocked SNS topic and yield its ARN."""
-    sns = boto3.client("sns", region_name="us-east-1")
-    response = sns.create_topic(Name="test-alert-topic")
-    yield response["TopicArn"]
+def sns_topic(dynamodb_tables, _session_sns_topic):
+    """Yield the session SNS topic ARN (topic persists; SQS queues are per-test)."""
+    yield _session_sns_topic

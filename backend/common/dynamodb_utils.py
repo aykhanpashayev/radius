@@ -19,7 +19,9 @@ _RETRYABLE_CODES = {"ProvisionedThroughputExceededException", "RequestLimitExcee
 
 def get_dynamodb_client() -> Any:
     """Return a boto3 DynamoDB client (resource interface)."""
-    return boto3.resource("dynamodb")
+    import os
+    region = os.environ.get("AWS_DEFAULT_REGION", "us-east-1")
+    return boto3.resource("dynamodb", region_name=region)
 
 
 def _should_retry(error: ClientError) -> bool:

@@ -260,7 +260,7 @@ Phase 6 brings Radius to production quality through two parallel workstreams: a 
     - Lambda packaging and deployment workflow: `build-lambdas.sh` then `deploy-infra.sh`
   - _Requirements: 13.1, 13.2, 13.3, 13.4, 13.5, 13.6_
 
-- [ ] 21. Final checkpoint — Ensure all tests pass and docs are complete
+- [x] 21. Final checkpoint — Ensure all tests pass and docs are complete
   - Ensure all tests pass with `pytest backend/tests/ -v`, ask the user if questions arise.
 
 ---

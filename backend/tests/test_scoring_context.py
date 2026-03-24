@@ -82,10 +82,11 @@ class TestBuildReturnsCorrectFields:
         trusts = [{"source_arn": IDENTITY_ARN, "relationship_type": "CrossAccount"}]
         with patch("backend.functions.score_engine.context.get_item", return_value={}), \
              patch("backend.functions.score_engine.context.get_dynamodb_client") as mock_client:
-            # First Table call = event_summary (empty), second = trust_relationship
+            # Table calls: event_summary, trust_relationship, incident
             empty_table = _table_mock([])
             trust_table = _table_mock(trusts)
-            mock_client.return_value.Table.side_effect = [empty_table, trust_table, MagicMock()]
+            incident_table = _table_mock([])
+            mock_client.return_value.Table.side_effect = [empty_table, trust_table, incident_table]
             ctx = ScoringContext.build(IDENTITY_ARN, TABLES)
         assert len(ctx.trust_relationships) == 1
 
