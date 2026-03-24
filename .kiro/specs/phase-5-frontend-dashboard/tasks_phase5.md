@@ -87,7 +87,7 @@ Phase 5 builds the Radius security dashboard — a React SPA hosted on S3 + Clou
 
 ### Milestone 3: Identity Risk Table
 
-- [ ] 6. Implement Identity Risk Table page (must-have)
+- [x] 6. Implement Identity Risk Table page (must-have)
   - Create `frontend/src/pages/IdentityRiskTable.jsx`
   - On mount: `Promise.allSettled([getScores({ limit: 25 }), getIncidents({ status: "open", limit: 100 })])` — parallel fetch for table data and summary strip
   - Render `<SummaryStrip scores={scores} incidents={incidents} />` above the table
@@ -101,7 +101,7 @@ Phase 5 builds the Radius security dashboard — a React SPA hosted on S3 + Clou
   - **Deliverable:** Identity Risk Table with summary strip, scores from API, and empty state
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.6, 2.8, 2.9_
 
-- [ ] 7. Add pagination and sort to Identity Risk Table (must-have)
+- [x] 7. Add pagination and sort to Identity Risk Table (must-have)
   - Store `nextToken` from API response metadata
   - "Load more" button: calls `getScores({ limit: 25, next_token: nextToken })`, appends to `scores`
   - Hide "Load more" when `nextToken` is null
@@ -113,7 +113,7 @@ Phase 5 builds the Radius security dashboard — a React SPA hosted on S3 + Clou
 
 ### Milestone 4: Incident Feed
 
-- [ ] 8. Implement Incident Feed page (must-have)
+- [x] 8. Implement Incident Feed page (must-have)
   - Create `frontend/src/pages/IncidentFeed.jsx`
   - On mount: call `getIncidents({ limit: 25 })`, store in `incidents` state
   - Render incident cards with: `incident_id` (first 8 chars + "..."), `identity_arn`, `detection_type`, `severity` (`<SeverityBadge>`), `status` (`<StatusBadge>`), `creation_timestamp`
@@ -123,7 +123,7 @@ Phase 5 builds the Radius security dashboard — a React SPA hosted on S3 + Clou
   - **Deliverable:** Incident Feed rendering incidents from API with empty state
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 3.8, 3.9, 3.10_
 
-- [ ] 9. Add status transition control to Incident Feed (must-have)
+- [x] 9. Add status transition control to Incident Feed (must-have)
   - For each incident card, check `TRANSITIONS[status]` — if non-empty, render a `<select>` dropdown
   - Dropdown options: current status (disabled, selected) + valid next statuses
   - On change: call `patchIncident(incident_id, newStatus)` — updates `status` field only
@@ -136,7 +136,7 @@ Phase 5 builds the Radius security dashboard — a React SPA hosted on S3 + Clou
 
 ### Milestone 5: Identity Detail View
 
-- [ ] 10. Implement Identity Detail page (must-have)
+- [x] 10. Implement Identity Detail page (must-have)
   - Create `frontend/src/pages/IdentityDetail.jsx`
   - Read `:arn` from `useParams()`, decode with `decodeURIComponent`
   - On mount: `Promise.allSettled([getIdentity(arn), getScore(arn), getEvents({ identity_arn: arn, limit: 20 })])`
@@ -157,14 +157,14 @@ Phase 5 builds the Radius security dashboard — a React SPA hosted on S3 + Clou
 
 ### Milestone 6: Integration and Polish
 
-- [ ] 11. Wire up App.jsx routes and NavBar (must-have)
+- [x] 11. Wire up App.jsx routes and NavBar (must-have)
   - Update `frontend/src/App.jsx` to include all three routes
   - Render `<NavBar />` outside `<Routes>` so it appears on every page
   - Ensure 404 route shows a simple "Page not found" message
   - **Deliverable:** Full routing working with persistent nav
   - _Requirements: 1.3, 5.1, 5.2_
 
-- [ ] 12. Write frontend documentation (must-have)
+- [x] 12. Write frontend documentation (must-have)
   - Create `docs/frontend.md`
   - Document: prerequisites (Node 18+), local dev setup (`npm install`, `npm run dev`), environment variables (`VITE_API_BASE_URL`), production build (`npm run build`), S3 deployment (`aws s3 sync`), CloudFront invalidation, CloudFront custom error response for SPA routing
   - **Deliverable:** `docs/frontend.md`
