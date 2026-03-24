@@ -10,6 +10,8 @@ from datetime import datetime, timezone
 from typing import Any
 
 import pytest
+from hypothesis import HealthCheck, given, settings
+from hypothesis import strategies as st
 
 from backend.common.dynamodb_utils import get_item, put_item
 from backend.common.errors import EventProcessingError, ValidationError
@@ -252,3 +254,107 @@ def test_missing_event_time_raises_error(dynamodb_tables):
 
     with pytest.raises((ValidationError, EventProcessingError, KeyError)):
         _run_normalizer(raw_event)
+
+
+# ---------------------------------------------------------------------------
+# Hypothesis strategies
+# ---------------------------------------------------------------------------
+
+@st.composite
+def valid_cloudtrail_event_strategy(draw):
+    identity_arn = draw(st.from_regex(
+        r"arn:aws:iam::[0-9]{12}:(user|role)/[a-zA-Z0-9_+=,.@/-]{1,32}",
+        fullmatch=True,
+    ))
+    account_id = identity_arn.split(":")[4]
+    event_name = draw(st.sampled_from([
+        "CreateUser", "AttachUserPolicy", "PutRolePolicy",
+        "StopLogging", "RunInstances", "ListUsers",
+    ]))
+    return _make_cloudtrail_event(event_name, identity_arn, account_id)
+
+
+@st.composite
+def assume_role_event_strategy(draw):
+    source_arn = draw(st.from_regex(
+        r"arn:aws:iam::[0-9]{12}:(user|role)/[a-zA-Z0-9_+=,.@/-]{1,32}",
+        fullmatch=True,
+    ))
+    source_account = source_arn.split(":")[4]
+    # Target role in a different account
+    target_account = draw(st.from_regex(r"[0-9]{12}", fullmatch=True).filter(lambda a: a != source_account))
+    target_arn = f"arn:aws:iam::{target_account}:role/CrossAccountRole"
+    return _make_cloudtrail_event(
+        "AssumeRole",
+        source_arn,
+        source_account,
+        extra_params={"roleArn": target_arn},
+    )
+
+
+# ---------------------------------------------------------------------------
+# Property-based tests P1–P4
+# ---------------------------------------------------------------------------
+
+# Feature: phase-6-testing-and-documentation, Property 1: Event_Summary write round-trip
+@given(raw_event=valid_cloudtrail_event_strategy())
+@settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+def test_event_summary_write_round_trip(raw_event, dynamodb_tables):
+    event_summary = _run_normalizer(raw_event)
+    put_item(dynamodb_tables["event_summary"], event_summary)
+    record = get_item(
+        dynamodb_tables["event_summary"],
+        {"identity_arn": event_summary["identity_arn"], "timestamp": event_summary["timestamp"]},
+    )
+    assert record is not None
+    for field in ("identity_arn", "timestamp", "event_id", "event_type", "date_partition", "account_id"):
+        assert field in record, f"Missing field: {field}"
+
+
+# Feature: phase-6-testing-and-documentation, Property 2: Identity_Profile upsert round-trip
+@given(raw_event=valid_cloudtrail_event_strategy())
+@settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+def test_identity_profile_upsert_round_trip(raw_event, dynamodb_tables):
+    event_summary = _run_normalizer(raw_event)
+    _run_collector(event_summary, raw_event, dynamodb_tables)
+    record = get_item(
+        dynamodb_tables["identity_profile"],
+        {"identity_arn": event_summary["identity_arn"]},
+    )
+    assert record is not None
+    for field in ("identity_arn", "identity_type", "account_id", "last_activity_timestamp"):
+        assert field in record, f"Missing field: {field}"
+
+
+# Feature: phase-6-testing-and-documentation, Property 3: Trust_Relationship write round-trip
+@given(raw_event=assume_role_event_strategy())
+@settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+def test_trust_relationship_write_round_trip(raw_event, dynamodb_tables):
+    event_summary = _run_normalizer(raw_event)
+    _run_collector(event_summary, raw_event, dynamodb_tables)
+    detail = raw_event.get("detail", raw_event)
+    target_arn = detail.get("requestParameters", {}).get("roleArn", "")
+    record = get_item(
+        dynamodb_tables["trust_relationship"],
+        {"source_arn": event_summary["identity_arn"], "target_arn": target_arn},
+    )
+    assert record is not None
+    for field in ("source_arn", "target_arn", "relationship_type", "source_account_id", "target_account_id"):
+        assert field in record, f"Missing field: {field}"
+
+
+# Feature: phase-6-testing-and-documentation, Property 4: Invalid event rejection
+@given(
+    missing_field=st.sampled_from(["eventName", "userIdentity", "eventTime"])
+)
+@settings(max_examples=100, suppress_health_check=[HealthCheck.function_scoped_fixture])
+def test_invalid_event_rejected(missing_field, dynamodb_tables):
+    raw_event = _make_cloudtrail_event("CreateUser", "arn:aws:iam::111111111111:user/u", "111111111111")
+    del raw_event["detail"][missing_field]
+    with pytest.raises((ValidationError, EventProcessingError, KeyError)):
+        _run_normalizer(raw_event)
+    # Verify zero writes to event_summary
+    import boto3
+    table = boto3.resource("dynamodb", region_name="us-east-1").Table(dynamodb_tables["event_summary"])
+    response = table.scan(Select="COUNT")
+    assert response["Count"] == 0
