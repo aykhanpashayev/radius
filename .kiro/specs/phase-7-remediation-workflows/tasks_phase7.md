@@ -47,8 +47,8 @@ Implementation tasks for Phase 7. All tasks are additive — no existing Lambda 
   - [x] 7.5 Create `backend/functions/remediation_engine/actions/notify_security_team.py` implementing `NotifySecurityTeamAction`: publish structured JSON to Remediation_Topic SNS including `incident_id`, `identity_arn`, `detection_type`, `severity`, `risk_mode`, `actions_taken`, `timestamp`, `dashboard_link`; skip publish when `risk_mode=monitor`; return `outcome=executed`, `outcome=suppressed`, or `outcome=failed`
   - [x] 7.6 Register all five action classes in `actions/__init__.py` `ALL_ACTIONS` dict
 
-- [ ] 8. Lambda Handler
-  - [ ] 8.1 Create `backend/functions/remediation_engine/handler.py` with `lambda_handler(event, context)` that reads env vars, constructs `RemediationRuleEngine`, calls `engine.process(event)`, and returns a status dict; handles `ValidationError` by returning `{"status": "skipped", "reason": ...}` without raising
+- [x] 8. Lambda Handler
+  - [x] 8.1 Create `backend/functions/remediation_engine/handler.py` with `lambda_handler(event, context)` that reads env vars, constructs `RemediationRuleEngine`, calls `engine.process(event)`, and returns a status dict; handles `ValidationError` by returning `{"status": "skipped", "reason": ...}` without raising
 
 - [ ] 9. Incident_Processor Integration
   - [ ] 9.1 Add `_invoke_remediation(incident, remediation_lambda_arn)` helper to `backend/functions/incident_processor/processor.py` that async-invokes the Remediation_Engine Lambda (`InvocationType="Event"`) and swallows all exceptions with a warning log
