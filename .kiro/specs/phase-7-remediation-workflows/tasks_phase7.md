@@ -74,15 +74,15 @@ Implementation tasks for Phase 7. All tasks are additive — no existing Lambda 
   - [x] 12.4 Write property test `test_audit_id_is_uuid4`: for any audit entry written by `write_audit_entry()`, the `audit_id` field matches the UUID v4 regex pattern (validates Requirement 12.4 / Design Property 4)
   - [x] 12.5 Write property test `test_monitor_mode_suppresses_all_actions`: for any Incident and any rule configuration, when `risk_mode=monitor`, all `ActionOutcome.outcome` values equal `suppressed` (validates Requirement 1.2 / Design Property 5)
 
-- [ ] 13. Integration Tests
-  - [ ] 13.1 Create `backend/tests/integration/test_remediation_integration.py` with moto fixtures for DynamoDB (Remediation_Config, Remediation_Audit_Log) and SNS (Remediation_Topic) and IAM
-  - [ ] 13.2 Write integration test `test_monitor_mode_no_mutations`: invoke engine with a Critical incident and a matching rule in monitor mode; assert zero IAM API calls made and audit entries have `outcome=suppressed`
-  - [ ] 13.3 Write integration test `test_alert_mode_notifies_no_mutations`: invoke engine in alert mode; assert SNS message published to Remediation_Topic and zero IAM mutations performed
-  - [ ] 13.4 Write integration test `test_enforce_mode_executes_actions`: invoke engine in enforce mode with `disable_iam_user` rule; assert IAM access keys deactivated and audit entry has `outcome=executed`
-  - [ ] 13.5 Write integration test `test_cooldown_suppresses_second_invocation`: invoke engine twice with same incident within 60 minutes; assert second invocation produces all `outcome=suppressed` with `reason=cooldown_active`
-  - [ ] 13.6 Write integration test `test_excluded_arn_suppressed`: add identity ARN to `excluded_arns` config; invoke engine; assert `outcome=suppressed` with `reason=identity_excluded`
-  - [ ] 13.7 Write integration test `test_dry_run_flag_overrides_enforce_mode`: set `risk_mode=enforce` in config but pass `dry_run=true` in payload; assert all outcomes are `suppressed` and audit entries have `dry_run=true`
-  - [ ] 13.8 Write integration test `test_audit_log_completeness`: invoke engine with two matched rules each having two actions; assert total audit entries written equals 4 action entries plus 1 summary entry
+- [x] 13. Integration Tests
+  - [x] 13.1 Create `backend/tests/integration/test_remediation_integration.py` with moto fixtures for DynamoDB (Remediation_Config, Remediation_Audit_Log) and SNS (Remediation_Topic) and IAM
+  - [x] 13.2 Write integration test `test_monitor_mode_no_mutations`: invoke engine with a Critical incident and a matching rule in monitor mode; assert zero IAM API calls made and audit entries have `outcome=suppressed`
+  - [x] 13.3 Write integration test `test_alert_mode_notifies_no_mutations`: invoke engine in alert mode; assert SNS message published to Remediation_Topic and zero IAM mutations performed
+  - [x] 13.4 Write integration test `test_enforce_mode_executes_actions`: invoke engine in enforce mode with `disable_iam_user` rule; assert IAM access keys deactivated and audit entry has `outcome=executed`
+  - [x] 13.5 Write integration test `test_cooldown_suppresses_second_invocation`: invoke engine twice with same incident within 60 minutes; assert second invocation produces all `outcome=suppressed` with `reason=cooldown_active`
+  - [x] 13.6 Write integration test `test_excluded_arn_suppressed`: add identity ARN to `excluded_arns` config; invoke engine; assert `outcome=suppressed` with `reason=identity_excluded`
+  - [x] 13.7 Write integration test `test_dry_run_flag_overrides_enforce_mode`: set `risk_mode=enforce` in config but pass `dry_run=true` in payload; assert all outcomes are `suppressed` and audit entries have `dry_run=true`
+  - [x] 13.8 Write integration test `test_audit_log_completeness`: invoke engine with two matched rules each having two actions; assert total audit entries written equals 4 action entries plus 1 summary entry
 
 - [ ] 14. Documentation
   - [ ] 14.1 Add a `Remediation Workflows` section to `docs/architecture.md` describing the new pipeline branch from Incident_Processor → Remediation_Engine, the three Risk Modes, and the two new DynamoDB tables
