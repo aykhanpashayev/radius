@@ -22,6 +22,18 @@ resource "aws_sns_topic" "alert_topic" {
 }
 
 # ---------------------------------------------------------------------------
+# Remediation_Topic
+# Receives structured remediation notifications from Remediation_Engine.
+# No subscriptions managed here — consumers subscribe independently.
+# ---------------------------------------------------------------------------
+resource "aws_sns_topic" "remediation_topic" {
+  name              = "${var.prefix}-remediation-topic"
+  kms_master_key_id = var.kms_key_arn
+
+  tags = local.common_tags
+}
+
+# ---------------------------------------------------------------------------
 # Email subscriptions (one per address)
 # ---------------------------------------------------------------------------
 resource "aws_sns_topic_subscription" "email" {

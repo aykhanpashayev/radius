@@ -287,6 +287,97 @@ resource "aws_dynamodb_table" "event_summary" {
 }
 
 # ---------------------------------------------------------------------------
+# Remediation_Config
+# Stores global remediation configuration (singleton record: config_id=global).
+# PK: config_id
+# ---------------------------------------------------------------------------
+resource "aws_dynamodb_table" "remediation_config" {
+  name         = "${var.prefix}-remediation-config"
+  billing_mode = var.billing_mode
+  hash_key     = "config_id"
+
+  attribute {
+    name = "config_id"
+    type = "S"
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_pitr
+  }
+
+  server_side_encryption {
+    enabled     = true
+    kms_key_arn = var.kms_key_arn
+  }
+
+  tags = merge(local.common_tags, { Table = "remediation-config" })
+}
+
+# ---------------------------------------------------------------------------
+# Remediation_Audit_Log
+# Stores per-action audit records for all remediation executions.
+# PK: audit_id
+# TTL: audit entries expire after 365 days (set by Lambda)
+# ---------------------------------------------------------------------------
+resource "aws_dynamodb_table" "remediation_audit_log" {
+  name         = "${var.prefix}-remediation-audit-log"
+  billing_mode = var.billing_mode
+  hash_key     = "audit_id"
+
+  attribute {
+    name = "audit_id"
+    type = "S"
+  }
+
+  attribute {
+    name = "identity_arn"
+    type = "S"
+  }
+
+  attribute {
+    name = "timestamp"
+    type = "S"
+  }
+
+  attribute {
+    name = "incident_id"
+    type = "S"
+  }
+
+  # GSI: query audit entries by identity sorted by time (for cooldown/rate-limit checks)
+  global_secondary_index {
+    name            = "IdentityTimeIndex"
+    hash_key        = "identity_arn"
+    range_key       = "timestamp"
+    projection_type = "ALL"
+  }
+
+  # GSI: query audit entries by incident (keys only for cost)
+  global_secondary_index {
+    name            = "IncidentIndex"
+    hash_key        = "incident_id"
+    range_key       = "timestamp"
+    projection_type = "KEYS_ONLY"
+  }
+
+  ttl {
+    attribute_name = "ttl"
+    enabled        = true
+  }
+
+  point_in_time_recovery {
+    enabled = var.enable_pitr
+  }
+
+  server_side_encryption {
+    enabled     = true
+    kms_key_arn = var.kms_key_arn
+  }
+
+  tags = merge(local.common_tags, { Table = "remediation-audit-log" })
+}
+
+# ---------------------------------------------------------------------------
 # Trust_Relationship
 # Records cross-account and service-to-service trust edges.
 # PK: source_arn, SK: target_arn

@@ -38,6 +38,11 @@ output "sns_alert_topic_arn" {
   value       = module.sns.alert_topic_arn
 }
 
+output "sns_remediation_topic_arn" {
+  description = "SNS Remediation_Topic ARN"
+  value       = module.sns.remediation_topic_arn
+}
+
 output "cloudtrail_trail_arn" {
   description = "CloudTrail trail ARN"
   value       = module.cloudtrail.trail_arn

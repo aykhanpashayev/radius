@@ -96,6 +96,7 @@ module "lambda" {
   dynamodb_table_arns  = module.dynamodb.table_arns
   dynamodb_gsi_arns    = module.dynamodb.gsi_arns
   sns_topic_arn        = module.sns.alert_topic_arn
+  remediation_topic_arn = module.sns.remediation_topic_arn
   kms_key_arn          = module.kms.lambda_key_arn
 
   tags = var.tags

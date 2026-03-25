@@ -2,11 +2,13 @@
 output "table_names" {
   description = "Map of logical table name to actual DynamoDB table name"
   value = {
-    identity_profile   = aws_dynamodb_table.identity_profile.name
-    blast_radius_score = aws_dynamodb_table.blast_radius_score.name
-    incident           = aws_dynamodb_table.incident.name
-    event_summary      = aws_dynamodb_table.event_summary.name
-    trust_relationship = aws_dynamodb_table.trust_relationship.name
+    identity_profile      = aws_dynamodb_table.identity_profile.name
+    blast_radius_score    = aws_dynamodb_table.blast_radius_score.name
+    incident              = aws_dynamodb_table.incident.name
+    event_summary         = aws_dynamodb_table.event_summary.name
+    trust_relationship    = aws_dynamodb_table.trust_relationship.name
+    remediation_config    = aws_dynamodb_table.remediation_config.name
+    remediation_audit_log = aws_dynamodb_table.remediation_audit_log.name
   }
 }
 
@@ -14,11 +16,13 @@ output "table_names" {
 output "table_arns" {
   description = "Map of logical table name to DynamoDB table ARN"
   value = {
-    identity_profile   = aws_dynamodb_table.identity_profile.arn
-    blast_radius_score = aws_dynamodb_table.blast_radius_score.arn
-    incident           = aws_dynamodb_table.incident.arn
-    event_summary      = aws_dynamodb_table.event_summary.arn
-    trust_relationship = aws_dynamodb_table.trust_relationship.arn
+    identity_profile      = aws_dynamodb_table.identity_profile.arn
+    blast_radius_score    = aws_dynamodb_table.blast_radius_score.arn
+    incident              = aws_dynamodb_table.incident.arn
+    event_summary         = aws_dynamodb_table.event_summary.arn
+    trust_relationship    = aws_dynamodb_table.trust_relationship.arn
+    remediation_config    = aws_dynamodb_table.remediation_config.arn
+    remediation_audit_log = aws_dynamodb_table.remediation_audit_log.arn
   }
 }
 
@@ -48,6 +52,10 @@ output "gsi_arns" {
       "${aws_dynamodb_table.trust_relationship.arn}/index/RelationshipTypeIndex",
       "${aws_dynamodb_table.trust_relationship.arn}/index/TargetAccountIndex",
     ]
+    remediation_audit_log = [
+      "${aws_dynamodb_table.remediation_audit_log.arn}/index/IdentityTimeIndex",
+      "${aws_dynamodb_table.remediation_audit_log.arn}/index/IncidentIndex",
+    ]
   }
 }
 
@@ -76,6 +84,10 @@ output "gsi_names" {
     trust_relationship = {
       relationship_type_index = "RelationshipTypeIndex"
       target_account_index    = "TargetAccountIndex"
+    }
+    remediation_audit_log = {
+      identity_time_index = "IdentityTimeIndex"
+      incident_index      = "IncidentIndex"
     }
   }
 }

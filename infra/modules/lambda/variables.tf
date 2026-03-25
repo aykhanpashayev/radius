@@ -45,22 +45,26 @@ variable "concurrency_limit" {
 variable "dynamodb_table_names" {
   description = "Map of DynamoDB table names injected as Lambda environment variables"
   type = object({
-    identity_profile   = string
-    blast_radius_score = string
-    incident           = string
-    event_summary      = string
-    trust_relationship = string
+    identity_profile      = string
+    blast_radius_score    = string
+    incident              = string
+    event_summary         = string
+    trust_relationship    = string
+    remediation_config    = string
+    remediation_audit_log = string
   })
 }
 
 variable "dynamodb_table_arns" {
   description = "Map of DynamoDB table ARNs used in IAM policies"
   type = object({
-    identity_profile   = string
-    blast_radius_score = string
-    incident           = string
-    event_summary      = string
-    trust_relationship = string
+    identity_profile      = string
+    blast_radius_score    = string
+    incident              = string
+    event_summary         = string
+    trust_relationship    = string
+    remediation_config    = string
+    remediation_audit_log = string
   })
 }
 
@@ -72,6 +76,12 @@ variable "dynamodb_gsi_arns" {
 variable "sns_topic_arn" {
   description = "SNS Alert_Topic ARN for Incident_Processor"
   type        = string
+}
+
+variable "remediation_topic_arn" {
+  description = "SNS Remediation_Topic ARN for Remediation_Engine"
+  type        = string
+  default     = ""
 }
 
 variable "kms_key_arn" {

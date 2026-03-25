@@ -8,11 +8,11 @@ Implementation tasks for Phase 7. All tasks are additive — no existing Lambda 
 
 ## Task List
 
-- [ ] 1. DynamoDB Tables and SNS Topic (Terraform)
-  - [ ] 1.1 Add `remediation_config` DynamoDB table to `infra/modules/dynamodb/main.tf` with PK `config_id`, KMS encryption, and PITR enabled
-  - [ ] 1.2 Add `remediation_audit_log` DynamoDB table to `infra/modules/dynamodb/main.tf` with PK `audit_id`, GSIs `IdentityTimeIndex` (PK: `identity_arn`, SK: `timestamp`, ALL) and `IncidentIndex` (PK: `incident_id`, SK: `timestamp`, KEYS_ONLY), TTL on `ttl`, KMS encryption, and PITR enabled
-  - [ ] 1.3 Add `remediation_topic` SNS topic to `infra/modules/sns/main.tf` with KMS encryption
-  - [ ] 1.4 Export new table names and topic ARN as Terraform outputs and wire them into `infra/main.tf`
+- [x] 1. DynamoDB Tables and SNS Topic (Terraform)
+  - [x] 1.1 Add `remediation_config` DynamoDB table to `infra/modules/dynamodb/main.tf` with PK `config_id`, KMS encryption, and PITR enabled
+  - [x] 1.2 Add `remediation_audit_log` DynamoDB table to `infra/modules/dynamodb/main.tf` with PK `audit_id`, GSIs `IdentityTimeIndex` (PK: `identity_arn`, SK: `timestamp`, ALL) and `IncidentIndex` (PK: `incident_id`, SK: `timestamp`, KEYS_ONLY), TTL on `ttl`, KMS encryption, and PITR enabled
+  - [x] 1.3 Add `remediation_topic` SNS topic to `infra/modules/sns/main.tf` with KMS encryption
+  - [x] 1.4 Export new table names and topic ARN as Terraform outputs and wire them into `infra/main.tf`
 
 - [ ] 2. Remediation_Engine Lambda — Core Infrastructure (Terraform)
   - [ ] 2.1 Add `remediation_engine` Lambda function resource to `infra/modules/lambda/main.tf` with `python3.12` runtime, `arm64` architecture, 60-second timeout, and environment variables: `REMEDIATION_CONFIG_TABLE`, `REMEDIATION_AUDIT_TABLE`, `REMEDIATION_TOPIC_ARN`, `DRY_RUN`
