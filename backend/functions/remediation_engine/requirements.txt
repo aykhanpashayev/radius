@@ -1,0 +1,2 @@
+# boto3 is already provided by the Lambda runtime — listed here for local dev only
+boto3

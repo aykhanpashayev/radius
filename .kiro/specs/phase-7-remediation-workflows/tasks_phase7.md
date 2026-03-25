@@ -19,10 +19,10 @@ Implementation tasks for Phase 7. All tasks are additive — no existing Lambda 
   - [x] 2.2 Create IAM role and policy for Remediation_Engine with least-privilege permissions: `iam:ListAccessKeys`, `iam:UpdateAccessKey`, `iam:DeleteLoginProfile`, `iam:ListAttachedUserPolicies`, `iam:ListAttachedRolePolicies`, `iam:ListUserPolicies`, `iam:ListRolePolicies`, `iam:GetUserPolicy`, `iam:GetRolePolicy`, `iam:DetachUserPolicy`, `iam:DetachRolePolicy`, `iam:DeleteUserPolicy`, `iam:DeleteRolePolicy`, `iam:GetRole`, `iam:UpdateAssumeRolePolicy`, `iam:PutUserPolicy`, `iam:PutRolePolicy`, `dynamodb:GetItem`, `dynamodb:PutItem`, `dynamodb:UpdateItem`, `dynamodb:Query` on the two new tables, and `sns:Publish` on Remediation_Topic
   - [x] 2.3 Add `REMEDIATION_LAMBDA_ARN` as an optional environment variable on the existing `incident_processor` Lambda resource (empty string default)
 
-- [ ] 3. Remediation_Engine Lambda — Python Package Skeleton
-  - [ ] 3.1 Create `backend/functions/remediation_engine/` directory with `__init__.py` and `requirements.txt` (boto3 only, already available in Lambda runtime)
-  - [ ] 3.2 Create `backend/functions/remediation_engine/actions/__init__.py` with `ALL_ACTIONS` registry dict mapping action name strings to action class instances
-  - [ ] 3.3 Create `backend/functions/remediation_engine/actions/base.py` with `ActionOutcome` dataclass (`action_name`, `outcome`, `reason`, `details`) and abstract `RemediationAction` base class with `execute()` and `suppress()` methods
+- [x] 3. Remediation_Engine Lambda — Python Package Skeleton
+  - [x] 3.1 Create `backend/functions/remediation_engine/` directory with `__init__.py` and `requirements.txt` (boto3 only, already available in Lambda runtime)
+  - [x] 3.2 Create `backend/functions/remediation_engine/actions/__init__.py` with `ALL_ACTIONS` registry dict mapping action name strings to action class instances
+  - [x] 3.3 Create `backend/functions/remediation_engine/actions/base.py` with `ActionOutcome` dataclass (`action_name`, `outcome`, `reason`, `details`) and abstract `RemediationAction` base class with `execute()` and `suppress()` methods
 
 - [ ] 4. Remediation Rule Engine — Config and Rule Matching
   - [ ] 4.1 Create `backend/functions/remediation_engine/config.py` with `load_config()` (reads singleton `config_id=global` record from Remediation_Config table, returns safe defaults if absent) and `update_risk_mode()` (validates mode is one of `monitor`, `alert`, `enforce`, then updates the record)
