@@ -67,12 +67,12 @@ Implementation tasks for Phase 7. All tasks are additive — no existing Lambda 
   - [x] 11.4 Create `backend/tests/test_remediation_actions.py` with mocked `boto3` IAM client testing each action: `DisableIAMUserAction` skips non-user ARNs, deactivates keys, handles missing login profile; `RemoveRiskyPoliciesAction` skips when no risky policies found, removes matching policies, tolerates per-policy failures; `BlockRoleAssumptionAction` skips non-role ARNs, prepends deny statement, stores previous policy; `RestrictNetworkAccessAction` attaches correct inline policy; `NotifySecurityTeamAction` skips publish in monitor mode
   - [x] 11.5 Create `backend/tests/test_remediation_audit.py` testing `write_audit_entry()` produces records with valid UUID v4 `audit_id`, correct `ttl` (~365 days from now within 60-second tolerance), and all required fields present
 
-- [ ] 12. Property-Based Tests
-  - [ ] 12.1 Create `backend/tests/test_remediation_properties.py` with Hypothesis strategy `valid_remediation_rule_strategy()` generating rules with valid `min_severity`, `detection_types`, `identity_types`, and `actions` values
-  - [ ] 12.2 Write property test `test_rule_serialization_round_trip`: for any valid rule, `deserialize(serialize(rule)) == rule` (validates Requirement 12.1)
-  - [ ] 12.3 Write property test `test_severity_ordering_invariant`: for any two severity levels A > B, any incident matched by a rule with `min_severity=A` is also matched by a rule with `min_severity=B` (validates Requirement 2.4 / Design Property 6)
-  - [ ] 12.4 Write property test `test_audit_id_is_uuid4`: for any audit entry written by `write_audit_entry()`, the `audit_id` field matches the UUID v4 regex pattern (validates Requirement 12.4 / Design Property 4)
-  - [ ] 12.5 Write property test `test_monitor_mode_suppresses_all_actions`: for any Incident and any rule configuration, when `risk_mode=monitor`, all `ActionOutcome.outcome` values equal `suppressed` (validates Requirement 1.2 / Design Property 5)
+- [x] 12. Property-Based Tests
+  - [x] 12.1 Create `backend/tests/test_remediation_properties.py` with Hypothesis strategy `valid_remediation_rule_strategy()` generating rules with valid `min_severity`, `detection_types`, `identity_types`, and `actions` values
+  - [x] 12.2 Write property test `test_rule_serialization_round_trip`: for any valid rule, `deserialize(serialize(rule)) == rule` (validates Requirement 12.1)
+  - [x] 12.3 Write property test `test_severity_ordering_invariant`: for any two severity levels A > B, any incident matched by a rule with `min_severity=A` is also matched by a rule with `min_severity=B` (validates Requirement 2.4 / Design Property 6)
+  - [x] 12.4 Write property test `test_audit_id_is_uuid4`: for any audit entry written by `write_audit_entry()`, the `audit_id` field matches the UUID v4 regex pattern (validates Requirement 12.4 / Design Property 4)
+  - [x] 12.5 Write property test `test_monitor_mode_suppresses_all_actions`: for any Incident and any rule configuration, when `risk_mode=monitor`, all `ActionOutcome.outcome` values equal `suppressed` (validates Requirement 1.2 / Design Property 5)
 
 - [ ] 13. Integration Tests
   - [ ] 13.1 Create `backend/tests/integration/test_remediation_integration.py` with moto fixtures for DynamoDB (Remediation_Config, Remediation_Audit_Log) and SNS (Remediation_Topic) and IAM
