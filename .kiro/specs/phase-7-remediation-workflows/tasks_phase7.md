@@ -24,11 +24,11 @@ Implementation tasks for Phase 7. All tasks are additive — no existing Lambda 
   - [x] 3.2 Create `backend/functions/remediation_engine/actions/__init__.py` with `ALL_ACTIONS` registry dict mapping action name strings to action class instances
   - [x] 3.3 Create `backend/functions/remediation_engine/actions/base.py` with `ActionOutcome` dataclass (`action_name`, `outcome`, `reason`, `details`) and abstract `RemediationAction` base class with `execute()` and `suppress()` methods
 
-- [ ] 4. Remediation Rule Engine — Config and Rule Matching
-  - [ ] 4.1 Create `backend/functions/remediation_engine/config.py` with `load_config()` (reads singleton `config_id=global` record from Remediation_Config table, returns safe defaults if absent) and `update_risk_mode()` (validates mode is one of `monitor`, `alert`, `enforce`, then updates the record)
-  - [ ] 4.2 Create `backend/functions/remediation_engine/engine.py` with `RemediationRuleEngine` class and `process(incident)` method implementing the full evaluation loop: load config → safety checks → match rules → collect actions → execute or suppress → notify → write summary audit record
-  - [ ] 4.3 Implement `match_rules(rules, incident)` function in `engine.py` that filters active rules by `min_severity` (using severity rank ordering Low=1 through Critical=5), `detection_types` (empty list matches all), and `identity_types` (empty list matches all)
-  - [ ] 4.4 Implement `deduplicate_actions(action_names)` in `engine.py` that returns a list of unique action names preserving first-occurrence order
+- [x] 4. Remediation Rule Engine — Config and Rule Matching
+  - [x] 4.1 Create `backend/functions/remediation_engine/config.py` with `load_config()` (reads singleton `config_id=global` record from Remediation_Config table, returns safe defaults if absent) and `update_risk_mode()` (validates mode is one of `monitor`, `alert`, `enforce`, then updates the record)
+  - [x] 4.2 Create `backend/functions/remediation_engine/engine.py` with `RemediationRuleEngine` class and `process(incident)` method implementing the full evaluation loop: load config → safety checks → match rules → collect actions → execute or suppress → notify → write summary audit record
+  - [x] 4.3 Implement `match_rules(rules, incident)` function in `engine.py` that filters active rules by `min_severity` (using severity rank ordering Low=1 through Critical=5), `detection_types` (empty list matches all), and `identity_types` (empty list matches all)
+  - [x] 4.4 Implement `deduplicate_actions(action_names)` in `engine.py` that returns a list of unique action names preserving first-occurrence order
 
 - [ ] 5. Safety Controls
   - [ ] 5.1 Create `backend/functions/remediation_engine/safety.py` with `check_safety_controls(identity_arn, config, audit_table)` that checks in order: `excluded_arns` list → `protected_account_ids` list → 60-minute cooldown query → 24-hour rate limit (max 10 executions), returning a suppression reason string or `None`
