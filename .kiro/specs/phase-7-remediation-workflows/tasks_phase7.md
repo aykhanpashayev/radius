@@ -50,9 +50,9 @@ Implementation tasks for Phase 7. All tasks are additive — no existing Lambda 
 - [x] 8. Lambda Handler
   - [x] 8.1 Create `backend/functions/remediation_engine/handler.py` with `lambda_handler(event, context)` that reads env vars, constructs `RemediationRuleEngine`, calls `engine.process(event)`, and returns a status dict; handles `ValidationError` by returning `{"status": "skipped", "reason": ...}` without raising
 
-- [ ] 9. Incident_Processor Integration
-  - [ ] 9.1 Add `_invoke_remediation(incident, remediation_lambda_arn)` helper to `backend/functions/incident_processor/processor.py` that async-invokes the Remediation_Engine Lambda (`InvocationType="Event"`) and swallows all exceptions with a warning log
-  - [ ] 9.2 Call `_invoke_remediation()` from `create_incident()` in `processor.py` only when `incident["severity"]` is in `{"High", "Very High", "Critical"}` and `REMEDIATION_LAMBDA_ARN` env var is set and non-empty
+- [x] 9. Incident_Processor Integration
+  - [x] 9.1 Add `_invoke_remediation(incident, remediation_lambda_arn)` helper to `backend/functions/incident_processor/processor.py` that async-invokes the Remediation_Engine Lambda (`InvocationType="Event"`) and swallows all exceptions with a warning log
+  - [x] 9.2 Call `_invoke_remediation()` from `create_incident()` in `processor.py` only when `incident["severity"]` is in `{"High", "Very High", "Critical"}` and `REMEDIATION_LAMBDA_ARN` env var is set and non-empty
 
 - [ ] 10. API Handler Extension
   - [ ] 10.1 Add six new handler functions to `backend/functions/api_handler/handlers.py`: `get_remediation_config`, `put_remediation_mode`, `list_remediation_rules`, `create_remediation_rule`, `delete_remediation_rule`, `list_remediation_audit`

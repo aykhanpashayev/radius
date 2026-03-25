@@ -1,6 +1,7 @@
 """Incident creation, deduplication, and status management for Incident_Processor."""
 
 import json
+import os
 import uuid
 from datetime import datetime, timezone, timedelta
 from typing import Any
@@ -122,6 +123,11 @@ def create_incident(
         "identity_arn": finding["identity_arn"],
         "severity": finding["severity"],
     })
+
+    remediation_lambda_arn = os.environ.get("REMEDIATION_LAMBDA_ARN", "")
+    if incident["severity"] in _HIGH_SEVERITY_LEVELS and remediation_lambda_arn:
+        _invoke_remediation(incident, remediation_lambda_arn)
+
     return incident
 
 
@@ -204,6 +210,33 @@ def transition_status(
         },
         expression_attribute_names={"#st": "status"},
     )
+
+
+def _invoke_remediation(incident: dict[str, Any], remediation_lambda_arn: str) -> None:
+    """Async-invoke the Remediation_Engine Lambda for high-severity incidents.
+
+    Swallows all exceptions to avoid disrupting the incident creation path.
+
+    Args:
+        incident: Incident dict to pass as the Lambda payload.
+        remediation_lambda_arn: ARN of the Remediation_Engine Lambda.
+    """
+    try:
+        lambda_client = boto3.client("lambda")
+        lambda_client.invoke(
+            FunctionName=remediation_lambda_arn,
+            InvocationType="Event",
+            Payload=json.dumps(incident),
+        )
+        logger.info("Invoked remediation engine", extra={
+            "incident_id": incident.get("incident_id"),
+            "remediation_lambda_arn": remediation_lambda_arn,
+        })
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Failed to invoke remediation engine", extra={
+            "incident_id": incident.get("incident_id"),
+            "error": str(exc),
+        })
 
 
 def publish_alert(
