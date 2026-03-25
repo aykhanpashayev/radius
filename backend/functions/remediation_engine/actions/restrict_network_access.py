@@ -91,7 +91,7 @@ class RestrictNetworkAccessAction(RemediationAction):
                     PolicyDocument=policy_json,
                 )
 
-            logger.info("RestrictNetworkAccessAction executed", extra={"name": name})
+            logger.info("RestrictNetworkAccessAction executed", extra={"identity_name": name})
             return ActionOutcome(
                 action_name=self.action_name,
                 outcome="executed",
@@ -101,7 +101,7 @@ class RestrictNetworkAccessAction(RemediationAction):
 
         except ClientError as exc:
             error_msg = exc.response["Error"]["Message"]
-            logger.error("RestrictNetworkAccessAction failed", extra={"name": name, "error": error_msg})
+            logger.error("RestrictNetworkAccessAction failed", extra={"identity_name": name, "error": error_msg})
             return ActionOutcome(
                 action_name=self.action_name,
                 outcome="failed",

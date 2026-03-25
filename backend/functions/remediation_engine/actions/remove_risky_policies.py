@@ -144,7 +144,9 @@ class RemoveRiskyPoliciesAction(RemediationAction):
                 reason="no_risky_policies_found",
             )
 
-        logger.info("RemoveRiskyPoliciesAction executed", extra={"name": name, "removed": removed, "failed": failed})
+        logger.info(
+            "RemoveRiskyPoliciesAction executed", extra={"identity_name": name, "removed": removed, "failed": failed}
+        )
         return ActionOutcome(
             action_name=self.action_name,
             outcome="executed",

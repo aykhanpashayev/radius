@@ -4,6 +4,7 @@ Loads the singleton config record from Remediation_Config table and
 provides a helper to update the global Risk_Mode.
 """
 
+import copy
 from typing import Any
 
 from backend.common.dynamodb_utils import get_item, update_item
@@ -37,10 +38,10 @@ def load_config(config_table: str) -> dict[str, Any]:
     """
     item = get_item(config_table, {"config_id": _CONFIG_ID})
     if item is None:
-        return dict(_DEFAULT_CONFIG)
+        return copy.deepcopy(_DEFAULT_CONFIG)
 
     # Merge with defaults so any missing keys are always present
-    merged = dict(_DEFAULT_CONFIG)
+    merged = copy.deepcopy(_DEFAULT_CONFIG)
     merged.update(item)
     return merged
 
