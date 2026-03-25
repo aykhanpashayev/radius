@@ -34,10 +34,10 @@ Implementation tasks for Phase 7. All tasks are additive — no existing Lambda 
   - [x] 5.1 Create `backend/functions/remediation_engine/safety.py` with `check_safety_controls(identity_arn, config, audit_table)` that checks in order: `excluded_arns` list → `protected_account_ids` list → 60-minute cooldown query → 24-hour rate limit (max 10 executions), returning a suppression reason string or `None`
   - [x] 5.2 Implement `_query_recent_executions(audit_table, identity_arn, hours)` in `safety.py` using `IdentityTimeIndex` GSI to count audit entries with `outcome=executed` within the given time window
 
-- [ ] 6. Audit Log
-  - [ ] 6.1 Create `backend/functions/remediation_engine/audit.py` with `write_audit_entry()` that writes a single action evaluation record (fields: `audit_id` UUID v4, `incident_id`, `identity_arn`, `rule_id`, `action_name`, `outcome`, `risk_mode`, `dry_run`, `timestamp`, `details` JSON string, `reason`, `ttl` 365 days from now)
-  - [ ] 6.2 Implement `write_audit_summary()` in `audit.py` that writes a summary record with `action_name=remediation_complete` and `details` containing counts of executed, skipped, failed, and suppressed actions
-  - [ ] 6.3 Implement `write_audit_suppressed()` and `write_audit_no_match()` convenience functions in `audit.py` for the safety-suppressed and no-rule-match paths
+- [x] 6. Audit Log
+  - [x] 6.1 Create `backend/functions/remediation_engine/audit.py` with `write_audit_entry()` that writes a single action evaluation record (fields: `audit_id` UUID v4, `incident_id`, `identity_arn`, `rule_id`, `action_name`, `outcome`, `risk_mode`, `dry_run`, `timestamp`, `details` JSON string, `reason`, `ttl` 365 days from now)
+  - [x] 6.2 Implement `write_audit_summary()` in `audit.py` that writes a summary record with `action_name=remediation_complete` and `details` containing counts of executed, skipped, failed, and suppressed actions
+  - [x] 6.3 Implement `write_audit_suppressed()` and `write_audit_no_match()` convenience functions in `audit.py` for the safety-suppressed and no-rule-match paths
 
 - [ ] 7. Remediation Actions — Implementation
   - [ ] 7.1 Create `backend/functions/remediation_engine/actions/disable_iam_user.py` implementing `DisableIAMUserAction`: skip non-IAMUser identities with `outcome=skipped/identity_type_not_supported`; deactivate all active access keys via `iam:UpdateAccessKey`; delete login profile via `iam:DeleteLoginProfile` (ignore `NoSuchEntityException`); return `outcome=executed` with `deactivated_key_ids` in details, or `outcome=failed` with error message on AWS API error
