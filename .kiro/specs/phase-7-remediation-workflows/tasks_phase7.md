@@ -30,9 +30,9 @@ Implementation tasks for Phase 7. All tasks are additive — no existing Lambda 
   - [x] 4.3 Implement `match_rules(rules, incident)` function in `engine.py` that filters active rules by `min_severity` (using severity rank ordering Low=1 through Critical=5), `detection_types` (empty list matches all), and `identity_types` (empty list matches all)
   - [x] 4.4 Implement `deduplicate_actions(action_names)` in `engine.py` that returns a list of unique action names preserving first-occurrence order
 
-- [ ] 5. Safety Controls
-  - [ ] 5.1 Create `backend/functions/remediation_engine/safety.py` with `check_safety_controls(identity_arn, config, audit_table)` that checks in order: `excluded_arns` list → `protected_account_ids` list → 60-minute cooldown query → 24-hour rate limit (max 10 executions), returning a suppression reason string or `None`
-  - [ ] 5.2 Implement `_query_recent_executions(audit_table, identity_arn, hours)` in `safety.py` using `IdentityTimeIndex` GSI to count audit entries with `outcome=executed` within the given time window
+- [x] 5. Safety Controls
+  - [x] 5.1 Create `backend/functions/remediation_engine/safety.py` with `check_safety_controls(identity_arn, config, audit_table)` that checks in order: `excluded_arns` list → `protected_account_ids` list → 60-minute cooldown query → 24-hour rate limit (max 10 executions), returning a suppression reason string or `None`
+  - [x] 5.2 Implement `_query_recent_executions(audit_table, identity_arn, hours)` in `safety.py` using `IdentityTimeIndex` GSI to count audit entries with `outcome=executed` within the given time window
 
 - [ ] 6. Audit Log
   - [ ] 6.1 Create `backend/functions/remediation_engine/audit.py` with `write_audit_entry()` that writes a single action evaluation record (fields: `audit_id` UUID v4, `incident_id`, `identity_arn`, `rule_id`, `action_name`, `outcome`, `risk_mode`, `dry_run`, `timestamp`, `details` JSON string, `reason`, `ttl` 365 days from now)
