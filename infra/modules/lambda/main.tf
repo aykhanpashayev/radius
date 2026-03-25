@@ -1,7 +1,8 @@
 # Lambda functions for Radius
-# Six functions: Event_Normalizer, Detection_Engine, Incident_Processor,
-# Identity_Collector, Score_Engine, API_Handler.
-# All use Python 3.11 on arm64. Event-driven functions have DLQs.
+# Seven functions: Event_Normalizer, Detection_Engine, Incident_Processor,
+# Identity_Collector, Score_Engine, API_Handler, Remediation_Engine.
+# All use Python 3.11 on arm64 (Remediation_Engine uses Python 3.12).
+# Event-driven functions have DLQs.
 
 locals {
   common_tags = merge(
@@ -39,6 +40,12 @@ resource "aws_sqs_queue" "identity_collector_dlq" {
   name                      = "${var.prefix}-identity-collector-dlq"
   message_retention_seconds = 1209600
   tags                      = merge(local.common_tags, { Function = "identity-collector" })
+}
+
+resource "aws_sqs_queue" "remediation_engine_dlq" {
+  name                      = "${var.prefix}-remediation-engine-dlq"
+  message_retention_seconds = 1209600
+  tags                      = merge(local.common_tags, { Function = "remediation-engine" })
 }
 
 # ---------------------------------------------------------------------------
@@ -79,6 +86,12 @@ resource "aws_cloudwatch_log_group" "api_handler" {
   name              = "/aws/lambda/${var.prefix}-api-handler"
   retention_in_days = var.log_retention_days
   tags              = merge(local.common_tags, { Function = "api-handler" })
+}
+
+resource "aws_cloudwatch_log_group" "remediation_engine" {
+  name              = "/aws/lambda/${var.prefix}-remediation-engine"
+  retention_in_days = var.log_retention_days
+  tags              = merge(local.common_tags, { Function = "remediation-engine" })
 }
 
 # ---------------------------------------------------------------------------
@@ -174,6 +187,7 @@ resource "aws_lambda_function" "incident_processor" {
       AWS_ACCOUNT_REGION = var.aws_region
       INCIDENT_TABLE   = var.dynamodb_table_names.incident
       SNS_TOPIC_ARN    = var.sns_topic_arn
+      REMEDIATION_LAMBDA_ARN = ""
     }
   }
 
@@ -274,4 +288,39 @@ resource "aws_lambda_function" "api_handler" {
   depends_on = [aws_cloudwatch_log_group.api_handler]
 
   tags = merge(local.common_tags, { Function = "api-handler" })
+}
+
+resource "aws_lambda_function" "remediation_engine" {
+  function_name = "${var.prefix}-remediation-engine"
+  role          = aws_iam_role.remediation_engine.arn
+  runtime       = "python3.12"
+  architectures = ["arm64"]
+  handler       = "handler.lambda_handler"
+  s3_bucket     = var.lambda_s3_bucket
+  s3_key        = "functions/remediation_engine.zip"
+  timeout       = 60
+  memory_size   = 256
+
+  reserved_concurrent_executions = var.concurrency_limit
+
+  kms_key_arn = var.kms_key_arn
+
+  environment {
+    variables = {
+      ENVIRONMENT              = var.environment
+      AWS_ACCOUNT_REGION       = var.aws_region
+      REMEDIATION_CONFIG_TABLE = var.dynamodb_table_names.remediation_config
+      REMEDIATION_AUDIT_TABLE  = var.dynamodb_table_names.remediation_audit_log
+      REMEDIATION_TOPIC_ARN    = var.remediation_topic_arn
+      DRY_RUN                  = "false"
+    }
+  }
+
+  dead_letter_config {
+    target_arn = aws_sqs_queue.remediation_engine_dlq.arn
+  }
+
+  depends_on = [aws_cloudwatch_log_group.remediation_engine]
+
+  tags = merge(local.common_tags, { Function = "remediation-engine" })
 }

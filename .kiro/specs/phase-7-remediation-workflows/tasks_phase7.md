@@ -14,10 +14,10 @@ Implementation tasks for Phase 7. All tasks are additive — no existing Lambda 
   - [x] 1.3 Add `remediation_topic` SNS topic to `infra/modules/sns/main.tf` with KMS encryption
   - [x] 1.4 Export new table names and topic ARN as Terraform outputs and wire them into `infra/main.tf`
 
-- [ ] 2. Remediation_Engine Lambda — Core Infrastructure (Terraform)
-  - [ ] 2.1 Add `remediation_engine` Lambda function resource to `infra/modules/lambda/main.tf` with `python3.12` runtime, `arm64` architecture, 60-second timeout, and environment variables: `REMEDIATION_CONFIG_TABLE`, `REMEDIATION_AUDIT_TABLE`, `REMEDIATION_TOPIC_ARN`, `DRY_RUN`
-  - [ ] 2.2 Create IAM role and policy for Remediation_Engine with least-privilege permissions: `iam:ListAccessKeys`, `iam:UpdateAccessKey`, `iam:DeleteLoginProfile`, `iam:ListAttachedUserPolicies`, `iam:ListAttachedRolePolicies`, `iam:ListUserPolicies`, `iam:ListRolePolicies`, `iam:GetUserPolicy`, `iam:GetRolePolicy`, `iam:DetachUserPolicy`, `iam:DetachRolePolicy`, `iam:DeleteUserPolicy`, `iam:DeleteRolePolicy`, `iam:GetRole`, `iam:UpdateAssumeRolePolicy`, `iam:PutUserPolicy`, `iam:PutRolePolicy`, `dynamodb:GetItem`, `dynamodb:PutItem`, `dynamodb:UpdateItem`, `dynamodb:Query` on the two new tables, and `sns:Publish` on Remediation_Topic
-  - [ ] 2.3 Add `REMEDIATION_LAMBDA_ARN` as an optional environment variable on the existing `incident_processor` Lambda resource (empty string default)
+- [x] 2. Remediation_Engine Lambda — Core Infrastructure (Terraform)
+  - [x] 2.1 Add `remediation_engine` Lambda function resource to `infra/modules/lambda/main.tf` with `python3.12` runtime, `arm64` architecture, 60-second timeout, and environment variables: `REMEDIATION_CONFIG_TABLE`, `REMEDIATION_AUDIT_TABLE`, `REMEDIATION_TOPIC_ARN`, `DRY_RUN`
+  - [x] 2.2 Create IAM role and policy for Remediation_Engine with least-privilege permissions: `iam:ListAccessKeys`, `iam:UpdateAccessKey`, `iam:DeleteLoginProfile`, `iam:ListAttachedUserPolicies`, `iam:ListAttachedRolePolicies`, `iam:ListUserPolicies`, `iam:ListRolePolicies`, `iam:GetUserPolicy`, `iam:GetRolePolicy`, `iam:DetachUserPolicy`, `iam:DetachRolePolicy`, `iam:DeleteUserPolicy`, `iam:DeleteRolePolicy`, `iam:GetRole`, `iam:UpdateAssumeRolePolicy`, `iam:PutUserPolicy`, `iam:PutRolePolicy`, `dynamodb:GetItem`, `dynamodb:PutItem`, `dynamodb:UpdateItem`, `dynamodb:Query` on the two new tables, and `sns:Publish` on Remediation_Topic
+  - [x] 2.3 Add `REMEDIATION_LAMBDA_ARN` as an optional environment variable on the existing `incident_processor` Lambda resource (empty string default)
 
 - [ ] 3. Remediation_Engine Lambda — Python Package Skeleton
   - [ ] 3.1 Create `backend/functions/remediation_engine/` directory with `__init__.py` and `requirements.txt` (boto3 only, already available in Lambda runtime)

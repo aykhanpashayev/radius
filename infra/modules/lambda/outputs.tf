@@ -8,6 +8,7 @@ output "function_arns" {
     identity_collector = aws_lambda_function.identity_collector.arn
     score_engine       = aws_lambda_function.score_engine.arn
     api_handler        = aws_lambda_function.api_handler.arn
+    remediation_engine = aws_lambda_function.remediation_engine.arn
   }
 }
 
@@ -21,6 +22,7 @@ output "function_names" {
     identity_collector = aws_lambda_function.identity_collector.function_name
     score_engine       = aws_lambda_function.score_engine.function_name
     api_handler        = aws_lambda_function.api_handler.function_name
+    remediation_engine = aws_lambda_function.remediation_engine.function_name
   }
 }
 
@@ -34,6 +36,7 @@ output "role_arns" {
     identity_collector = aws_iam_role.identity_collector.arn
     score_engine       = aws_iam_role.score_engine.arn
     api_handler        = aws_iam_role.api_handler.arn
+    remediation_engine = aws_iam_role.remediation_engine.arn
   }
 }
 
