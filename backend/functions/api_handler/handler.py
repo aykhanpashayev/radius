@@ -11,6 +11,12 @@ Supports:
   GET  /events
   GET  /events/{id}
   GET  /trust-relationships
+  GET  /remediation/config
+  PUT  /remediation/config/mode
+  GET  /remediation/rules
+  POST /remediation/rules
+  DELETE /remediation/rules/{rule_id}
+  GET  /remediation/audit
 """
 
 import time
@@ -26,16 +32,22 @@ logger = get_logger(__name__)
 # Route table: (method, resource_path_pattern) → handler function
 # resource_path uses {param} placeholders matching API Gateway path parameters.
 _ROUTES: list[tuple[str, str, Any]] = [
-    ("GET",   "/identities",          handlers.list_identities),
-    ("GET",   "/identities/{arn}",    handlers.get_identity),
-    ("GET",   "/scores",              handlers.list_scores),
-    ("GET",   "/scores/{arn}",        handlers.get_score),
-    ("GET",   "/incidents",           handlers.list_incidents),
-    ("GET",   "/incidents/{id}",      handlers.get_incident),
-    ("PATCH", "/incidents/{id}",      handlers.patch_incident),
-    ("GET",   "/events",              handlers.list_events),
-    ("GET",   "/events/{id}",         handlers.get_event),
-    ("GET",   "/trust-relationships", handlers.list_trust_relationships),
+    ("GET",    "/identities",                    handlers.list_identities),
+    ("GET",    "/identities/{arn}",              handlers.get_identity),
+    ("GET",    "/scores",                        handlers.list_scores),
+    ("GET",    "/scores/{arn}",                  handlers.get_score),
+    ("GET",    "/incidents",                     handlers.list_incidents),
+    ("GET",    "/incidents/{id}",                handlers.get_incident),
+    ("PATCH",  "/incidents/{id}",                handlers.patch_incident),
+    ("GET",    "/events",                        handlers.list_events),
+    ("GET",    "/events/{id}",                   handlers.get_event),
+    ("GET",    "/trust-relationships",           handlers.list_trust_relationships),
+    ("GET",    "/remediation/config",            handlers.get_remediation_config),
+    ("PUT",    "/remediation/config/mode",       handlers.put_remediation_mode),
+    ("GET",    "/remediation/rules",             handlers.list_remediation_rules),
+    ("POST",   "/remediation/rules",             handlers.create_remediation_rule),
+    ("DELETE", "/remediation/rules/{rule_id}",   handlers.delete_remediation_rule),
+    ("GET",    "/remediation/audit",             handlers.list_remediation_audit),
 ]
 
 

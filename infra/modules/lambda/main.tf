@@ -282,6 +282,8 @@ resource "aws_lambda_function" "api_handler" {
       INCIDENT_TABLE           = var.dynamodb_table_names.incident
       EVENT_SUMMARY_TABLE      = var.dynamodb_table_names.event_summary
       TRUST_RELATIONSHIP_TABLE = var.dynamodb_table_names.trust_relationship
+      REMEDIATION_CONFIG_TABLE = var.dynamodb_table_names.remediation_config
+      REMEDIATION_AUDIT_TABLE  = var.dynamodb_table_names.remediation_audit_log
     }
   }
 

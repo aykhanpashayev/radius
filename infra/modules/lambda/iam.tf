@@ -357,6 +357,31 @@ resource "aws_iam_role_policy" "api_handler" {
         Resource = var.dynamodb_table_arns.incident
       },
       {
+        Sid    = "RemediationConfigAccess"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:Query",
+        ]
+        Resource = var.dynamodb_table_arns.remediation_config
+      },
+      {
+        Sid    = "RemediationAuditAccess"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+          "dynamodb:Query",
+        ]
+        Resource = concat(
+          [var.dynamodb_table_arns.remediation_audit_log],
+          var.dynamodb_gsi_arns["remediation_audit_log"]
+        )
+      },
+      {
         Sid    = "KMS"
         Effect = "Allow"
         Action = ["kms:Decrypt", "kms:GenerateDataKey*"]

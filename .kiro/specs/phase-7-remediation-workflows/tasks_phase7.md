@@ -54,11 +54,11 @@ Implementation tasks for Phase 7. All tasks are additive — no existing Lambda 
   - [x] 9.1 Add `_invoke_remediation(incident, remediation_lambda_arn)` helper to `backend/functions/incident_processor/processor.py` that async-invokes the Remediation_Engine Lambda (`InvocationType="Event"`) and swallows all exceptions with a warning log
   - [x] 9.2 Call `_invoke_remediation()` from `create_incident()` in `processor.py` only when `incident["severity"]` is in `{"High", "Very High", "Critical"}` and `REMEDIATION_LAMBDA_ARN` env var is set and non-empty
 
-- [ ] 10. API Handler Extension
-  - [ ] 10.1 Add six new handler functions to `backend/functions/api_handler/handlers.py`: `get_remediation_config`, `put_remediation_mode`, `list_remediation_rules`, `create_remediation_rule`, `delete_remediation_rule`, `list_remediation_audit`
-  - [ ] 10.2 Register the six new routes in the `_ROUTES` list in `backend/functions/api_handler/handler.py`: `GET /remediation/config`, `PUT /remediation/config/mode`, `GET /remediation/rules`, `POST /remediation/rules`, `DELETE /remediation/rules/{rule_id}`, `GET /remediation/audit`
-  - [ ] 10.3 Add `REMEDIATION_CONFIG_TABLE` and `REMEDIATION_AUDIT_TABLE` environment variables to the `api_handler` Lambda resource in Terraform
-  - [ ] 10.4 Add IAM permissions for `api_handler` Lambda role: `dynamodb:GetItem`, `dynamodb:PutItem`, `dynamodb:UpdateItem`, `dynamodb:Query` on Remediation_Config and Remediation_Audit_Log tables
+- [x] 10. API Handler Extension
+  - [x] 10.1 Add six new handler functions to `backend/functions/api_handler/handlers.py`: `get_remediation_config`, `put_remediation_mode`, `list_remediation_rules`, `create_remediation_rule`, `delete_remediation_rule`, `list_remediation_audit`
+  - [x] 10.2 Register the six new routes in the `_ROUTES` list in `backend/functions/api_handler/handler.py`: `GET /remediation/config`, `PUT /remediation/config/mode`, `GET /remediation/rules`, `POST /remediation/rules`, `DELETE /remediation/rules/{rule_id}`, `GET /remediation/audit`
+  - [x] 10.3 Add `REMEDIATION_CONFIG_TABLE` and `REMEDIATION_AUDIT_TABLE` environment variables to the `api_handler` Lambda resource in Terraform
+  - [x] 10.4 Add IAM permissions for `api_handler` Lambda role: `dynamodb:GetItem`, `dynamodb:PutItem`, `dynamodb:UpdateItem`, `dynamodb:Query` on Remediation_Config and Remediation_Audit_Log tables
 
 - [ ] 11. Unit Tests
   - [ ] 11.1 Create `backend/tests/test_remediation_config.py` testing `load_config()` default values when table is empty, `update_risk_mode()` accepts valid modes, and `update_risk_mode()` raises `ValidationError` for invalid modes

@@ -14,11 +14,18 @@ Supported operations:
   GET  /events
   GET  /events/{id}
   GET  /trust-relationships
+  GET  /remediation/config
+  PUT  /remediation/config/mode
+  GET  /remediation/rules
+  POST /remediation/rules
+  DELETE /remediation/rules/{rule_id}
+  GET  /remediation/audit
 """
 
 import json
 import os
 import time
+import uuid
 from typing import Any
 from urllib.parse import unquote
 
@@ -47,6 +54,12 @@ _SCORE_TABLE = os.environ.get("BLAST_RADIUS_SCORE_TABLE", "")
 _INCIDENT_TABLE = os.environ.get("INCIDENT_TABLE", "")
 _EVENT_TABLE = os.environ.get("EVENT_SUMMARY_TABLE", "")
 _TRUST_TABLE = os.environ.get("TRUST_RELATIONSHIP_TABLE", "")
+_REMEDIATION_CONFIG_TABLE = os.environ.get("REMEDIATION_CONFIG_TABLE", "")
+_REMEDIATION_AUDIT_TABLE = os.environ.get("REMEDIATION_AUDIT_TABLE", "")
+
+_VALID_RISK_MODES = {"monitor", "alert", "enforce"}
+_VALID_SEVERITIES = {"Low", "Moderate", "High", "Very High", "Critical"}
+_REMEDIATION_CONFIG_ID = "global"
 
 # Valid incident statuses and allowed transitions (mirrors processor.py)
 _VALID_STATUSES = {"open", "investigating", "resolved", "false_positive"}
@@ -592,6 +605,250 @@ def list_trust_relationships(
             kwargs = {
                 "IndexName": "TargetAccountIndex",
                 "KeyConditionExpression": Key("target_account_id").eq(target_account_id),
+                "Limit": limit,
+            }
+            if start_key:
+                kwargs["ExclusiveStartKey"] = start_key
+            resp = table.query(**kwargs)
+
+        else:
+            kwargs = {"Limit": limit}
+            if start_key:
+                kwargs["ExclusiveStartKey"] = start_key
+            resp = table.scan(**kwargs)
+
+    except DynamoDBError as exc:
+        return server_error(str(exc))
+
+    elapsed = (time.monotonic() - t0) * 1000
+    return ok(resp.get("Items", []), resp.get("LastEvaluatedKey"), elapsed)
+
+
+# ===========================================================================
+# /remediation/config
+# ===========================================================================
+
+def get_remediation_config(
+    _path_params: dict[str, str],
+    _query_params: dict[str, str],
+    _event: dict[str, Any],
+) -> dict[str, Any]:
+    """GET /remediation/config — return the global remediation configuration."""
+    from backend.functions.remediation_engine.config import load_config
+    try:
+        config = load_config(_REMEDIATION_CONFIG_TABLE)
+    except DynamoDBError as exc:
+        return server_error(str(exc))
+    return ok(config)
+
+
+def put_remediation_mode(
+    _path_params: dict[str, str],
+    _query_params: dict[str, str],
+    raw_event: dict[str, Any],
+) -> dict[str, Any]:
+    """PUT /remediation/config/mode — update the global risk mode."""
+    try:
+        body = json.loads(raw_event.get("body") or "{}")
+    except json.JSONDecodeError:
+        return bad_request("Request body must be valid JSON")
+
+    new_mode = body.get("risk_mode")
+    if not new_mode:
+        return bad_request("Request body must include 'risk_mode'")
+    if new_mode not in _VALID_RISK_MODES:
+        return bad_request(
+            f"Invalid risk_mode {new_mode!r}. Must be one of: {sorted(_VALID_RISK_MODES)}"
+        )
+
+    from backend.functions.remediation_engine.config import update_risk_mode
+    try:
+        update_risk_mode(_REMEDIATION_CONFIG_TABLE, new_mode)
+    except ValidationError as exc:
+        return bad_request(str(exc))
+    except DynamoDBError as exc:
+        return server_error(str(exc))
+
+    return ok({"risk_mode": new_mode, "updated": True})
+
+
+# ===========================================================================
+# /remediation/rules
+# ===========================================================================
+
+def list_remediation_rules(
+    _path_params: dict[str, str],
+    _query_params: dict[str, str],
+    _event: dict[str, Any],
+) -> dict[str, Any]:
+    """GET /remediation/rules — return the rules list from the global config."""
+    from backend.functions.remediation_engine.config import load_config
+    try:
+        config = load_config(_REMEDIATION_CONFIG_TABLE)
+    except DynamoDBError as exc:
+        return server_error(str(exc))
+    return ok(config.get("rules", []))
+
+
+def create_remediation_rule(
+    _path_params: dict[str, str],
+    _query_params: dict[str, str],
+    raw_event: dict[str, Any],
+) -> dict[str, Any]:
+    """POST /remediation/rules — append a new rule to the global config."""
+    try:
+        body = json.loads(raw_event.get("body") or "{}")
+    except json.JSONDecodeError:
+        return bad_request("Request body must be valid JSON")
+
+    # Validate required fields
+    name = body.get("name", "").strip()
+    if not name:
+        return bad_request("Rule must include a non-empty 'name'")
+
+    min_severity = body.get("min_severity", "Low")
+    if min_severity not in _VALID_SEVERITIES:
+        return bad_request(
+            f"Invalid min_severity {min_severity!r}. Must be one of: {sorted(_VALID_SEVERITIES)}"
+        )
+
+    actions = body.get("actions", [])
+    if not isinstance(actions, list) or not actions:
+        return bad_request("Rule must include a non-empty 'actions' list")
+
+    rule = {
+        "rule_id": str(uuid.uuid4()),
+        "name": name,
+        "active": bool(body.get("active", True)),
+        "min_severity": min_severity,
+        "detection_types": body.get("detection_types") or [],
+        "identity_types": body.get("identity_types") or [],
+        "actions": actions,
+        "priority": int(body.get("priority", 100)),
+    }
+
+    try:
+        dynamodb = get_dynamodb_client()
+        table = dynamodb.Table(_REMEDIATION_CONFIG_TABLE)
+        # Append to the rules list; initialise record if absent
+        table.update_item(
+            Key={"config_id": _REMEDIATION_CONFIG_ID},
+            UpdateExpression=(
+                "SET #r = list_append(if_not_exists(#r, :empty), :new_rule)"
+            ),
+            ExpressionAttributeNames={"#r": "rules"},
+            ExpressionAttributeValues={":new_rule": [rule], ":empty": []},
+        )
+    except DynamoDBError as exc:
+        return server_error(str(exc))
+    except Exception as exc:
+        logger.error("DynamoDB error in create_remediation_rule", extra={"error": str(exc)})
+        return server_error(str(exc))
+
+    return ok(rule)
+
+
+def delete_remediation_rule(
+    path_params: dict[str, str],
+    _query_params: dict[str, str],
+    _event: dict[str, Any],
+) -> dict[str, Any]:
+    """DELETE /remediation/rules/{rule_id} — remove a rule from the global config."""
+    rule_id = path_params.get("rule_id", "")
+    if not rule_id:
+        return bad_request("Missing path parameter: rule_id")
+
+    from backend.functions.remediation_engine.config import load_config
+    try:
+        config = load_config(_REMEDIATION_CONFIG_TABLE)
+    except DynamoDBError as exc:
+        return server_error(str(exc))
+
+    rules = config.get("rules", [])
+    new_rules = [r for r in rules if r.get("rule_id") != rule_id]
+
+    if len(new_rules) == len(rules):
+        return not_found(f"Rule {rule_id!r}")
+
+    try:
+        dynamodb = get_dynamodb_client()
+        table = dynamodb.Table(_REMEDIATION_CONFIG_TABLE)
+        table.update_item(
+            Key={"config_id": _REMEDIATION_CONFIG_ID},
+            UpdateExpression="SET #r = :rules",
+            ExpressionAttributeNames={"#r": "rules"},
+            ExpressionAttributeValues={":rules": new_rules},
+        )
+    except DynamoDBError as exc:
+        return server_error(str(exc))
+    except Exception as exc:
+        logger.error("DynamoDB error in delete_remediation_rule", extra={"error": str(exc)})
+        return server_error(str(exc))
+
+    return ok({"rule_id": rule_id, "deleted": True})
+
+
+# ===========================================================================
+# /remediation/audit
+# ===========================================================================
+
+def list_remediation_audit(
+    _path_params: dict[str, str],
+    query_params: dict[str, str],
+    _event: dict[str, Any],
+) -> dict[str, Any]:
+    """GET /remediation/audit — list audit log entries with optional filters.
+
+    Query params:
+      identity_arn  — filter by identity (uses IdentityTimeIndex GSI)
+      incident_id   — filter by incident (uses IncidentIndex GSI)
+      start_date    — ISO timestamp lower bound (SK range on GSI)
+      limit         — max items (default 25, max 100)
+      next_token    — pagination cursor
+    """
+    try:
+        limit = parse_limit(query_params)
+        start_key = parse_exclusive_start_key(query_params)
+    except ValidationError as exc:
+        return bad_request(str(exc))
+
+    identity_arn = query_params.get("identity_arn")
+    incident_id = query_params.get("incident_id")
+    start_date = query_params.get("start_date")
+
+    if identity_arn and incident_id:
+        return bad_request(
+            "Filtering by both 'identity_arn' and 'incident_id' is not supported. "
+            "Use one filter at a time."
+        )
+
+    t0 = time.monotonic()
+    try:
+        dynamodb = get_dynamodb_client()
+        table = dynamodb.Table(_REMEDIATION_AUDIT_TABLE)
+
+        if identity_arn:
+            # IdentityTimeIndex: PK=identity_arn, SK=timestamp
+            key_cond = Key("identity_arn").eq(identity_arn)
+            if start_date:
+                key_cond = key_cond & Key("timestamp").gte(start_date)
+            kwargs: dict[str, Any] = {
+                "IndexName": "IdentityTimeIndex",
+                "KeyConditionExpression": key_cond,
+                "Limit": limit,
+            }
+            if start_key:
+                kwargs["ExclusiveStartKey"] = start_key
+            resp = table.query(**kwargs)
+
+        elif incident_id:
+            # IncidentIndex: PK=incident_id, SK=timestamp
+            key_cond = Key("incident_id").eq(incident_id)
+            if start_date:
+                key_cond = key_cond & Key("timestamp").gte(start_date)
+            kwargs = {
+                "IndexName": "IncidentIndex",
+                "KeyConditionExpression": key_cond,
                 "Limit": limit,
             }
             if start_key:
