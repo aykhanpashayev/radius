@@ -86,6 +86,10 @@ TOTAL                  192     192     0       89%       51.2s
 All tests passed.
 ```
 
+## Deploying to AWS
+
+To deploy Radius in your own AWS account, see [docs/deployment.md](docs/deployment.md). It covers prerequisites, Terraform state setup, building Lambda packages, deploying infrastructure, and verifying the deployment. For extending the platform with new rules or running the test suite, see [docs/developer-guide.md](docs/developer-guide.md).
+
 ## Project Walkthrough
 
 For a deep-dive into every design decision, see [docs/walkthrough.md](docs/walkthrough.md).
