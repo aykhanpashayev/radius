@@ -82,6 +82,7 @@ lambda-packages/
 
 # Local environment files
 .env
+.env.*
 .env.local
 .env.*.local
 
@@ -96,6 +97,9 @@ yarn-error.log*
 .pytest_cache/
 test-results/
 coverage/
+coverage.xml
+node_modules/
+frontend/build/
 
 # Temporary files
 tmp/

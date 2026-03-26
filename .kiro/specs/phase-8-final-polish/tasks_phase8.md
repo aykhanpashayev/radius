@@ -64,13 +64,13 @@ Implementation tasks for Phase 8. All tasks are documentation, tooling, and pres
   - [x] 6.7 Add full schema entries for `Remediation_Config` and `Remediation_Audit_Log` to `docs/database-schema.md`, including: key schema, all GSIs with projection types, TTL configuration, and a complete example record for each table
   - [x] 6.8 Verify that every documentation file longer than 100 lines has a table of contents; add a ToC to any file that is missing one (`docs/api-reference.md`, `docs/deployment.md`, `docs/developer-guide.md`, `docs/monitoring.md`, `docs/database-schema.md`, `docs/remediation.md`)
 
-- [ ] 7. Repository Hygiene
-  - [ ] 7.1 Delete `IMPLEMENTATION_SUMMARY.md` from the repository root
-  - [ ] 7.2 Update `.gitignore` to add the following entries if not already present: `__pycache__/`, `*.pyc`, `.pytest_cache/`, `.hypothesis/`, `*.egg-info/`, `dist/`, `build/`, `.env`, `.env.*`, `*.tfstate`, `*.tfstate.backup`, `.terraform/`, `node_modules/`, `frontend/build/`, `coverage.xml`, `.coverage`, `htmlcov/`
-  - [ ] 7.3 Create `.python-version` at the repository root containing the single line `3.11`
-  - [ ] 7.4 Audit every Python file in `backend/functions/` and add a one-sentence module-level docstring to any file that is missing one; files to check: `event_normalizer/handler.py`, `event_normalizer/normalizer.py`, `detection_engine/handler.py`, `detection_engine/engine.py`, `detection_engine/context.py`, `incident_processor/handler.py`, `incident_processor/processor.py`, `identity_collector/handler.py`, `identity_collector/collector.py`, `api_handler/handler.py`, `api_handler/handlers.py`, `remediation_engine/handler.py`, `remediation_engine/engine.py`, `remediation_engine/audit.py`, `remediation_engine/config.py`
-  - [ ] 7.5 Verify that `scripts/build-lambdas.sh`, `scripts/deploy-infra.sh`, and `scripts/verify-deployment.sh` each have a `#!/usr/bin/env bash` shebang and a comment block at the top describing what the script does and its usage; add missing shebangs and comment blocks
-  - [ ] 7.6 Verify that `scripts/inject-events.py` and `scripts/seed-dev-data.py` each have a `#!/usr/bin/env python3` shebang and a module docstring; add missing shebangs and docstrings
+- [x] 7. Repository Hygiene
+  - [x] 7.1 Delete `IMPLEMENTATION_SUMMARY.md` from the repository root
+  - [x] 7.2 Update `.gitignore` to add the following entries if not already present: `__pycache__/`, `*.pyc`, `.pytest_cache/`, `.hypothesis/`, `*.egg-info/`, `dist/`, `build/`, `.env`, `.env.*`, `*.tfstate`, `*.tfstate.backup`, `.terraform/`, `node_modules/`, `frontend/build/`, `coverage.xml`, `.coverage`, `htmlcov/`
+  - [x] 7.3 Create `.python-version` at the repository root containing the single line `3.11`
+  - [x] 7.4 Audit every Python file in `backend/functions/` and add a one-sentence module-level docstring to any file that is missing one; files to check: `event_normalizer/handler.py`, `event_normalizer/normalizer.py`, `detection_engine/handler.py`, `detection_engine/engine.py`, `detection_engine/context.py`, `incident_processor/handler.py`, `incident_processor/processor.py`, `identity_collector/handler.py`, `identity_collector/collector.py`, `api_handler/handler.py`, `api_handler/handlers.py`, `remediation_engine/handler.py`, `remediation_engine/engine.py`, `remediation_engine/audit.py`, `remediation_engine/config.py`
+  - [x] 7.5 Verify that `scripts/build-lambdas.sh`, `scripts/deploy-infra.sh`, and `scripts/verify-deployment.sh` each have a `#!/usr/bin/env bash` shebang and a comment block at the top describing what the script does and its usage; add missing shebangs and comment blocks
+  - [x] 7.6 Verify that `scripts/inject-events.py` and `scripts/seed-dev-data.py` each have a `#!/usr/bin/env python3` shebang and a module docstring; add missing shebangs and docstrings
 
 - [ ] 8. Project Walkthrough Document
   - [ ] 8.1 Create `docs/walkthrough.md` with a top-level H1 heading "Radius — Project Walkthrough" and a one-paragraph introduction explaining that this document is an interview-ready narrative of every design decision in the project
