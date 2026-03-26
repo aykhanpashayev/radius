@@ -1,0 +1,35 @@
+# Enforce Unix line endings for shell scripts regardless of OS.
+# This prevents CRLF line endings breaking bash scripts when the repo
+# is cloned or edited on Windows.
+
+# Default: normalize all text files to LF in the repo
+* text=auto eol=lf
+
+# Shell scripts must always be LF
+*.sh text eol=lf
+
+# PowerShell scripts can use CRLF on Windows
+*.ps1 text eol=crlf
+
+# Python files: LF
+*.py text eol=lf
+
+# Terraform files: LF
+*.tf text eol=lf
+*.tfvars text eol=lf
+
+# Markdown and docs: LF
+*.md text eol=lf
+
+# JSON/YAML: LF
+*.json text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+
+# Binary files: no line ending conversion
+*.zip binary
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.gz binary

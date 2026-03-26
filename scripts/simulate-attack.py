@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import sys, io
+# Force UTF-8 output on Windows so Unicode box-drawing characters render correctly.
+if sys.stdout.encoding and sys.stdout.encoding.lower() != "utf-8":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 """simulate-attack.py — Simulate a privilege escalation attack through the Radius pipeline.
 
 Runs a four-step IAM attack scenario (CreateUser → AttachUserPolicy →
