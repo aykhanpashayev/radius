@@ -3,13 +3,21 @@
 #
 # Usage:
 #   ./scripts/build-lambdas.sh --env dev [--bucket my-bucket] [--region us-east-1]
+#   ./scripts/build-lambdas.sh --env dev --local   # build only, skip S3 upload
 #
-# The script:
-#   1. Installs Python dependencies for each function into a build dir
-#   2. Zips function code + dependencies
-#   3. Uploads each zip to s3://<bucket>/functions/<name>.zip
+# What this does:
+#   1. For each Lambda function, installs its Python dependencies into a build dir
+#   2. Copies backend/common/ shared utilities into each package
+#   3. Zips the package (excluding .pyc and __pycache__)
+#   4. Uploads each zip to s3://<bucket>/functions/<name>.zip (unless --local)
 #
-# Prerequisites: python3, pip, zip, aws CLI
+# Prerequisites:
+#   - python3 and pip
+#   - zip (Linux/macOS: built-in; Windows: use WSL2 or Git Bash)
+#   - aws CLI configured (only needed without --local)
+#
+# Windows users: run this script inside WSL2 or Git Bash.
+# See docs/deployment.md for Windows setup instructions.
 
 set -euo pipefail
 
@@ -19,6 +27,7 @@ set -euo pipefail
 ENV=""
 BUCKET=""
 REGION="us-east-1"
+LOCAL_ONLY=false
 BUILD_DIR="$(pwd)/.build"
 FUNCTIONS_DIR="$(pwd)/backend/functions"
 COMMON_DIR="$(pwd)/backend/common"
@@ -31,6 +40,7 @@ while [[ $# -gt 0 ]]; do
     --env)     ENV="$2";    shift 2 ;;
     --bucket)  BUCKET="$2"; shift 2 ;;
     --region)  REGION="$2"; shift 2 ;;
+    --local)   LOCAL_ONLY=true; shift ;;
     *) echo "Unknown argument: $1"; exit 1 ;;
   esac
 done
@@ -40,23 +50,27 @@ if [[ -z "$ENV" ]]; then
   exit 1
 fi
 
-if [[ -z "$BUCKET" ]]; then
-  # Try to read from tfvars
+# Try to read bucket from tfvars if not provided
+if [[ -z "$BUCKET" && "$LOCAL_ONLY" == "false" ]]; then
   TFVARS="$(pwd)/infra/envs/${ENV}/terraform.tfvars"
   if [[ -f "$TFVARS" ]]; then
-    BUCKET=$(grep 'lambda_s3_bucket' "$TFVARS" | sed 's/.*= *"\(.*\)"/\1/')
+    BUCKET=$(grep 'lambda_s3_bucket' "$TFVARS" 2>/dev/null | sed 's/.*= *"\(.*\)"/\1/' || true)
   fi
 fi
 
-if [[ -z "$BUCKET" ]]; then
-  echo "ERROR: --bucket is required (or set lambda_s3_bucket in terraform.tfvars)"
+if [[ -z "$BUCKET" && "$LOCAL_ONLY" == "false" ]]; then
+  echo "ERROR: --bucket is required (or set lambda_s3_bucket in terraform.tfvars, or use --local)"
   exit 1
 fi
 
-echo "==> Building Lambda functions for env=${ENV}, bucket=${BUCKET}, region=${REGION}"
+if [[ "$LOCAL_ONLY" == "true" ]]; then
+  echo "==> Building Lambda packages locally (no S3 upload) [env=${ENV}]"
+else
+  echo "==> Building Lambda functions [env=${ENV}, bucket=${BUCKET}, region=${REGION}]"
+fi
 
 # ---------------------------------------------------------------------------
-# Functions to build
+# Functions to build — must include ALL Lambda functions
 # ---------------------------------------------------------------------------
 FUNCTION_NAMES=(
   event_normalizer
@@ -65,6 +79,7 @@ FUNCTION_NAMES=(
   identity_collector
   score_engine
   api_handler
+  remediation_engine
 )
 
 SUCCESS_COUNT=0
@@ -99,37 +114,42 @@ for FUNC in "${FUNCTION_NAMES[@]}"; do
   touch "${PACKAGE_DIR}/backend/__init__.py"
 
   # Install dependencies
+  # NOTE: We do NOT use --platform here because that requires --only-binary
+  # and breaks on many packages. Lambda arm64 packages are handled by Terraform
+  # layer configuration. For local builds, install native packages normally.
   REQUIREMENTS="${FUNC_DIR}/requirements.txt"
   if [[ -f "$REQUIREMENTS" ]]; then
     pip install \
       --quiet \
       --target "$PACKAGE_DIR" \
       --requirement "$REQUIREMENTS" \
-      --platform manylinux2014_aarch64 \
-      --implementation cp \
-      --python-version 3.11 \
-      --only-binary=:all: \
-      2>&1 | tail -5
+      2>&1 | tail -3
   fi
 
   # Create zip
   rm -f "$ZIP_FILE"
-  (cd "$PACKAGE_DIR" && zip -r "$ZIP_FILE" . -x "*.pyc" -x "*/__pycache__/*" -x "*.dist-info/*") > /dev/null
+  (cd "$PACKAGE_DIR" && zip -r "$ZIP_FILE" . \
+    -x "*.pyc" \
+    -x "*/__pycache__/*" \
+    -x "*.dist-info/*" \
+    -x "*.egg-info/*") > /dev/null
 
   ZIP_SIZE=$(du -sh "$ZIP_FILE" | cut -f1)
-  echo "    Package size: ${ZIP_SIZE}"
+  echo "    Package: ${ZIP_FILE} (${ZIP_SIZE})"
 
-  # Upload to S3
-  aws s3 cp "$ZIP_FILE" "s3://${BUCKET}/functions/${FUNC}.zip" \
-    --region "$REGION" \
-    --quiet
+  if [[ "$LOCAL_ONLY" == "false" ]]; then
+    aws s3 cp "$ZIP_FILE" "s3://${BUCKET}/functions/${FUNC}.zip" \
+      --region "$REGION" \
+      --quiet
+    echo "    Uploaded: s3://${BUCKET}/functions/${FUNC}.zip"
+  fi
 
-  echo "    Uploaded to s3://${BUCKET}/functions/${FUNC}.zip"
-  (( SUCCESS_COUNT++ ))
+  (( SUCCESS_COUNT++ )) || true
 done
 
 echo ""
 echo "==> Build complete: ${SUCCESS_COUNT} succeeded, ${FAIL_COUNT} failed"
+echo "    Packages in: ${BUILD_DIR}/"
 
 if [[ $FAIL_COUNT -gt 0 ]]; then
   exit 1

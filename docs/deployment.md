@@ -2,243 +2,354 @@
 
 ## Table of Contents
 
+- [What Gets Deployed](#what-gets-deployed)
+- [Supported Environments](#supported-environments)
 - [Prerequisites](#prerequisites)
-- [First-Time Setup](#first-time-setup)
-- [Deploying](#deploying)
-- [Injecting Sample Events (Dev Only)](#injecting-sample-events-dev-only)
-- [Phase 7 Resources](#phase-7-resources)
+- [Quick Start — Local Testing (No AWS Required)](#quick-start--local-testing-no-aws-required)
+- [Full AWS Deployment](#full-aws-deployment)
+  - [Step 1 — Run the preflight check](#step-1--run-the-preflight-check)
+  - [Step 2 — Create the S3 buckets](#step-2--create-the-s3-buckets)
+  - [Step 3 — Fill in the config files](#step-3--fill-in-the-config-files)
+  - [Step 4 — Install Python dependencies](#step-4--install-python-dependencies)
+  - [Step 5 — Run the test suite](#step-5--run-the-test-suite)
+  - [Step 6 — Build Lambda packages](#step-6--build-lambda-packages)
+  - [Step 7 — Deploy infrastructure](#step-7--deploy-infrastructure)
+  - [Step 8 — Verify the deployment](#step-8--verify-the-deployment)
+  - [Step 9 — Seed test data (optional)](#step-9--seed-test-data-optional)
+- [Post-Deployment Validation](#post-deployment-validation)
 - [Dev vs Prod Differences](#dev-vs-prod-differences)
 - [Rollback](#rollback)
+- [Cleanup — Destroy All Resources](#cleanup--destroy-all-resources)
 - [Troubleshooting](#troubleshooting)
+- [Windows Users](#windows-users)
+- [Known Limitations](#known-limitations)
+
+---
+
+## What Gets Deployed
+
+Running the full deployment creates the following AWS resources in your account:
+
+| Resource | Count | Description |
+|---|---|---|
+| Lambda functions | 7 | Event_Normalizer, Detection_Engine, Incident_Processor, Identity_Collector, Score_Engine, API_Handler, Remediation_Engine |
+| DynamoDB tables | 7 | Identity_Profile, Blast_Radius_Score, Incident, Event_Summary, Trust_Relationship, Remediation_Config, Remediation_Audit_Log |
+| SNS topics | 2 | Alert_Topic (high-severity incidents), Remediation_Topic (remediation notifications) |
+| API Gateway | 1 | REST API serving the React dashboard |
+| EventBridge rules | 2 | CloudTrail event routing, Score_Engine schedule |
+| CloudTrail trail | 1 | Management event capture (single-account in dev) |
+| KMS keys | 4 | Encryption for DynamoDB, SNS, Lambda, CloudTrail |
+| CloudWatch | Alarms + log groups | One log group per Lambda, alarms for errors and throttles |
+| S3 bucket | 1 | CloudTrail log storage (created by Terraform) |
+
+**Estimated cost in dev:** Under $5/month at low event volume. The main cost drivers are KMS key fees ($1/key/month) and Lambda invocations. DynamoDB uses on-demand billing and costs nothing at zero traffic.
+
+---
+
+## Supported Environments
+
+| Environment | Status | Notes |
+|---|---|---|
+| Linux (Ubuntu, Debian, Amazon Linux) | Fully supported | All scripts work natively |
+| macOS | Fully supported | All scripts work natively |
+| Windows with WSL2 | Supported | Run all `.sh` scripts inside WSL2 |
+| Windows with Git Bash | Mostly supported | Shell scripts work; some edge cases with paths |
+| Windows PowerShell only | Partial | Python scripts and `terraform` work; `.sh` scripts require WSL2 or Git Bash |
+| GitHub Codespaces / Gitpod | Fully supported | Linux environment, all scripts work |
+
+**Windows recommendation:** Install WSL2 (Windows Subsystem for Linux). Once WSL2 is set up, open a WSL2 terminal and follow the Linux instructions. See [Windows Users](#windows-users) for setup steps.
+
+---
 
 ## Prerequisites
 
-| Tool | Minimum Version | Notes |
+You need the following tools installed before starting. The preflight script checks all of these automatically.
+
+| Tool | Minimum Version | How to install |
 |---|---|---|
-| AWS CLI | 2.x | Configured with credentials for the target account |
-| Terraform | 1.5.0 | `terraform -version` to verify |
-| Python | 3.11+ | Used for Lambda packaging and utility scripts |
-| pip | 23.x | Bundled with Python 3.11 |
-| zip | any | Standard system utility for Lambda packaging |
+| Python | 3.11 | https://python.org — use the installer for your OS |
+| pip | 23+ | Included with Python 3.11 |
+| Terraform | 1.5.0 | https://developer.hashicorp.com/terraform/downloads |
+| AWS CLI | 2.x | https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html |
+| zip | any | Built-in on Linux/macOS; on Windows use WSL2 |
 
-### Required IAM Permissions
+You also need:
 
-The deploying principal needs the following AWS managed policies (or equivalent custom policy):
-
-- `AdministratorAccess` — recommended for first-time setup
-- Minimum: IAM, Lambda, DynamoDB, S3, SNS, EventBridge, API Gateway, CloudTrail, CloudWatch, KMS create/update/delete permissions
-
-### Pre-deployment Checklist
-
-- [ ] AWS CLI configured: `aws sts get-caller-identity` returns your account ID
-- [ ] S3 bucket for Terraform state created (see Step 1 below)
-- [ ] S3 bucket for Lambda packages available (can be the same bucket)
-- [ ] `lambda_s3_bucket` set in `infra/envs/dev/terraform.tfvars`
+- An **AWS account** with permissions to create Lambda, DynamoDB, S3, SNS, EventBridge, API Gateway, CloudTrail, KMS, IAM, and CloudWatch resources. `AdministratorAccess` is easiest for a first deployment.
+- AWS credentials configured locally. Run `aws configure` if you haven't already, or set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` as environment variables.
 
 ---
 
-## First-Time Setup
+## Quick Start — Local Testing (No AWS Required)
 
-### Step 1 — Create the Terraform state bucket
+You can run the full test suite and the attack simulation demo without any AWS account or credentials. This is the fastest way to verify the project works.
 
 ```bash
-aws s3 mb s3://radius-terraform-state-dev --region us-east-1
+# 1. Clone the repo
+git clone <repo-url>
+cd radius
 
+# 2. Create a virtual environment (keeps dependencies isolated)
+python -m venv .venv
+
+# 3. Activate it
+#    Linux/macOS:
+source .venv/bin/activate
+#    Windows (PowerShell):
+.venv\Scripts\Activate.ps1
+#    Windows (Git Bash / WSL2):
+source .venv/Scripts/activate
+
+# 4. Install all test dependencies
+pip install -r backend/requirements-dev.txt
+
+# 5. Run the full test suite (no AWS credentials needed — uses moto mock)
+python -m pytest backend/tests/ -q
+
+# 6. Run the attack simulation demo (no AWS credentials needed)
+python scripts/simulate-attack.py --mode mock
+```
+
+**Expected output from step 5:** All tests pass. You should see something like:
+```
+306 passed in 12s
+```
+
+**Expected output from step 6:** A five-phase attack simulation showing identity seeding, event injection, incident detection, blast radius scoring, and audit log entries — all running against an in-memory mock AWS environment.
+
+---
+
+## Full AWS Deployment
+
+Follow these steps in order. Each step explains what you're doing and what success looks like.
+
+### Step 1 — Run the preflight check
+
+The preflight script checks that all required tools are installed, your AWS credentials work, and your config files are ready. Run it before anything else.
+
+```bash
+# Linux/macOS/WSL2:
+bash scripts/preflight.sh --env dev
+
+# Windows (PowerShell):
+.\scripts\preflight.ps1 -Env dev
+```
+
+**What to expect:** A list of PASS/WARN/FAIL items. Fix every `[FAIL]` before continuing. `[WARN]` items are advisory.
+
+**If AWS credentials fail:** Run `aws configure` and enter your Access Key ID, Secret Access Key, region (`us-east-1`), and output format (`json`). Then re-run the preflight.
+
+---
+
+### Step 2 — Create the S3 buckets
+
+Terraform needs an S3 bucket to store its state file. Lambda packages also need an S3 bucket. You can use the same bucket for both, or separate ones.
+
+```bash
+# Replace "my-radius-state" with a globally unique bucket name (S3 names are global)
+aws s3 mb s3://my-radius-state --region us-east-1
+
+# Enable versioning so you can roll back Terraform state if needed
 aws s3api put-bucket-versioning \
-  --bucket radius-terraform-state-dev \
+  --bucket my-radius-state \
   --versioning-configuration Status=Enabled
 ```
 
-Versioning is required for the rollback procedure described below.
+**Why versioning?** If a Terraform apply goes wrong, you can restore a previous state file from S3 version history. See [Rollback](#rollback).
 
-### Step 2 — Configure the Terraform backend
+**Verify it worked:**
+```bash
+aws s3 ls s3://my-radius-state
+# Should return an empty listing (no error)
+```
 
-Create `infra/envs/dev/backend.tfvars`:
+---
+
+### Step 3 — Fill in the config files
+
+Two config files need your values before deployment can proceed. Both were created with placeholder values when you cloned the repo.
+
+**File 1: `infra/envs/dev/backend.tfvars`**
+
+Open this file and replace the placeholder with your state bucket name:
 
 ```hcl
-bucket         = "radius-terraform-state-dev"
+bucket         = "my-radius-state"   # <-- your bucket name from Step 2
 key            = "radius/dev/terraform.tfstate"
 region         = "us-east-1"
 dynamodb_table = "radius-terraform-locks"
+encrypt        = true
 ```
 
-> The `dynamodb_table` lock table is created automatically by Terraform on first `init` if it does not exist.
+**File 2: `infra/envs/dev/terraform.tfvars`**
 
-### Step 3 — Configure variables
-
-Edit `infra/envs/dev/terraform.tfvars`. The only value you must set before deploying is `lambda_s3_bucket`:
+Open this file and set `lambda_s3_bucket` to the bucket where Lambda packages will be uploaded. This can be the same bucket as the state bucket:
 
 ```hcl
-# infra/envs/dev/terraform.tfvars (excerpt)
-environment     = "dev"
-aws_region      = "us-east-1"
-resource_prefix = "radius-dev"
+lambda_s3_bucket = "my-radius-state"   # <-- your bucket name
+```
 
-lambda_s3_bucket = "my-artifact-bucket"   # <-- set this
+Everything else in `terraform.tfvars` has sensible defaults for dev. You don't need to change anything else.
 
-lambda_memory = {
-  event_normalizer   = 512
-  detection_engine   = 1024
-  incident_processor = 512
-  identity_collector = 512
-  score_engine       = 1024
-  api_handler        = 256
-}
+**Verify:** Re-run the preflight check — the config file checks should now show `[PASS]`.
 
-lambda_timeout = {
-  event_normalizer   = 30
-  detection_engine   = 60
-  incident_processor = 30
-  identity_collector = 30
-  score_engine       = 60
-  api_handler        = 10
-}
+---
 
-lambda_concurrency_limit        = 10
-log_retention_days              = 7
-cloudtrail_organization_enabled = false
-enable_pitr                     = false
-score_engine_schedule           = "rate(24 hours)"
+### Step 4 — Install Python dependencies
+
+```bash
+pip install -r backend/requirements-dev.txt
+```
+
+This installs pytest, moto, hypothesis, boto3, and all other packages needed to run tests and scripts.
+
+**Verify:**
+```bash
+python -c "import boto3, moto, pytest, hypothesis; print('OK')"
+# Should print: OK
 ```
 
 ---
 
-## Deploying
+### Step 5 — Run the test suite
 
-### Step 1 — Build Lambda packages
-
-```bash
-./scripts/build-lambdas.sh --env dev --bucket my-artifact-bucket --region us-east-1
-```
-
-What it does:
-- Installs Python dependencies for each of the 6 functions into a build directory
-- Copies `backend/common/` shared utilities into each package
-- Zips each package (excluding `*.pyc` and `__pycache__`)
-- Uploads to `s3://<bucket>/functions/<function_name>.zip`
-
-If `lambda_s3_bucket` is set in `terraform.tfvars`, you can omit `--bucket`:
+Always run tests before building and deploying. This confirms the backend logic is correct before you spend time on infrastructure.
 
 ```bash
-./scripts/build-lambdas.sh --env dev
+# Full suite (unit + integration + property-based):
+python -m pytest backend/tests/ -q
+
+# Fast mode (skip property-based tests, ~15 seconds):
+python -m pytest backend/tests/ --ignore=backend/tests/test_*_properties.py -q
 ```
 
-### Step 2 — Deploy infrastructure
-
-```bash
-./scripts/deploy-infra.sh --env dev
-```
-
-This runs `terraform init -backend-config=backend.tfvars`, `terraform plan`, prompts for approval, then applies.
-
-**Plan only (no changes applied):**
-```bash
-./scripts/deploy-infra.sh --env dev --plan-only
-```
-
-**Auto-approve (CI/CD pipelines):**
-```bash
-./scripts/deploy-infra.sh --env dev --auto-approve
-```
-
-### Step 3 — Verify deployment
-
-```bash
-./scripts/verify-deployment.sh --env dev --region us-east-1
-```
-
-Checks:
-- All 6 Lambda functions are in `Active` state
-- All 5 DynamoDB tables are in `ACTIVE` status
-- API Gateway endpoint returns HTTP 200
-- CloudTrail trail is in `IsLogging: true` state
-- SNS topic exists and has at least one subscription (if configured)
+**Expected output:** All tests pass. If any fail, do not proceed to deployment — fix the failures first.
 
 ---
 
-## Injecting Sample Events (Dev Only)
+### Step 6 — Build Lambda packages
+
+This step packages each Lambda function's code and dependencies into a zip file and uploads it to S3.
 
 ```bash
-# Inject all sample events from the sample-data directory
+bash scripts/build-lambdas.sh --env dev --region us-east-1
+```
+
+The script reads `lambda_s3_bucket` from `infra/envs/dev/terraform.tfvars` automatically, so you don't need to pass `--bucket` separately.
+
+**What it does:**
+1. For each of the 7 Lambda functions, creates a build directory
+2. Copies the function code and `backend/common/` shared utilities into it
+3. Installs the function's `requirements.txt` dependencies
+4. Zips everything up
+5. Uploads the zip to `s3://<your-bucket>/functions/<function-name>.zip`
+
+**Verify:**
+```bash
+aws s3 ls s3://my-radius-state/functions/
+# Should list 7 zip files: event_normalizer.zip, detection_engine.zip, etc.
+```
+
+**If you only want to build locally without uploading to S3:**
+```bash
+bash scripts/build-lambdas.sh --env dev --local
+# Packages are saved to .build/ in the repo root
+```
+
+---
+
+### Step 7 — Deploy infrastructure
+
+This runs Terraform to create all AWS resources.
+
+```bash
+bash scripts/deploy-infra.sh --env dev
+```
+
+**What happens:**
+1. `terraform init` — downloads the AWS provider and configures the S3 backend
+2. `terraform plan` — shows you exactly what will be created (no changes yet)
+3. Prompts you to confirm: type `yes` to apply
+4. `terraform apply` — creates all resources (takes 3–8 minutes)
+5. Prints key outputs including the API Gateway URL
+
+**To apply without the confirmation prompt (useful for automation):**
+```bash
+bash scripts/deploy-infra.sh --env dev --auto-approve
+```
+
+**To see the plan without applying:**
+```bash
+bash scripts/deploy-infra.sh --env dev --plan-only
+```
+
+**Verify:** Terraform prints `Apply complete!` with a count of resources created. It also prints the `api_endpoint` output — save this URL, you'll need it for the dashboard.
+
+---
+
+### Step 8 — Verify the deployment
+
+After Terraform finishes, run the verification script to confirm all resources are healthy:
+
+```bash
+bash scripts/verify-deployment.sh --env dev --region us-east-1
+```
+
+**What it checks:**
+- All 7 Lambda functions are in `Active` state
+- All 7 DynamoDB tables are in `ACTIVE` status
+- API Gateway exists and endpoints return expected HTTP codes
+- CloudTrail trail exists and is logging
+
+**Expected output:** All checks show `[PASS]`. If any show `[FAIL]`, see [Troubleshooting](#troubleshooting).
+
+---
+
+### Step 9 — Seed test data (optional)
+
+To populate the dashboard with sample identities, scores, and incidents for a demo:
+
+```bash
+python scripts/seed-dev-data.py --env dev --region us-east-1
+```
+
+To inject sample CloudTrail events and trigger the full detection pipeline:
+
+```bash
 python scripts/inject-events.py --env dev --dir sample-data/cloud-trail-events
-
-# Inject a single event file
-python scripts/inject-events.py --env dev --file sample-data/cloud-trail-events/sts-assume-role.json
-
-# Dry run — validate events without sending to EventBridge
-python scripts/inject-events.py --env dev --dir sample-data/cloud-trail-events --dry-run
 ```
+
+After injecting events, wait 30–60 seconds for the pipeline to process them, then check the dashboard or query DynamoDB directly to see the results.
 
 ---
 
-## Phase 7 Resources
+## Post-Deployment Validation
 
-Phase 7 added the Remediation_Engine and its supporting infrastructure. The resources below are in addition to the six Lambda functions and five DynamoDB tables deployed in earlier phases.
+After deployment, verify the system is actually processing events end-to-end:
 
-### New Lambda Function
+```bash
+# 1. Inject a single suspicious event
+python scripts/inject-events.py --env dev \
+  --file sample-data/cloud-trail-events/suspicious-privilege-escalation.json
 
-| Function name | Handler | Description |
-|---|---|---|
-| `{env}-remediation-engine` | `handler.lambda_handler` | Evaluates remediation rules and executes approved IAM mutations against offending identities |
+# 2. Wait 30 seconds for the pipeline to process it
 
-### New DynamoDB Tables
+# 3. Check if an incident was created
+aws dynamodb scan \
+  --table-name radius-dev-incident \
+  --region us-east-1 \
+  --query "Items[*].{id:incident_id.S, type:detection_type.S, severity:severity.S}" \
+  --output table
 
-| Table name | Description |
-|---|---|
-| `{env}-remediation-config` | Singleton config record (`config_id=global`) storing risk mode, rules, exclusions, and allowed IP ranges |
-| `{env}-remediation-audit-log` | Append-only audit log of every action evaluation — executed, skipped, suppressed, or failed |
+# 4. Check if a blast radius score was calculated
+aws dynamodb scan \
+  --table-name radius-dev-blast-radius-score \
+  --region us-east-1 \
+  --query "Items[*].{arn:identity_arn.S, score:score_value.N, severity:severity_level.S}" \
+  --output table
+```
 
-### New SNS Topic
-
-| Topic name | Description |
-|---|---|
-| `{env}-radius-remediation` | Receives structured JSON notifications when risk mode is `alert` or `enforce` |
-
-### New Environment Variables
-
-**`{env}-incident-processor`** — added in Phase 7:
-
-| Variable | Value | Description |
-|---|---|---|
-| `REMEDIATION_LAMBDA_ARN` | `arn:aws:lambda:{region}:{account}:function:{env}-remediation-engine` | ARN of the Remediation_Engine Lambda; Incident_Processor invokes it asynchronously for every new incident |
-
-**`{env}-api-handler`** — added in Phase 7:
-
-| Variable | Value | Description |
-|---|---|---|
-| `REMEDIATION_CONFIG_TABLE` | `{env}-remediation-config` | DynamoDB table for remediation config reads/writes |
-| `REMEDIATION_AUDIT_TABLE` | `{env}-remediation-audit-log` | DynamoDB table for audit log queries |
-
-### IAM Permissions — `{env}-remediation-engine` Role
-
-The Remediation_Engine Lambda role requires the following permissions in addition to the standard Lambda execution role:
-
-| Permission | Resource | Purpose |
-|---|---|---|
-| `dynamodb:GetItem` | `{env}-remediation-config` | Load global config |
-| `dynamodb:UpdateItem` | `{env}-remediation-config` | Update risk mode |
-| `dynamodb:PutItem` | `{env}-remediation-audit-log` | Write audit entries |
-| `dynamodb:Query` | `{env}-remediation-audit-log` | Safety control cooldown/rate-limit checks |
-| `sns:Publish` | `{env}-radius-remediation` | Publish remediation notifications |
-| `iam:ListAccessKeys` | `*` | `disable_iam_user` action |
-| `iam:UpdateAccessKey` | `*` | `disable_iam_user` action |
-| `iam:DeleteLoginProfile` | `*` | `disable_iam_user` action |
-| `iam:ListAttachedUserPolicies` | `*` | `remove_risky_policies` action |
-| `iam:ListAttachedRolePolicies` | `*` | `remove_risky_policies` action |
-| `iam:ListUserPolicies` | `*` | `remove_risky_policies` action |
-| `iam:ListRolePolicies` | `*` | `remove_risky_policies` action |
-| `iam:GetUserPolicy` | `*` | `remove_risky_policies` action |
-| `iam:GetRolePolicy` | `*` | `remove_risky_policies` action |
-| `iam:DetachUserPolicy` | `*` | `remove_risky_policies` action |
-| `iam:DetachRolePolicy` | `*` | `remove_risky_policies` action |
-| `iam:DeleteUserPolicy` | `*` | `remove_risky_policies` action |
-| `iam:DeleteRolePolicy` | `*` | `remove_risky_policies` action |
-| `iam:GetRole` | `*` | `block_role_assumption` action |
-| `iam:UpdateAssumeRolePolicy` | `*` | `block_role_assumption` action |
-| `iam:PutUserPolicy` | `*` | `restrict_network_access` action |
-| `iam:PutRolePolicy` | `*` | `restrict_network_access` action |
-
-> **Note:** In production, scope `iam:*` permissions to specific resource ARNs or use permission boundaries to limit the blast radius of the Remediation_Engine role itself.
+If incidents and scores appear, the pipeline is working end-to-end.
 
 ---
 
@@ -246,15 +357,15 @@ The Remediation_Engine Lambda role requires the following permissions in additio
 
 | Setting | Dev | Prod |
 |---|---|---|
-| `resource_prefix` | `radius-dev` | `radius-prod` |
-| `cloudtrail_organization_enabled` | `false` | `true` (requires Org management account) |
-| `enable_pitr` | `false` | `true` (all tables) |
-| `log_retention_days` | `7` | `30` |
-| `lambda_concurrency_limit` | `10` | not set (unreserved) |
-| `lambda_memory.detection_engine` | `1024 MB` | `2048 MB` |
-| `lambda_memory.score_engine` | `1024 MB` | `2048 MB` |
-| CloudWatch alarm thresholds | relaxed | strict |
+| `cloudtrail_organization_enabled` | `false` (single account) | `true` (requires AWS Organizations management account) |
+| `enable_pitr` | `false` | `true` (DynamoDB point-in-time recovery) |
+| `log_retention_days` | 7 | 30 |
+| `lambda_concurrency_limit` | 10 (cost control) | 0 (unreserved, scales freely) |
+| `lambda_memory.detection_engine` | 1024 MB | 2048 MB |
+| `score_engine_schedule` | every 24 hours | every 6 hours |
 | SNS subscriptions | optional | required (ops team email) |
+
+To deploy to prod, fill in `infra/envs/prod/terraform.tfvars` and `infra/envs/prod/backend.tfvars`, then run the same steps with `--env prod`.
 
 ---
 
@@ -265,92 +376,205 @@ Terraform state is versioned in S3. To roll back to a previous deployment:
 ```bash
 # 1. List available state versions
 aws s3api list-object-versions \
-  --bucket radius-terraform-state-dev \
+  --bucket my-radius-state \
   --prefix radius/dev/terraform.tfstate \
   --query 'Versions[*].{VersionId:VersionId,LastModified:LastModified}' \
   --output table
 
-# 2. Restore the desired version
+# 2. Restore the desired version (replace VERSION_ID with the ID from step 1)
 aws s3api copy-object \
-  --bucket radius-terraform-state-dev \
-  --copy-source "radius-terraform-state-dev/radius/dev/terraform.tfstate?versionId=<VERSION_ID>" \
+  --bucket my-radius-state \
+  --copy-source "my-radius-state/radius/dev/terraform.tfstate?versionId=VERSION_ID" \
   --key radius/dev/terraform.tfstate
 
 # 3. Re-apply to reconcile infrastructure with the restored state
-./scripts/deploy-infra.sh --env dev --auto-approve
+bash scripts/deploy-infra.sh --env dev --auto-approve
+```
+
+---
+
+## Cleanup — Destroy All Resources
+
+To remove all AWS resources created by Terraform:
+
+```bash
+# This destroys everything — DynamoDB tables, Lambda functions, CloudTrail, etc.
+# Data in DynamoDB will be permanently deleted.
+terraform -chdir=infra/envs/dev destroy -var-file=terraform.tfvars
+```
+
+Type `yes` when prompted. This takes 3–5 minutes.
+
+After destroying, you can also delete the S3 buckets manually if you no longer need them:
+
+```bash
+# Empty the bucket first (required before deletion)
+aws s3 rm s3://my-radius-state --recursive
+aws s3 rb s3://my-radius-state
 ```
 
 ---
 
 ## Troubleshooting
 
-### Lambda function not updating after a code change
+### "backend/requirements-dev.txt not found"
 
-**Symptom:** Deploying after a code change has no effect — the old function code is still running.
-
-**Cause:** Terraform detects Lambda package changes via the S3 object ETag. If `build-lambdas.sh` was not re-run, the ETag is unchanged and Terraform skips the update.
-
-**Resolution:**
+This file was missing in earlier versions of the repo. It now exists. If you cloned before it was added, pull the latest changes:
 ```bash
-./scripts/build-lambdas.sh --env dev
-./scripts/deploy-infra.sh --env dev
+git pull
+pip install -r backend/requirements-dev.txt
 ```
 
----
+### Tests fail with "ModuleNotFoundError: No module named 'backend'"
 
-### Lambda timeout on large CloudTrail event batches
+This means pytest can't find the `backend` package. Make sure you're running pytest from the **repository root** (the directory containing `pyproject.toml`), not from inside `backend/`:
 
-**Symptom:** Event_Normalizer or Detection_Engine invocations fail with `Task timed out after X seconds`.
+```bash
+# Correct — run from repo root:
+python -m pytest backend/tests/ -q
 
-**Cause:** Default timeouts (30s / 60s) are too short for large event payloads or slow DynamoDB responses under load.
+# Wrong — do not cd into backend first
+```
 
-**Resolution:** Increase the timeout in `terraform.tfvars` and redeploy:
+The `pyproject.toml` at the repo root sets `pythonpath = ["."]` which fixes this automatically.
+
+### "ERROR: infra/envs/dev/terraform.tfvars still contains placeholder values"
+
+Open `infra/envs/dev/terraform.tfvars` and replace every value that looks like `<REPLACE: ...>` with your actual values. The only required change is `lambda_s3_bucket`.
+
+### Lambda function not updating after a code change
+
+Terraform detects Lambda package changes via the S3 object ETag. If `build-lambdas.sh` was not re-run, the ETag is unchanged and Terraform skips the update.
+
+```bash
+bash scripts/build-lambdas.sh --env dev
+bash scripts/deploy-infra.sh --env dev
+```
+
+### "Error acquiring the state lock"
+
+This happens when a previous `terraform apply` was interrupted. Get the lock ID from the error message, then:
+
+```bash
+terraform -chdir=infra/envs/dev force-unlock LOCK_ID
+```
+
+### Lambda timeout errors in CloudWatch
+
+Increase the timeout in `terraform.tfvars` and redeploy:
 
 ```hcl
 lambda_timeout = {
   event_normalizer = 60   # was 30
   detection_engine = 120  # was 60
-  ...
 }
 ```
 
-Then run `./scripts/deploy-infra.sh --env dev`.
+### EventBridge not routing events to Event_Normalizer
 
----
+1. Verify the trail is logging: `aws cloudtrail get-trail-status --name radius-dev-trail`
+2. Check the EventBridge rule is enabled: `aws events describe-rule --name radius-dev-cloudtrail-rule`
+3. Verify Lambda permissions: `aws lambda get-policy --function-name radius-dev-event-normalizer`
 
-### DynamoDB throttling errors in CloudWatch
+### DynamoDB throttling errors
 
-**Symptom:** CloudWatch alarms fire for `SystemErrors` or `ThrottledRequests` on DynamoDB tables.
+On-demand billing handles bursts automatically, but very sudden spikes can cause transient throttling. For dev, reduce the injection rate:
 
-**Cause:** On-demand billing mode handles bursts automatically, but very sudden spikes (e.g. bulk event injection) can trigger transient throttling before DynamoDB scales.
-
-**Resolution:**
-- For dev: reduce injection rate in `scripts/inject-events.py` using `--delay` flag
-- For prod: review CloudWatch metrics to confirm the spike is transient; if sustained, consider switching high-traffic tables to provisioned capacity with auto-scaling
-- The `dynamodb_utils.py` retry logic handles transient throttling with exponential backoff (3 retries, 100ms base delay)
-
----
-
-### EventBridge rule not routing CloudTrail events to Event_Normalizer
-
-**Symptom:** CloudTrail events are being recorded but Event_Normalizer is never invoked.
-
-**Cause:** Common causes are (1) the EventBridge rule event pattern does not match the event source/type, (2) the Lambda resource-based policy is missing the EventBridge principal, or (3) the CloudTrail trail is not delivering to CloudWatch Logs / EventBridge.
-
-**Resolution:**
-1. Verify the trail is logging: `aws cloudtrail get-trail-status --name <trail-name>`
-2. Check the EventBridge rule is enabled: `aws events describe-rule --name <rule-name>`
-3. Test the rule pattern manually in the EventBridge console using a sample CloudTrail event
-4. Verify Lambda permissions: `aws lambda get-policy --function-name <event-normalizer-name>` — should include a statement allowing `events.amazonaws.com` to invoke
-
----
-
-### Terraform state lock not released after interrupted apply
-
-**Symptom:** `terraform apply` fails with `Error acquiring the state lock`.
-
-**Resolution:**
 ```bash
-# Get the lock ID from the error message, then:
-terraform -chdir=infra/envs/dev force-unlock <LOCK_ID>
+python scripts/inject-events.py --env dev --dir sample-data/cloud-trail-events --delay 0.5
 ```
+
+---
+
+## Windows Users
+
+The deployment shell scripts (`build-lambdas.sh`, `deploy-infra.sh`, `verify-deployment.sh`, `preflight.sh`) require a bash environment. On Windows, you have two options:
+
+### Option A — WSL2 (recommended)
+
+WSL2 gives you a full Linux environment inside Windows. It's the most reliable option.
+
+1. Install WSL2: open PowerShell as Administrator and run:
+   ```powershell
+   wsl --install
+   ```
+   Restart your computer when prompted.
+
+2. Open the WSL2 terminal (search "Ubuntu" in the Start menu).
+
+3. Install required tools inside WSL2:
+   ```bash
+   sudo apt update
+   sudo apt install -y python3.11 python3-pip zip unzip
+   ```
+
+4. Install Terraform inside WSL2:
+   ```bash
+   wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+   echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+   sudo apt update && sudo apt install terraform
+   ```
+
+5. Install AWS CLI inside WSL2:
+   ```bash
+   curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+   unzip awscliv2.zip && sudo ./aws/install
+   ```
+
+6. Clone the repo inside WSL2 (not on the Windows filesystem — use `~/radius` not `/mnt/c/...`):
+   ```bash
+   git clone <repo-url> ~/radius
+   cd ~/radius
+   ```
+
+7. Follow the [Full AWS Deployment](#full-aws-deployment) steps from inside the WSL2 terminal.
+
+### Option B — Git Bash
+
+Git Bash (included with Git for Windows) can run the shell scripts without WSL2.
+
+1. Install Git for Windows: https://git-scm.com/download/win
+2. Open "Git Bash" from the Start menu
+3. Follow the Linux deployment steps — they work in Git Bash
+
+**Limitation:** Git Bash doesn't include `zip` by default. Install it:
+```bash
+# In Git Bash:
+curl -L https://sourceforge.net/projects/gnuwin32/files/zip/3.0/zip-3.0-bin.zip/download -o zip.zip
+# Or use: winget install GnuWin32.Zip
+```
+
+### What works natively in PowerShell
+
+These commands work directly in PowerShell without WSL2 or Git Bash:
+
+```powershell
+# Run the preflight check
+.\scripts\preflight.ps1 -Env dev
+
+# Install Python dependencies
+pip install -r backend\requirements-dev.txt
+
+# Run tests
+python -m pytest backend\tests\ -q
+
+# Run the demo (no AWS needed)
+python scripts\simulate-attack.py --mode mock
+
+# Terraform commands (Terraform has a native Windows binary)
+terraform -chdir=infra\envs\dev init -backend-config=backend.tfvars
+terraform -chdir=infra\envs\dev plan -var-file=terraform.tfvars
+terraform -chdir=infra\envs\dev apply -var-file=terraform.tfvars
+```
+
+---
+
+## Known Limitations
+
+**`build-lambdas.sh` on Windows without WSL2:** The script uses bash and `zip`, which are not available in native PowerShell. Use WSL2 or Git Bash. Alternatively, you can manually zip each Lambda function directory and upload to S3 — the structure is: function code + `backend/common/` + installed dependencies, all at the root of the zip.
+
+**`--platform manylinux2014_aarch64` removed:** Earlier versions of `build-lambdas.sh` used `pip install --platform manylinux2014_aarch64 --only-binary=:all:` to build arm64-compatible packages. This was removed because it fails for packages without pre-built arm64 wheels and breaks on Windows. Lambda arm64 compatibility is handled at the Terraform layer level. If you have packages that require native arm64 binaries, build on an arm64 Linux machine or use a Docker-based build.
+
+**CloudTrail organization trail:** Setting `cloudtrail_organization_enabled = true` requires deploying from an AWS Organizations management account. This is not available in standalone AWS accounts. Leave it `false` for dev and single-account deployments.
+
+**Terraform state bucket must be created manually:** Terraform cannot create its own state bucket (chicken-and-egg problem). You must create the S3 bucket in Step 2 before running `deploy-infra.sh`.

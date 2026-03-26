@@ -1,0 +1,21 @@
+[tool.pytest.ini_options]
+# Add the repo root to sys.path so "from backend.functions..." imports work
+# regardless of which directory pytest is invoked from.
+pythonpath = ["."]
+testpaths = ["backend/tests"]
+addopts = "-q"
+
+[tool.coverage.run]
+source = ["backend"]
+omit = [
+    "backend/tests/*",
+    "**/__pycache__/*",
+    "**/*.pyc",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+]

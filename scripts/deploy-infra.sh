@@ -4,7 +4,20 @@
 # Usage:
 #   ./scripts/deploy-infra.sh --env dev [--auto-approve] [--plan-only]
 #
-# Prerequisites: terraform >= 1.5, aws CLI with credentials configured
+# What this does:
+#   1. Runs terraform init with the backend config from infra/envs/<env>/backend.tfvars
+#   2. Runs terraform plan using infra/envs/<env>/terraform.tfvars
+#   3. Prompts for confirmation, then applies (unless --plan-only)
+#
+# Prerequisites:
+#   - Terraform >= 1.5 installed and on PATH
+#   - AWS CLI configured: run "aws sts get-caller-identity" to verify
+#   - infra/envs/<env>/backend.tfvars filled in (copy from the template)
+#   - infra/envs/<env>/terraform.tfvars filled in (copy from the template)
+#   - S3 bucket for Terraform state already created
+#   - S3 bucket for Lambda packages already created and set in terraform.tfvars
+#
+# Windows users: run this script inside WSL2 or Git Bash.
 
 set -euo pipefail
 
@@ -14,6 +27,8 @@ set -euo pipefail
 ENV=""
 AUTO_APPROVE=false
 PLAN_ONLY=false
+# The env dirs live under infra/envs/<env>/ and contain their own main.tf
+# which calls the root module via source = "../.."
 INFRA_ROOT="$(pwd)/infra"
 
 # ---------------------------------------------------------------------------
@@ -21,7 +36,7 @@ INFRA_ROOT="$(pwd)/infra"
 # ---------------------------------------------------------------------------
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --env)          ENV="$2";       shift 2 ;;
+    --env)          ENV="$2";          shift 2 ;;
     --auto-approve) AUTO_APPROVE=true; shift ;;
     --plan-only)    PLAN_ONLY=true;    shift ;;
     *) echo "Unknown argument: $1"; exit 1 ;;
@@ -42,35 +57,49 @@ if [[ ! -d "$ENV_DIR" ]]; then
   exit 1
 fi
 
+# Check for placeholder values that haven't been filled in
+if grep -q "<REPLACE" "$TFVARS" 2>/dev/null; then
+  echo "ERROR: ${TFVARS} still contains placeholder values."
+  echo "       Open the file and replace every value marked <REPLACE: ...>"
+  exit 1
+fi
+
+if grep -q "<REPLACE" "$BACKEND_VARS" 2>/dev/null; then
+  echo "ERROR: ${BACKEND_VARS} still contains placeholder values."
+  echo "       Open the file and replace every value marked <REPLACE: ...>"
+  exit 1
+fi
+
 echo "==> Deploying Radius infrastructure [env=${ENV}]"
-echo "    Directory : ${ENV_DIR}"
+echo "    Env dir   : ${ENV_DIR}"
 echo "    Backend   : ${BACKEND_VARS}"
 echo "    Variables : ${TFVARS}"
 echo ""
 
 # ---------------------------------------------------------------------------
-# Init
+# Init — configure the S3 backend and download providers
 # ---------------------------------------------------------------------------
 echo "--> terraform init"
-terraform -chdir="$ENV_DIR" init \
-  -backend-config="$BACKEND_VARS" \
+terraform -chdir="${ENV_DIR}" init \
+  -backend-config="${BACKEND_VARS}" \
   -reconfigure \
   -input=false
 
 # ---------------------------------------------------------------------------
-# Plan
+# Plan — show what will be created/changed/destroyed
 # ---------------------------------------------------------------------------
 PLAN_FILE="${ENV_DIR}/.tfplan"
 echo ""
 echo "--> terraform plan"
-terraform -chdir="$ENV_DIR" plan \
-  -var-file="$TFVARS" \
-  -out="$PLAN_FILE" \
+terraform -chdir="${ENV_DIR}" plan \
+  -var-file="${TFVARS}" \
+  -out="${PLAN_FILE}" \
   -input=false
 
 if [[ "$PLAN_ONLY" == "true" ]]; then
   echo ""
   echo "==> Plan complete (--plan-only). No changes applied."
+  rm -f "${PLAN_FILE}"
   exit 0
 fi
 
@@ -80,30 +109,37 @@ fi
 echo ""
 if [[ "$AUTO_APPROVE" == "true" ]]; then
   echo "--> terraform apply (auto-approved)"
-  terraform -chdir="$ENV_DIR" apply "$PLAN_FILE"
+  terraform -chdir="${ENV_DIR}" apply "${PLAN_FILE}"
 else
   echo "--> terraform apply"
   read -r -p "Apply the above plan? [yes/no]: " CONFIRM
   if [[ "$CONFIRM" != "yes" ]]; then
     echo "Aborted."
+    rm -f "${PLAN_FILE}"
     exit 0
   fi
-  terraform -chdir="$ENV_DIR" apply "$PLAN_FILE"
+  terraform -chdir="${ENV_DIR}" apply "${PLAN_FILE}"
 fi
 
+rm -f "${PLAN_FILE}"
+
 # ---------------------------------------------------------------------------
-# Output resource ARNs
+# Print outputs
 # ---------------------------------------------------------------------------
 echo ""
-echo "==> Deployment complete. Resource outputs:"
-terraform -chdir="$ENV_DIR" output -json | \
+echo "==> Deployment complete. Key outputs:"
+terraform -chdir="${ENV_DIR}" output -json 2>/dev/null | \
   python3 -c "
 import json, sys
-outputs = json.load(sys.stdin)
-for k, v in outputs.items():
-    print(f'  {k} = {v[\"value\"]}')
-"
+try:
+    outputs = json.load(sys.stdin)
+    for k, v in outputs.items():
+        val = v.get('value', '')
+        if isinstance(val, str):
+            print(f'  {k} = {val}')
+except Exception:
+    pass
+" || true
 
-rm -f "$PLAN_FILE"
 echo ""
-echo "==> Done."
+echo "==> Next step: run ./scripts/verify-deployment.sh --env ${ENV}"

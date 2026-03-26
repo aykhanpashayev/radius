@@ -1,8 +1,9 @@
 # Terraform
 *.tfstate
 *.tfstate.*
-*.tfvars
-!*.tfvars.example
+# Track the template tfvars files (they contain <REPLACE> placeholders, not real secrets)
+# but ignore any local overrides named *.local.tfvars
+*.local.tfvars
 .terraform/
 .terraform.lock.hcl
 crash.log
@@ -79,6 +80,7 @@ venv.bak/
 # Lambda deployment packages
 *.zip
 lambda-packages/
+.build/
 
 # Local environment files
 .env
