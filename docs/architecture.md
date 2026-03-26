@@ -197,3 +197,12 @@ Any firing guard suppresses the entire evaluation and writes a single audit entr
 - **Cost-aware** — arm64 Lambda, KEYS_ONLY GSIs where full projection is unnecessary, TTL for Event_Summary and Incident archival
 - **Explainable** — detection rules have explicit trigger conditions; scoring rules emit named contributing factors with point values
 - **Multi-account** — org-wide CloudTrail trail covers all accounts; account_id is a first-class field on all records
+
+## Diagrams
+
+Detailed Mermaid diagrams for each subsystem are available in `docs/architecture/`:
+
+- [Pipeline Overview](architecture/pipeline-overview.md) — full event pipeline from CloudTrail to the React Dashboard
+- [Scoring Pipeline](architecture/scoring-pipeline.md) — Score_Engine trigger sources, ScoringContext queries, and the 8 scoring rules
+- [Remediation Branch](architecture/remediation-branch.md) — Remediation_Engine safety controls, rule matching, and risk mode execution paths
+- [API Layer](architecture/api-layer.md) — React Dashboard through API Gateway to API_Handler and all DynamoDB tables
