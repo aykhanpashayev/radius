@@ -1,5 +1,16 @@
 # Deployment Guide
 
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [First-Time Setup](#first-time-setup)
+- [Deploying](#deploying)
+- [Injecting Sample Events (Dev Only)](#injecting-sample-events-dev-only)
+- [Phase 7 Resources](#phase-7-resources)
+- [Dev vs Prod Differences](#dev-vs-prod-differences)
+- [Rollback](#rollback)
+- [Troubleshooting](#troubleshooting)
+
 ## Prerequisites
 
 | Tool | Minimum Version | Notes |
@@ -157,6 +168,77 @@ python scripts/inject-events.py --env dev --file sample-data/cloud-trail-events/
 # Dry run — validate events without sending to EventBridge
 python scripts/inject-events.py --env dev --dir sample-data/cloud-trail-events --dry-run
 ```
+
+---
+
+## Phase 7 Resources
+
+Phase 7 added the Remediation_Engine and its supporting infrastructure. The resources below are in addition to the six Lambda functions and five DynamoDB tables deployed in earlier phases.
+
+### New Lambda Function
+
+| Function name | Handler | Description |
+|---|---|---|
+| `{env}-remediation-engine` | `handler.lambda_handler` | Evaluates remediation rules and executes approved IAM mutations against offending identities |
+
+### New DynamoDB Tables
+
+| Table name | Description |
+|---|---|
+| `{env}-remediation-config` | Singleton config record (`config_id=global`) storing risk mode, rules, exclusions, and allowed IP ranges |
+| `{env}-remediation-audit-log` | Append-only audit log of every action evaluation — executed, skipped, suppressed, or failed |
+
+### New SNS Topic
+
+| Topic name | Description |
+|---|---|
+| `{env}-radius-remediation` | Receives structured JSON notifications when risk mode is `alert` or `enforce` |
+
+### New Environment Variables
+
+**`{env}-incident-processor`** — added in Phase 7:
+
+| Variable | Value | Description |
+|---|---|---|
+| `REMEDIATION_LAMBDA_ARN` | `arn:aws:lambda:{region}:{account}:function:{env}-remediation-engine` | ARN of the Remediation_Engine Lambda; Incident_Processor invokes it asynchronously for every new incident |
+
+**`{env}-api-handler`** — added in Phase 7:
+
+| Variable | Value | Description |
+|---|---|---|
+| `REMEDIATION_CONFIG_TABLE` | `{env}-remediation-config` | DynamoDB table for remediation config reads/writes |
+| `REMEDIATION_AUDIT_TABLE` | `{env}-remediation-audit-log` | DynamoDB table for audit log queries |
+
+### IAM Permissions — `{env}-remediation-engine` Role
+
+The Remediation_Engine Lambda role requires the following permissions in addition to the standard Lambda execution role:
+
+| Permission | Resource | Purpose |
+|---|---|---|
+| `dynamodb:GetItem` | `{env}-remediation-config` | Load global config |
+| `dynamodb:UpdateItem` | `{env}-remediation-config` | Update risk mode |
+| `dynamodb:PutItem` | `{env}-remediation-audit-log` | Write audit entries |
+| `dynamodb:Query` | `{env}-remediation-audit-log` | Safety control cooldown/rate-limit checks |
+| `sns:Publish` | `{env}-radius-remediation` | Publish remediation notifications |
+| `iam:ListAccessKeys` | `*` | `disable_iam_user` action |
+| `iam:UpdateAccessKey` | `*` | `disable_iam_user` action |
+| `iam:DeleteLoginProfile` | `*` | `disable_iam_user` action |
+| `iam:ListAttachedUserPolicies` | `*` | `remove_risky_policies` action |
+| `iam:ListAttachedRolePolicies` | `*` | `remove_risky_policies` action |
+| `iam:ListUserPolicies` | `*` | `remove_risky_policies` action |
+| `iam:ListRolePolicies` | `*` | `remove_risky_policies` action |
+| `iam:GetUserPolicy` | `*` | `remove_risky_policies` action |
+| `iam:GetRolePolicy` | `*` | `remove_risky_policies` action |
+| `iam:DetachUserPolicy` | `*` | `remove_risky_policies` action |
+| `iam:DetachRolePolicy` | `*` | `remove_risky_policies` action |
+| `iam:DeleteUserPolicy` | `*` | `remove_risky_policies` action |
+| `iam:DeleteRolePolicy` | `*` | `remove_risky_policies` action |
+| `iam:GetRole` | `*` | `block_role_assumption` action |
+| `iam:UpdateAssumeRolePolicy` | `*` | `block_role_assumption` action |
+| `iam:PutUserPolicy` | `*` | `restrict_network_access` action |
+| `iam:PutRolePolicy` | `*` | `restrict_network_access` action |
+
+> **Note:** In production, scope `iam:*` permissions to specific resource ARNs or use permission boundaries to limit the blast radius of the Remediation_Engine role itself.
 
 ---
 

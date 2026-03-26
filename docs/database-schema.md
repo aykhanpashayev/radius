@@ -1,5 +1,15 @@
 # Database Schema
 
+## Table of Contents
+
+- [Identity_Profile](#identity_profile)
+- [Blast_Radius_Score](#blast_radius_score)
+- [Incident](#incident)
+- [Event_Summary](#event_summary)
+- [Trust_Relationship](#trust_relationship)
+- [Remediation_Config](#remediation_config)
+- [Remediation_Audit_Log](#remediation_audit_log)
+
 All tables use on-demand billing and KMS encryption. PITR is enabled on Identity_Profile, Blast_Radius_Score, and Incident tables.
 
 ## Identity_Profile
@@ -144,3 +154,110 @@ Records trust edges between IAM identities discovered from AssumeRole events.
 |---|---|---|---|---|
 | RelationshipTypeIndex | relationship_type | discovery_timestamp | ALL | Filter by relationship type |
 | TargetAccountIndex | target_account_id | discovery_timestamp | KEYS_ONLY | Find cross-account relationships |
+
+---
+
+## Remediation_Config
+
+Stores the singleton global remediation configuration. There is exactly one record in this table (`config_id=global`).
+
+**Primary key:** `config_id` (partition key)
+
+| Field | Type | Description |
+|---|---|---|
+| config_id | String | Always `"global"` (PK) |
+| risk_mode | String | Active risk mode: `monitor`, `alert`, or `enforce` |
+| rules | List | Ordered list of remediation rule objects |
+| excluded_arns | List | IAM ARNs exempt from all remediation |
+| protected_account_ids | List | AWS account IDs exempt from all remediation |
+| allowed_ip_ranges | List | CIDR ranges used by `restrict_network_access` action |
+
+**Rule object fields:**
+
+| Field | Type | Description |
+|---|---|---|
+| rule_id | String (UUID v4) | Unique rule identifier |
+| name | String | Human-readable description |
+| active | Boolean | Whether the rule participates in matching |
+| priority | Integer | Lower = higher priority; rules evaluated in ascending order |
+| min_severity | String | Minimum incident severity to match |
+| detection_types | List\<String\> | Detection types that trigger this rule; empty = all |
+| identity_types | List\<String\> | Identity types this rule applies to; empty = all |
+| actions | List\<String\> | Ordered list of action names to execute |
+
+**GSIs:** None (single-record table; all access is by primary key)
+
+**TTL:** Not enabled
+
+**Example record:**
+```json
+{
+  "config_id": "global",
+  "risk_mode": "monitor",
+  "rules": [
+    {
+      "rule_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "Disable compromised IAM users on Critical incidents",
+      "active": true,
+      "priority": 1,
+      "min_severity": "Critical",
+      "detection_types": [],
+      "identity_types": ["IAMUser"],
+      "actions": ["disable_iam_user", "notify_security_team"]
+    }
+  ],
+  "excluded_arns": ["arn:aws:iam::123456789012:user/break-glass-admin"],
+  "protected_account_ids": ["123456789012"],
+  "allowed_ip_ranges": ["10.0.0.0/8", "192.168.1.0/24"]
+}
+```
+
+---
+
+## Remediation_Audit_Log
+
+Append-only audit log. Every action evaluation — executed, skipped, suppressed, or failed — writes one record. A summary record (`action_name=remediation_complete`) is written after all actions complete for an incident.
+
+**Primary key:** `audit_id` (partition key)
+
+| Field | Type | Description |
+|---|---|---|
+| audit_id | String (UUID v4) | Primary key |
+| incident_id | String (UUID v4) | Source incident |
+| identity_arn | String | IAM identity that was evaluated |
+| rule_id | String | Rule that triggered this action; empty for suppressed/no-match/summary records |
+| action_name | String | Action evaluated, or `remediation_suppressed` / `no_rules_matched` / `remediation_complete` |
+| outcome | String | `executed`, `skipped`, `failed`, `suppressed`, or `summary` |
+| risk_mode | String | Active mode at evaluation time |
+| dry_run | Boolean | Whether dry_run was active |
+| timestamp | String (ISO 8601 UTC) | Evaluation time |
+| details | String (JSON) | Action-specific metadata (key IDs, policy ARNs, counts) |
+| reason | String | Suppression or failure reason; empty for executed outcomes |
+| ttl | Number (Unix timestamp) | Auto-expiry 365 days from write time |
+
+**GSIs:**
+
+| Index | PK | SK | Projection | Use case |
+|---|---|---|---|---|
+| IdentityTimeIndex | identity_arn | timestamp | ALL | List audit entries for an identity, sorted by time |
+| IncidentIndex | incident_id | timestamp | ALL | List all audit entries for a specific incident |
+
+**TTL:** Enabled on `ttl` field (365-day expiry)
+
+**Example record:**
+```json
+{
+  "audit_id": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+  "incident_id": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+  "identity_arn": "arn:aws:iam::123456789012:user/attacker",
+  "rule_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "action_name": "disable_iam_user",
+  "outcome": "executed",
+  "risk_mode": "enforce",
+  "dry_run": false,
+  "timestamp": "2024-01-15T10:30:00.123456+00:00",
+  "details": "{\"deactivated_key_ids\": [\"AKIAIOSFODNN7EXAMPLE\"], \"login_profile_deleted\": true}",
+  "reason": "",
+  "ttl": 1768472400
+}
+```

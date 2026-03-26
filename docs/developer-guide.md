@@ -1,5 +1,14 @@
 # Developer Guide
 
+## Table of Contents
+
+- [Adding a New Detection Rule](#adding-a-new-detection-rule)
+- [Adding a New Scoring Rule](#adding-a-new-scoring-rule)
+- [Test Structure](#test-structure)
+- [Running Tests](#running-tests)
+- [Injecting Sample Events](#injecting-sample-events)
+- [Lambda Packaging and Deployment](#lambda-packaging-and-deployment)
+
 This guide covers how to extend Radius with new detection and scoring rules, how the test suite is structured, and how to run tests, inject sample events, and package Lambda functions for deployment.
 
 ---
@@ -174,7 +183,58 @@ Integration tests in `backend/tests/integration/` use [moto](https://docs.getmot
 
 ## Running Tests
 
-### Full test suite
+### Install test dependencies
+
+```bash
+pip install -r backend/requirements-dev.txt
+```
+
+This installs pytest, pytest-cov, moto, hypothesis, and all other test dependencies. Always run this after cloning or pulling changes that modify `requirements-dev.txt`.
+
+### Run all tests
+
+```bash
+bash scripts/run-tests.sh
+```
+
+Runs unit tests, integration tests, and property-based tests in sequence and prints a formatted summary table with pass/fail counts, coverage percentages, and duration per suite.
+
+### Fast mode (skip property-based tests)
+
+```bash
+bash scripts/run-tests.sh --fast
+```
+
+Skips the Hypothesis property-based test suite. Useful during active development when you want a quick feedback loop. Property tests should always be run before committing.
+
+### Run a single test file
+
+```bash
+pytest backend/tests/test_remediation_engine.py -v
+```
+
+Replace the file path with any test file. The `-v` flag shows individual test names and pass/fail status.
+
+### Interpreting coverage output
+
+After running the full suite, pytest-cov prints a per-module coverage table:
+
+```
+Name                                                    Stmts   Miss  Cover
+---------------------------------------------------------------------------
+backend/functions/detection_engine/engine.py               45      3    93%
+backend/functions/remediation_engine/engine.py             82      5    94%
+...
+TOTAL                                                     612     38    94%
+```
+
+- **Stmts** — total executable statements in the module
+- **Miss** — statements not executed by any test
+- **Cover** — percentage of statements executed
+
+Lines marked with `# pragma: no cover` are excluded from the count (used sparingly for defensive error branches that cannot be triggered in tests).
+
+### Full test suite (legacy pytest invocation)
 
 ```bash
 pytest backend/tests/ -v
@@ -190,18 +250,6 @@ pytest backend/tests/ -v --ignore=backend/tests/integration
 
 ```bash
 pytest backend/tests/integration/ -v
-```
-
-### With coverage
-
-```bash
-pytest backend/tests/ --cov=backend/functions --cov-report=term-missing
-```
-
-### Single test file
-
-```bash
-pytest backend/tests/test_detection_rules.py -v
 ```
 
 ### Property-based tests (Hypothesis)

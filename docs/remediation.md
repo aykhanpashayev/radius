@@ -1,5 +1,14 @@
 # Remediation Workflows
 
+## Table of Contents
+
+- [Risk Modes](#risk-modes)
+- [Remediation Actions](#remediation-actions)
+- [Safety Controls](#safety-controls)
+- [Audit Log Schema](#audit-log-schema)
+- [Configuring Rules](#configuring-rules)
+- [Operational Runbook](#operational-runbook)
+
 Radius can automatically respond to high-severity incidents by executing approved AWS mutations against the offending IAM identity. This document covers how to configure and operate the remediation system.
 
 ---

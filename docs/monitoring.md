@@ -1,5 +1,14 @@
 # Monitoring
 
+## Table of Contents
+
+- [CloudWatch Dashboards](#cloudwatch-dashboards)
+- [CloudWatch Alarms](#cloudwatch-alarms)
+- [Structured Logging](#structured-logging)
+- [Correlation ID Propagation](#correlation-id-propagation)
+- [Example CloudWatch Logs Insights Queries](#example-cloudwatch-logs-insights-queries)
+- [Troubleshooting Common Issues](#troubleshooting-common-issues)
+
 ## CloudWatch Dashboards
 
 Four dashboards are provisioned automatically by the `cloudwatch` Terraform module.
@@ -40,19 +49,73 @@ Log groups follow the pattern `/aws/lambda/{prefix}-{function-name}`.
 
 Retention: 7 days (dev), 30 days (prod).
 
-## Correlation ID Tracing
+### Log Groups and Fields
 
-Each Lambda invocation generates a `correlation_id` at entry. This ID is:
-- Included in every log record for that invocation
-- Passed to downstream async invocations in the event payload
-- Logged on errors with full stack trace via `log_error()`
+| Log group | Additional structured fields |
+|---|---|
+| `/aws/lambda/{env}-event-normalizer` | `event_id`, `identity_arn`, `event_type` |
+| `/aws/lambda/{env}-detection-engine` | `event_id`, `identity_arn`, `findings_count` |
+| `/aws/lambda/{env}-incident-processor` | `incident_id`, `identity_arn`, `detection_type`, `severity` |
+| `/aws/lambda/{env}-identity-collector` | `identity_arn`, `identity_type`, `account_id` |
+| `/aws/lambda/{env}-score-engine` | `identity_arn`, `score_value`, `severity_level` |
+| `/aws/lambda/{env}-api-handler` | `http_method`, `path`, `status_code`, `duration_ms` |
+| `/aws/lambda/{env}-remediation-engine` | `function_name`, `correlation_id`, `incident_id`, `identity_arn`, `risk_mode`, `actions_executed`, `actions_suppressed` |
 
-To trace a request end-to-end, search CloudWatch Logs Insights across all log groups:
+## Correlation ID Propagation
+
+Every invocation of Event_Normalizer generates a `correlation_id` (UUID v4) at entry. This ID travels through the entire async pipeline so that a single CloudTrail event can be traced end-to-end across all log groups.
+
+**Propagation path:**
+
+1. **Event_Normalizer** — generates `correlation_id`, includes it in every log record for that invocation, and embeds it in the payload passed to Detection_Engine via async Lambda invoke.
+2. **Detection_Engine** — reads `correlation_id` from the invocation payload, includes it in all log records, and passes it forward in the payload to Incident_Processor.
+3. **Incident_Processor** — reads `correlation_id` from the payload, logs it with every record, and includes it in the async invoke payload sent to Remediation_Engine.
+4. **Remediation_Engine** — reads `correlation_id` from the payload and logs it with every audit and outcome record.
+
+Because `correlation_id` is present in every log record across all four functions, a single Logs Insights query across all log groups can reconstruct the complete execution trace for any event.
+
+**Tracing a request end-to-end in CloudWatch Logs Insights:**
+
+Select all relevant log groups (`/aws/lambda/{env}-event-normalizer`, `-detection-engine`, `-incident-processor`, `-remediation-engine`) and run:
 
 ```
-fields @timestamp, @message
+fields @timestamp, @logStream, @message
 | filter correlation_id = "your-correlation-id-here"
 | sort @timestamp asc
+```
+
+## Example CloudWatch Logs Insights Queries
+
+### Find all log entries for a given correlation_id
+
+Use this to trace a single CloudTrail event through the full pipeline. Select all Lambda log groups.
+
+```
+fields @timestamp, @logStream, level, message, incident_id, identity_arn
+| filter correlation_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+| sort @timestamp asc
+```
+
+### Find all incidents created in the last hour
+
+Run against `/aws/lambda/{env}-incident-processor`.
+
+```
+fields @timestamp, incident_id, identity_arn, detection_type, severity
+| filter message = "Incident created"
+| filter @timestamp >= ago(1h)
+| sort @timestamp desc
+```
+
+### Find all remediation actions executed for a given identity_arn
+
+Run against `/aws/lambda/{env}-remediation-engine`.
+
+```
+fields @timestamp, incident_id, action_name, outcome, risk_mode, reason
+| filter identity_arn = "arn:aws:iam::123456789012:user/attacker"
+| filter outcome = "executed"
+| sort @timestamp desc
 ```
 
 ## Troubleshooting Common Issues
