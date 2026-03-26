@@ -84,7 +84,7 @@ Implementation tasks for Phase 7. All tasks are additive — no existing Lambda 
   - [x] 13.7 Write integration test `test_dry_run_flag_overrides_enforce_mode`: set `risk_mode=enforce` in config but pass `dry_run=true` in payload; assert all outcomes are `suppressed` and audit entries have `dry_run=true`
   - [x] 13.8 Write integration test `test_audit_log_completeness`: invoke engine with two matched rules each having two actions; assert total audit entries written equals 4 action entries plus 1 summary entry
 
-- [ ] 14. Documentation
-  - [ ] 14.1 Add a `Remediation Workflows` section to `docs/architecture.md` describing the new pipeline branch from Incident_Processor → Remediation_Engine, the three Risk Modes, and the two new DynamoDB tables
-  - [ ] 14.2 Create `docs/remediation.md` documenting: the three Risk Modes and how to change them, all five remediation actions with trigger conditions and rollback procedures, the safety controls (cooldown, rate limit, exclusions), the audit log schema, and example API calls for configuring rules
+- [x] 14. Documentation
+  - [x] 14.1 Add a `Remediation Workflows` section to `docs/architecture.md` describing the new pipeline branch from Incident_Processor → Remediation_Engine, the three Risk Modes, and the two new DynamoDB tables
+  - [x] 14.2 Create `docs/remediation.md` documenting: the three Risk Modes and how to change them, all five remediation actions with trigger conditions and rollback procedures, the safety controls (cooldown, rate limit, exclusions), the audit log schema, and example API calls for configuring rules
 

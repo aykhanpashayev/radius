@@ -45,6 +45,7 @@ Event_Normalizer is the single entry point from EventBridge. It invokes Detectio
 | Identity_Collector | Async invoke (Event_Normalizer) | Upsert Identity_Profile records; record Trust_Relationship edges for AssumeRole events | — |
 | Score_Engine | EventBridge schedule / direct invoke | Evaluate 8 scoring rules against ScoringContext; write Blast_Radius_Score snapshot | — |
 | API_Handler | API Gateway (REST) | Serve all read/write operations for the React dashboard | — |
+| Remediation_Engine | Async invoke (Incident_Processor) | Evaluate remediation rules against high-severity incidents; execute approved IAM actions; write audit log | Remediation_Topic (SNS) |
 
 ## DynamoDB Tables
 
@@ -55,6 +56,8 @@ Event_Normalizer is the single entry point from EventBridge. It invokes Detectio
 | Incident | `incident_id` | — | Security incidents: status, severity, related events, status history |
 | Event_Summary | `identity_arn` | `timestamp` | Normalized CloudTrail events; TTL-expired after 90 days |
 | Trust_Relationship | `source_arn` | `target_arn` | Cross-account and service trust edges discovered from AssumeRole events |
+| Remediation_Config | `config_id` | — | Singleton remediation config: Risk_Mode, active rules, exclusion lists |
+| Remediation_Audit_Log | `audit_id` | — | Append-only audit trail of every remediation action evaluation; TTL 365 days |
 
 ### GSIs
 
@@ -120,6 +123,72 @@ kms
 6. Identity_Collector upserts the Identity_Profile record and writes a Trust_Relationship edge for AssumeRole events
 7. Score_Engine (scheduled or on-demand) builds a ScoringContext and evaluates 8 rules to produce a Blast_Radius_Score snapshot with contributing factors
 8. API_Handler serves the React dashboard via API Gateway with endpoints for identities, scores, incidents, and events
+
+## Remediation Workflows
+
+When Incident_Processor creates a High, Very High, or Critical severity incident, it asynchronously invokes the Remediation_Engine Lambda. The engine evaluates a configuration-driven rule set and optionally executes approved AWS mutations against the offending IAM identity.
+
+### Pipeline Branch
+
+```
+Incident_Processor Lambda
+    │
+    ├── (existing) create_incident() → Incident table
+    ├── (existing) publish_alert()   → SNS Alert_Topic
+    │
+    └── (NEW) _invoke_remediation()  → Remediation_Engine Lambda (async, High+ only)
+                                              │
+                                              ├── load_config()          → Remediation_Config table
+                                              ├── check_safety_controls()
+                                              ├── match_rules()
+                                              ├── execute_actions()      → IAM APIs
+                                              ├── publish_notification() → Remediation_Topic (SNS)
+                                              └── write_audit_log()      → Remediation_Audit_Log table
+```
+
+### Risk Modes
+
+The engine operates in one of three modes, configured via the `PUT /remediation/config/mode` API:
+
+| Mode | Behaviour |
+|---|---|
+| `monitor` | All rules evaluated and logged; no AWS mutations, no SNS notifications. Safe default. |
+| `alert` | Rules evaluated; SNS notification published; no AWS mutations. |
+| `enforce` | Rules evaluated; AWS mutations executed; SNS notification published. |
+
+The `dry_run` flag (Lambda env var or per-invocation payload field) overrides any configured mode to `monitor`.
+
+### New Lambda Functions
+
+| Function | Trigger | Purpose |
+|---|---|---|
+| Remediation_Engine | Async invoke (Incident_Processor) | Evaluate remediation rules, execute approved IAM actions, write audit log |
+
+### New DynamoDB Tables
+
+| Table | PK | GSIs | Purpose |
+|---|---|---|---|
+| Remediation_Config | `config_id` | — | Singleton config record: Risk_Mode, active rules, exclusion lists |
+| Remediation_Audit_Log | `audit_id` | `IdentityTimeIndex` (PK: `identity_arn`, SK: `timestamp`, ALL); `IncidentIndex` (PK: `incident_id`, SK: `timestamp`, KEYS_ONLY) | Append-only audit trail of every action evaluation; TTL 365 days |
+
+### New SNS Topic
+
+| Topic | Purpose |
+|---|---|
+| Remediation_Topic | Remediation-specific notifications published in `alert` and `enforce` modes |
+
+### Safety Controls
+
+Before any rule matching, the engine checks four guards in order:
+
+1. `excluded_arns` — identity explicitly excluded from all remediation
+2. `protected_account_ids` — identity belongs to a protected AWS account
+3. 60-minute cooldown — a remediation was already executed for this identity recently
+4. 24-hour rate limit — maximum 10 executions per identity per day
+
+Any firing guard suppresses the entire evaluation and writes a single audit entry with the suppression reason.
+
+---
 
 ## Design Principles
 
