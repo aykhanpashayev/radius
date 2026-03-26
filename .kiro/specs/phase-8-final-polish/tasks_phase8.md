@@ -46,12 +46,12 @@ Implementation tasks for Phase 8. All tasks are documentation, tooling, and pres
   - [x] 4.8 Implement `main()` in `scripts/simulate-attack.py` that orchestrates phase execution: if `--phase N` is given, run only that phase; otherwise run all phases in order 1–5, stopping on first failure; collect `PhaseResult` objects and call `print_phase_summary()` at the end; exit with code 0 on all pass, 1 on any failure
   - [x] 4.9 Implement `print_phase_summary(results)` in `scripts/simulate-attack.py` that prints the formatted summary table (phase number, name, status with ✓/✗ prefix, duration) and a final "All phases passed" or "N phase(s) failed" line
 
-- [ ] 5. run-tests.sh Script
-  - [ ] 5.1 Create `scripts/run-tests.sh` with `#!/usr/bin/env bash`, `set -euo pipefail`, a comment block describing the script and its `--fast` flag, and argument parsing for `--fast`
-  - [ ] 5.2 Implement the `run_suite` function in `scripts/run-tests.sh` that accepts a suite name and pytest command, records start time, runs the command capturing output, records end time, parses pytest output for passed/failed counts, and stores results in parallel arrays for the summary table
-  - [ ] 5.3 Add the three suite invocations to `scripts/run-tests.sh`: Unit Tests (`pytest backend/tests/ --ignore=backend/tests/integration --ignore=backend/tests/test_*_properties.py --cov=backend --cov-report=term-missing -q`), Integration Tests (`pytest backend/tests/integration/ --cov=backend --cov-append -q`), and Property-Based Tests (`pytest backend/tests/test_*_properties.py --cov=backend --cov-append -q`) — the third suite is skipped when `--fast` is set
-  - [ ] 5.4 Implement `print_summary_table` in `scripts/run-tests.sh` that prints the formatted table with columns: Suite, Tests, Passed, Failed, Coverage, Duration — using the data collected by `run_suite` — followed by a TOTAL row and a final pass/fail message
-  - [ ] 5.5 Add the exit code logic to `scripts/run-tests.sh`: accumulate a `TOTAL_FAILURES` counter from all suites; exit 0 if `TOTAL_FAILURES -eq 0`, exit 1 otherwise
+- [x] 5. run-tests.sh Script
+  - [x] 5.1 Create `scripts/run-tests.sh` with `#!/usr/bin/env bash`, `set -euo pipefail`, a comment block describing the script and its `--fast` flag, and argument parsing for `--fast`
+  - [x] 5.2 Implement the `run_suite` function in `scripts/run-tests.sh` that accepts a suite name and pytest command, records start time, runs the command capturing output, records end time, parses pytest output for passed/failed counts, and stores results in parallel arrays for the summary table
+  - [x] 5.3 Add the three suite invocations to `scripts/run-tests.sh`: Unit Tests (`pytest backend/tests/ --ignore=backend/tests/integration --ignore=backend/tests/test_*_properties.py --cov=backend --cov-report=term-missing -q`), Integration Tests (`pytest backend/tests/integration/ --cov=backend --cov-append -q`), and Property-Based Tests (`pytest backend/tests/test_*_properties.py --cov=backend --cov-append -q`) — the third suite is skipped when `--fast` is set
+  - [x] 5.4 Implement `print_summary_table` in `scripts/run-tests.sh` that prints the formatted table with columns: Suite, Tests, Passed, Failed, Coverage, Duration — using the data collected by `run_suite` — followed by a TOTAL row and a final pass/fail message
+  - [x] 5.5 Add the exit code logic to `scripts/run-tests.sh`: accumulate a `TOTAL_FAILURES` counter from all suites; exit 0 if `TOTAL_FAILURES -eq 0`, exit 1 otherwise
   - [ ]* 5.6 Add a `--coverage-html` optional flag to `scripts/run-tests.sh` that appends `--cov-report=html:htmlcov` to the pytest command and prints the path to the HTML report after the summary table
 
 - [ ] 6. Documentation Gap-Filling
