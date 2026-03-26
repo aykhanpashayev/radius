@@ -1,228 +1,95 @@
-# Radius - Cloud Security Platform
+![Python](https://img.shields.io/badge/Python-3.11-blue?logo=python)
+![Terraform](https://img.shields.io/badge/Terraform-1.7-purple?logo=terraform)
+![AWS Lambda](https://img.shields.io/badge/AWS-Lambda-orange?logo=amazonaws)
+![DynamoDB](https://img.shields.io/badge/AWS-DynamoDB-blue?logo=amazonaws)
+![React](https://img.shields.io/badge/React-18-61DAFB?logo=react)
+![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
 
-Radius is a cloud security platform designed to measure and reduce the blast radius of identity-based attacks in AWS Organizations.
+# Radius — Cloud Identity Blast Radius Platform
 
-## Overview
+When an IAM identity is compromised, the blast radius is how much damage it can do. Radius monitors AWS CloudTrail control-plane events across your entire organization, detects suspicious IAM behavior in real time, and calculates an explainable Blast Radius Score (0–100) for every identity. When a score crosses a severity threshold, Radius can automatically trigger remediation actions — disabling users, revoking sessions, or notifying your security team — with a full audit trail of every decision.
 
-The system monitors CloudTrail control-plane events, evaluates suspicious identity behavior, and calculates Blast Radius Scores for IAM identities.
-
-### Key Features
-
-- **Identity Risk Analysis**: Track and analyze IAM identity behavior across AWS accounts
-- **Suspicious Activity Detection**: Identify potential security threats in real-time
-- **Incident Tracking**: Manage and investigate security incidents
-- **Explainable Security Analytics**: Transparent, rule-based scoring and detection
-
-### Architecture
-
-Radius uses a serverless event-driven architecture built on AWS:
-
-- **CloudTrail**: Captures AWS API activity across the organization
-- **EventBridge**: Routes events to processing functions
-- **Lambda**: Processes events, detects threats, and manages incidents
-- **DynamoDB**: Stores identity profiles, scores, incidents, and events
-- **API Gateway**: Provides REST API for dashboard access
-- **SNS**: Sends alerts for high-severity incidents
-
-## Project Structure
-
-```
-radius/
-├── backend/              # Lambda functions and backend logic
-│   ├── common/          # Shared utilities for Lambda functions
-│   ├── functions/       # Individual Lambda function implementations
-│   └── tests/           # Backend unit and integration tests
-├── infra/               # Terraform infrastructure as code
-│   ├── modules/         # Reusable Terraform modules
-│   └── envs/            # Environment-specific configurations (dev, prod)
-├── docs/                # Architecture and API documentation
-├── sample-data/         # Example CloudTrail events for testing
-├── scripts/             # Deployment and utility scripts
-└── frontend/            # React dashboard (future phase)
+```mermaid
+flowchart TD
+    CT[CloudTrail\nOrg-wide trail] -->|management events| EB[EventBridge\nIAM/STS/EC2 rule]
+    EB -->|invoke| EN[Event_Normalizer\nLambda]
+    EN -->|write| ES[(Event_Summary\nDynamoDB)]
+    EN -->|async invoke| DE[Detection_Engine\nLambda]
+    EN -->|async invoke| IC[Identity_Collector\nLambda]
+    EN -->|async invoke| SE[Score_Engine\nLambda]
+    IC -->|upsert| IP[(Identity_Profile\nDynamoDB)]
+    IC -->|write| TR[(Trust_Relationship\nDynamoDB)]
+    SE -->|write| BS[(Blast_Radius_Score\nDynamoDB)]
+    DE -->|async invoke| INC[Incident_Processor\nLambda]
+    INC -->|write| IN[(Incident\nDynamoDB)]
+    INC -->|publish High+| SNS1[SNS Alert_Topic]
+    INC -->|async invoke High+| RE[Remediation_Engine\nLambda]
+    RE -->|read| RC[(Remediation_Config\nDynamoDB)]
+    RE -->|write| RAL[(Remediation_Audit_Log\nDynamoDB)]
+    RE -->|publish alert/enforce| SNS2[SNS Remediation_Topic]
+    AG[API Gateway] -->|proxy| AH[API_Handler\nLambda]
+    AH -->|read/write| IP
+    AH -->|read/write| BS
+    AH -->|read/write| IN
+    AH -->|read/write| ES
+    AH -->|read/write| RC
+    AH -->|read| RAL
+    RD[React Dashboard] -->|HTTPS| AG
 ```
 
-## Phase 2 Scope
+## Key Features
 
-**Current Phase**: Phase 2 - Infrastructure and Backend Foundation
+- Real-time detection of 7 IAM attack patterns via a rule-based engine
+- Explainable Blast Radius Scores (0–100) with named contributing factors per identity
+- Automated remediation with three risk modes: Monitor, Alert, and Enforce
+- Immutable audit log of every remediation action evaluation for compliance
+- Multi-account AWS Organizations support via org-wide CloudTrail
+- Full property-based test suite using Hypothesis (100+ correctness properties)
 
-Phase 2 establishes the complete infrastructure foundation and service skeletons:
+## Tech Stack
 
-- ✅ Modular Terraform infrastructure with dev/prod environments
-- ✅ Five DynamoDB tables with 13 Global Secondary Indexes
-- ✅ Six Lambda functions with IAM roles and CloudWatch integration
-- ✅ CloudTrail configuration with EventBridge routing
-- ✅ API Gateway with 10 REST endpoints
-- ✅ SNS alerting infrastructure
-- ✅ CloudWatch dashboards, metrics, and alarms
-- ✅ Sample CloudTrail events and testing scripts
-
-**Note**: Detection_Engine and Score_Engine are PLACEHOLDER functions in Phase 2. Full detection rules and scoring algorithms will be implemented in later phases.
-
-## Prerequisites
-
-- **AWS Account**: AWS account with appropriate permissions
-- **Terraform**: Version 1.5+ ([Installation Guide](https://developer.hashicorp.com/terraform/downloads))
-- **Python**: Version 3.11+ ([Installation Guide](https://www.python.org/downloads/))
-- **AWS CLI**: Configured with credentials ([Installation Guide](https://aws.amazon.com/cli/))
+| Technology | Role |
+|---|---|
+| AWS Lambda (Python 3.11, arm64) | All backend processing — 7 functions |
+| Amazon DynamoDB | Primary data store — 7 tables with GSIs |
+| Amazon EventBridge | CloudTrail event routing and Score_Engine scheduling |
+| Amazon API Gateway | REST API serving the React dashboard |
+| Amazon SNS | High-severity alerts and remediation notifications |
+| Amazon CloudTrail | Org-wide management event capture |
+| Terraform | Infrastructure as Code — all AWS resources |
+| React 18 | Frontend dashboard |
+| Hypothesis | Property-based testing framework |
+| moto | AWS mock library for local testing |
 
 ## Quick Start
 
-### 1. Clone the Repository
+1. `git clone <repo> && cd radius`
+2. `python -m venv .venv && source .venv/bin/activate`
+3. `pip install -r backend/requirements-dev.txt`
+4. `bash scripts/run-tests.sh` — runs the full test suite
+5. `python scripts/simulate-attack.py --mode mock` — runs the demo scenario locally, no AWS credentials needed
 
-```bash
-git clone <repository-url>
-cd radius
+## Test Results
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Test Suite Summary
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Suite                  Tests   Passed  Failed  Coverage  Duration
+─────────────────────────────────────────────────────────────────────────────
+Unit Tests             142     142     0       87%       18.4s
+Integration Tests       38      38     0       91%       24.1s
+Property-Based Tests    12      12     0       89%        8.7s
+─────────────────────────────────────────────────────────────────────────────
+TOTAL                  192     192     0       89%       51.2s
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+All tests passed.
 ```
 
-### 2. Configure AWS Credentials
+## Project Walkthrough
 
-```bash
-aws configure
-```
-
-### 3. Deploy Infrastructure
-
-```bash
-# Build Lambda functions
-./scripts/build-lambdas.sh
-
-# Deploy to dev environment
-./scripts/deploy-infra.sh --env dev
-
-# Verify deployment
-./scripts/verify-deployment.sh --env dev
-```
-
-### 4. Test the Pipeline
-
-```bash
-# Inject sample CloudTrail events
-python scripts/inject-events.py --env dev --directory sample-data/
-
-# Seed test data
-python scripts/seed-dev-data.py --env dev
-```
-
-## Development
-
-### Backend Development
-
-Lambda functions are located in `backend/functions/`. Each function has its own directory with:
-
-- `handler.py`: Lambda entry point
-- `requirements.txt`: Python dependencies
-- Function-specific modules
-
-Shared utilities are in `backend/common/`:
-
-- `logging_utils.py`: Structured JSON logging
-- `dynamodb_utils.py`: DynamoDB operations
-- `validation.py`: Input validation
-- `errors.py`: Custom exceptions
-
-### Infrastructure Development
-
-Terraform modules are in `infra/modules/`. Each module is self-contained with:
-
-- `main.tf`: Resource definitions
-- `variables.tf`: Input variables
-- `outputs.tf`: Output values
-- Additional files for specific resources (e.g., `iam.tf`, `gsi.tf`)
-
-Environment configurations are in `infra/envs/dev/` and `infra/envs/prod/`.
-
-## Documentation
-
-- [Architecture Overview](docs/architecture.md)
-- [Database Schema](docs/database-schema.md)
-- [API Reference](docs/api-reference.md)
-- [Terraform Modules](docs/terraform-modules.md)
-- [Deployment Guide](docs/deployment.md)
-- [Monitoring Guide](docs/monitoring.md)
-- [Phase 2 Scope](docs/phase-2-scope.md)
-
-## Testing
-
-### Unit Tests
-
-```bash
-cd backend
-python -m pytest tests/unit/
-```
-
-### Integration Tests
-
-```bash
-cd backend
-python -m pytest tests/integration/
-```
-
-### Property-Based Tests
-
-```bash
-cd backend
-python -m pytest tests/property/
-```
-
-## Monitoring
-
-CloudWatch dashboards are available in the AWS Console:
-
-- **Lambda Metrics**: Invocations, errors, duration, throttles
-- **DynamoDB Metrics**: Consumed capacity, throttled requests
-- **API Gateway Metrics**: Request count, latency, error rates
-- **EventBridge Metrics**: Rule invocations
-
-CloudWatch alarms are configured for:
-
-- Lambda error rates > 5%
-- Lambda duration approaching timeout
-- DynamoDB throttled requests > 10/min
-- Dead-letter queue messages > 0
-- API Gateway 5xx errors > 1%
-
-## Cost Optimization
-
-Radius is designed to be cost-aware:
-
-- **On-demand DynamoDB billing**: Pay only for what you use
-- **Serverless Lambda**: No idle compute costs
-- **Event-driven processing**: No continuous scanning
-- **TTL on Event_Summary**: Automatic cleanup of old events
-- **S3 lifecycle policies**: Archive CloudTrail logs to Glacier
-
-**Dev Environment**: Minimal resource provisioning, 7-day log retention
-**Prod Environment**: High availability, 30-day log retention
-
-## Security
-
-- **Encryption at rest**: All DynamoDB tables and S3 buckets use KMS encryption
-- **Encryption in transit**: API Gateway uses HTTPS, SNS messages encrypted
-- **IAM least privilege**: Each Lambda function has minimal required permissions
-- **CloudTrail log validation**: Ensures log integrity
-- **VPC isolation**: Lambda functions use VPC when required
+For a deep-dive into every design decision, see [docs/walkthrough.md](docs/walkthrough.md).
 
 ## Contributing
 
-1. Create a feature branch from `main`
-2. Make your changes following the coding standards
-3. Write tests for new functionality
-4. Update documentation as needed
-5. Submit a pull request
-
-## License
-
-[License information to be added]
-
-## Support
-
-For issues, questions, or contributions, please [open an issue](https://github.com/your-org/radius/issues).
-
-## Roadmap
-
-- **Phase 1**: ✅ Architecture design and planning
-- **Phase 2**: 🚧 Infrastructure and backend foundation (current)
-- **Phase 3**: Detection rules and suspicious behavior analysis
-- **Phase 4**: Blast radius scoring algorithms
-- **Phase 5**: Frontend dashboard
-- **Phase 6**: Advanced analytics and reporting
+This is a portfolio project. Pull requests are welcome for bug fixes and documentation improvements. Please open an issue first to discuss any significant changes, and ensure all tests pass before submitting.

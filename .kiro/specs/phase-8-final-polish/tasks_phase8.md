@@ -8,14 +8,14 @@ Implementation tasks for Phase 8. All tasks are documentation, tooling, and pres
 
 ## Task List
 
-- [ ] 1. README Overhaul
-  - [ ] 1.1 Delete all existing content from `README.md` and replace it with the new structure defined in the design doc: badges row, H1 headline, "What is Radius?" paragraph, embedded Mermaid pipeline diagram, Key Features bullet list, Tech Stack table, Quick Start numbered steps, Test Results code block, Project Walkthrough link, and Contributing paragraph
-  - [ ] 1.2 Write the "What is Radius?" paragraph (~80 words) explaining blast radius as a concept, how Radius monitors CloudTrail events to detect suspicious IAM behavior, and that it produces explainable Blast Radius Scores with automated remediation — accessible to a non-specialist recruiter
-  - [ ] 1.3 Add the shields.io badge row to `README.md` with badges for Python 3.11, Terraform, AWS Lambda, DynamoDB, React, and a static "tests passing" badge
-  - [ ] 1.4 Add the Tech Stack table to `README.md` listing all 10 technologies (Lambda, DynamoDB, EventBridge, API Gateway, SNS, CloudTrail, Terraform, React, Hypothesis, moto) with their roles
-  - [ ] 1.5 Add the Quick Start section to `README.md` with the five numbered commands: clone, venv, pip install, run-tests.sh, simulate-attack.py
-  - [ ] 1.6 Add a static Test Results code block to `README.md` showing representative `scripts/run-tests.sh` output (suite names, test counts, coverage percentages)
-  - [ ] 1.7 Verify `README.md` contains no references to Phase 2 scope, `IMPLEMENTATION_SUMMARY.md`, or any stale content from the previous README
+- [x] 1. README Overhaul
+  - [x] 1.1 Delete all existing content from `README.md` and replace it with the new structure defined in the design doc: badges row, H1 headline, "What is Radius?" paragraph, embedded Mermaid pipeline diagram, Key Features bullet list, Tech Stack table, Quick Start numbered steps, Test Results code block, Project Walkthrough link, and Contributing paragraph
+  - [x] 1.2 Write the "What is Radius?" paragraph (~80 words) explaining blast radius as a concept, how Radius monitors CloudTrail events to detect suspicious IAM behavior, and that it produces explainable Blast Radius Scores with automated remediation — accessible to a non-specialist recruiter
+  - [x] 1.3 Add the shields.io badge row to `README.md` with badges for Python 3.11, Terraform, AWS Lambda, DynamoDB, React, and a static "tests passing" badge
+  - [x] 1.4 Add the Tech Stack table to `README.md` listing all 10 technologies (Lambda, DynamoDB, EventBridge, API Gateway, SNS, CloudTrail, Terraform, React, Hypothesis, moto) with their roles
+  - [x] 1.5 Add the Quick Start section to `README.md` with the five numbered commands: clone, venv, pip install, run-tests.sh, simulate-attack.py
+  - [x] 1.6 Add a static Test Results code block to `README.md` showing representative `scripts/run-tests.sh` output (suite names, test counts, coverage percentages)
+  - [x] 1.7 Verify `README.md` contains no references to Phase 2 scope, `IMPLEMENTATION_SUMMARY.md`, or any stale content from the previous README
 
 - [ ] 2. Architecture Diagrams
   - [ ] 2.1 Create `docs/architecture/pipeline-overview.md` with a 2–4 sentence prose introduction and a `flowchart TD` Mermaid diagram showing the full event pipeline: CloudTrail → EventBridge → Event_Normalizer → Detection_Engine → Incident_Processor → Remediation_Engine, with Identity_Collector, Score_Engine, SNS topics, all DynamoDB tables, API Gateway, API_Handler, and React Dashboard annotated
