@@ -25,15 +25,15 @@ Implementation tasks for Phase 8. All tasks are documentation, tooling, and pres
   - [x] 2.5 Update `docs/architecture.md` to add a "Diagrams" section after the existing "Design Principles" section, with links to all four new diagram files: `pipeline-overview.md`, `scoring-pipeline.md`, `remediation-branch.md`, `api-layer.md`
   - [x] 2.6 Copy the Mermaid `flowchart TD` block from `docs/architecture/pipeline-overview.md` into `README.md` (task 1.1 placeholder) so the pipeline diagram renders directly on the GitHub repository landing page
 
-- [ ] 3. Demo Guide
-  - [ ] 3.1 Create `docs/demo/demo-guide.md` with an Overview section explaining what the demo shows (full privilege escalation attack through the Radius pipeline) and why it matters for demonstrating the platform
-  - [ ] 3.2 Add a Prerequisites section to `docs/demo/demo-guide.md` listing: Python 3.11+, `pip install -r backend/requirements-dev.txt`, and a note that no AWS credentials are needed in mock mode
-  - [ ] 3.3 Add an "Attack Scenario" section to `docs/demo/demo-guide.md` with a narrative of the four-step attack (CreateUser → AttachUserPolicy → CreatePolicyVersion → StopLogging) and a table mapping each step to the CloudTrail event it generates and the detection rule it triggers
-  - [ ] 3.4 Add a "Running the Demo" section to `docs/demo/demo-guide.md` with exact shell commands for each phase: `python scripts/simulate-attack.py --mode mock`, `python scripts/simulate-attack.py --mode mock --verbose`, and `python scripts/simulate-attack.py --mode mock --phase 4`
-  - [ ] 3.5 Add a "What to Narrate" section to `docs/demo/demo-guide.md` with bullet points for each of the five phases that the presenter can use to explain what is happening to an interviewer
-  - [ ] 3.6 Add an "Expected Output" section to `docs/demo/demo-guide.md` with an annotated text block showing the full `simulate-attack.py` output for a successful mock run, with inline comments explaining each section
-  - [ ] 3.7 Add a "Cleanup" section to `docs/demo/demo-guide.md` explaining that mock mode leaves no persistent state (moto is in-process) and that live mode cleanup requires deleting the seeded DynamoDB records
-  - [ ] 3.8 Update `docs/demo/demo-scenario.md` to add a note at the top cross-referencing `demo-guide.md` and `scripts/simulate-attack.py` as the automated version of the scenario
+- [x] 3. Demo Guide
+  - [x] 3.1 Create `docs/demo/demo-guide.md` with an Overview section explaining what the demo shows (full privilege escalation attack through the Radius pipeline) and why it matters for demonstrating the platform
+  - [x] 3.2 Add a Prerequisites section to `docs/demo/demo-guide.md` listing: Python 3.11+, `pip install -r backend/requirements-dev.txt`, and a note that no AWS credentials are needed in mock mode
+  - [x] 3.3 Add an "Attack Scenario" section to `docs/demo/demo-guide.md` with a narrative of the four-step attack (CreateUser → AttachUserPolicy → CreatePolicyVersion → StopLogging) and a table mapping each step to the CloudTrail event it generates and the detection rule it triggers
+  - [x] 3.4 Add a "Running the Demo" section to `docs/demo/demo-guide.md` with exact shell commands for each phase: `python scripts/simulate-attack.py --mode mock`, `python scripts/simulate-attack.py --mode mock --verbose`, and `python scripts/simulate-attack.py --mode mock --phase 4`
+  - [x] 3.5 Add a "What to Narrate" section to `docs/demo/demo-guide.md` with bullet points for each of the five phases that the presenter can use to explain what is happening to an interviewer
+  - [x] 3.6 Add an "Expected Output" section to `docs/demo/demo-guide.md` with an annotated text block showing the full `simulate-attack.py` output for a successful mock run, with inline comments explaining each section
+  - [x] 3.7 Add a "Cleanup" section to `docs/demo/demo-guide.md` explaining that mock mode leaves no persistent state (moto is in-process) and that live mode cleanup requires deleting the seeded DynamoDB records
+  - [x] 3.8 Update `docs/demo/demo-scenario.md` to add a note at the top cross-referencing `demo-guide.md` and `scripts/simulate-attack.py` as the automated version of the scenario
 
 - [ ] 4. simulate-attack.py Script
   - [ ] 4.1 Create `scripts/simulate-attack.py` with a `#!/usr/bin/env python3` shebang, a module docstring describing the script's purpose and usage, and `argparse`-based CLI with flags: `--mode {mock,live}` (default: `mock`), `--identity ARN` (default: `arn:aws:iam::123456789012:user/attacker`), `--verbose` (flag), `--phase {1,2,3,4,5}` (optional int), `--timeout SECONDS` (default: 30)
