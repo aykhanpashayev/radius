@@ -19,7 +19,7 @@ locals {
 
 # ---------------------------------------------------------------------------
 # Dead-Letter Queues (event-driven functions only)
-# API_Handler and Score_Engine are excluded — they are synchronous.
+# API_Handler and Score_Engine are excluded â€” they are synchronous.
 # ---------------------------------------------------------------------------
 resource "aws_sqs_queue" "event_normalizer_dlq" {
   name                      = "${var.prefix}-event-normalizer-dlq"
@@ -98,19 +98,32 @@ resource "aws_cloudwatch_log_group" "remediation_engine" {
 }
 
 # ---------------------------------------------------------------------------
+# S3 object data sources â€” used to get ETags for source_code_hash triggers.
+# This ensures Terraform redeploys Lambda whenever the zip changes in S3.
+# ---------------------------------------------------------------------------
+data "aws_s3_object" "event_normalizer"   { bucket = var.lambda_s3_bucket; key = "functions/event_normalizer.zip" }
+data "aws_s3_object" "detection_engine"   { bucket = var.lambda_s3_bucket; key = "functions/detection_engine.zip" }
+data "aws_s3_object" "incident_processor" { bucket = var.lambda_s3_bucket; key = "functions/incident_processor.zip" }
+data "aws_s3_object" "identity_collector" { bucket = var.lambda_s3_bucket; key = "functions/identity_collector.zip" }
+data "aws_s3_object" "score_engine"       { bucket = var.lambda_s3_bucket; key = "functions/score_engine.zip" }
+data "aws_s3_object" "api_handler"        { bucket = var.lambda_s3_bucket; key = "functions/api_handler.zip" }
+data "aws_s3_object" "remediation_engine" { bucket = var.lambda_s3_bucket; key = "functions/remediation_engine.zip" }
+
+# ---------------------------------------------------------------------------
 # Lambda Functions
 # ---------------------------------------------------------------------------
 
 resource "aws_lambda_function" "event_normalizer" {
-  function_name = "${var.prefix}-event-normalizer"
-  role          = aws_iam_role.event_normalizer.arn
-  runtime       = "python3.11"
-  architectures = ["arm64"]
-  handler       = "handler.lambda_handler"
-  s3_bucket     = var.lambda_s3_bucket
-  s3_key        = "functions/event_normalizer.zip"
-  timeout       = var.timeout_configs.event_normalizer
-  memory_size   = var.function_configs.event_normalizer
+  function_name    = "${var.prefix}-event-normalizer"
+  role             = aws_iam_role.event_normalizer.arn
+  runtime          = "python3.11"
+  architectures    = ["arm64"]
+  handler          = "handler.lambda_handler"
+  s3_bucket        = var.lambda_s3_bucket
+  s3_key           = "functions/event_normalizer.zip"
+  source_code_hash = data.aws_s3_object.event_normalizer.etag
+  timeout          = var.timeout_configs.event_normalizer
+  memory_size      = var.function_configs.event_normalizer
 
   reserved_concurrent_executions = local.effective_concurrency
 
@@ -147,6 +160,7 @@ resource "aws_lambda_function" "detection_engine" {
   handler       = "handler.lambda_handler"
   s3_bucket     = var.lambda_s3_bucket
   s3_key        = "functions/detection_engine.zip"
+  source_code_hash = data.aws_s3_object.detection_engine.etag
   timeout       = var.timeout_configs.detection_engine
   memory_size   = var.function_configs.detection_engine
 
@@ -183,6 +197,7 @@ resource "aws_lambda_function" "incident_processor" {
   handler       = "handler.lambda_handler"
   s3_bucket     = var.lambda_s3_bucket
   s3_key        = "functions/incident_processor.zip"
+  source_code_hash = data.aws_s3_object.incident_processor.etag
   timeout       = var.timeout_configs.incident_processor
   memory_size   = var.function_configs.incident_processor
 
@@ -220,6 +235,7 @@ resource "aws_lambda_function" "identity_collector" {
   handler       = "handler.lambda_handler"
   s3_bucket     = var.lambda_s3_bucket
   s3_key        = "functions/identity_collector.zip"
+  source_code_hash = data.aws_s3_object.identity_collector.etag
   timeout       = var.timeout_configs.identity_collector
   memory_size   = var.function_configs.identity_collector
 
@@ -256,6 +272,7 @@ resource "aws_lambda_function" "score_engine" {
   handler       = "handler.lambda_handler"
   s3_bucket     = var.lambda_s3_bucket
   s3_key        = "functions/score_engine.zip"
+  source_code_hash = data.aws_s3_object.score_engine.etag
   timeout       = var.timeout_configs.score_engine
   memory_size   = var.function_configs.score_engine
 
@@ -286,6 +303,7 @@ resource "aws_lambda_function" "api_handler" {
   handler       = "handler.lambda_handler"
   s3_bucket     = var.lambda_s3_bucket
   s3_key        = "functions/api_handler.zip"
+  source_code_hash = data.aws_s3_object.api_handler.etag
   timeout       = var.timeout_configs.api_handler
   memory_size   = var.function_configs.api_handler
 
@@ -321,6 +339,7 @@ resource "aws_lambda_function" "remediation_engine" {
   handler       = "handler.lambda_handler"
   s3_bucket     = var.lambda_s3_bucket
   s3_key        = "functions/remediation_engine.zip"
+  source_code_hash = data.aws_s3_object.remediation_engine.etag
   timeout       = 60
   memory_size   = 256
 
