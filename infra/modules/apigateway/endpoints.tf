@@ -1,18 +1,28 @@
-# API Gateway endpoint definitions for Radius
-# 10 operations across 5 resource groups.
-# All use Lambda proxy integration pointing to API_Handler.
+# API Gateway endpoint definitions for Radius.
+# All non-GET methods require an OPTIONS mock integration for CORS preflight.
+# The OPTIONS response returns Access-Control-Allow-* headers directly from
+# API Gateway without invoking Lambda — this is the standard pattern.
 
 locals {
   lambda_uri = "arn:aws:apigateway:${data.aws_region.current.name}:lambda:path/2015-03-31/functions/${var.lambda_function_arn}/invocations"
+
+  cors_response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
+    "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,PATCH,DELETE,OPTIONS'"
+    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+  }
+
+  cors_response_templates = {
+    "application/json" = ""
+  }
 }
 
 data "aws_region" "current" {}
 
 # ---------------------------------------------------------------------------
-# Helper: CORS OPTIONS method (shared mock integration)
+# Helper: reusable OPTIONS mock integration for CORS preflight
+# Every resource that has PATCH/POST/PUT/DELETE needs one of these.
 # ---------------------------------------------------------------------------
-# Not defined per-resource here to keep the file concise.
-# CORS headers are returned by the Lambda proxy response.
 
 # ===========================================================================
 # /identities
@@ -51,10 +61,7 @@ resource "aws_api_gateway_method" "get_identity_by_arn" {
   resource_id   = aws_api_gateway_resource.identity_by_arn.id
   http_method   = "GET"
   authorization = "NONE"
-
-  request_parameters = {
-    "method.request.path.arn" = true
-  }
+  request_parameters = { "method.request.path.arn" = true }
 }
 
 resource "aws_api_gateway_integration" "get_identity_by_arn" {
@@ -103,10 +110,7 @@ resource "aws_api_gateway_method" "get_score_by_arn" {
   resource_id   = aws_api_gateway_resource.score_by_arn.id
   http_method   = "GET"
   authorization = "NONE"
-
-  request_parameters = {
-    "method.request.path.arn" = true
-  }
+  request_parameters = { "method.request.path.arn" = true }
 }
 
 resource "aws_api_gateway_integration" "get_score_by_arn" {
@@ -155,10 +159,7 @@ resource "aws_api_gateway_method" "get_incident_by_id" {
   resource_id   = aws_api_gateway_resource.incident_by_id.id
   http_method   = "GET"
   authorization = "NONE"
-
-  request_parameters = {
-    "method.request.path.id" = true
-  }
+  request_parameters = { "method.request.path.id" = true }
 }
 
 resource "aws_api_gateway_integration" "get_incident_by_id" {
@@ -175,10 +176,7 @@ resource "aws_api_gateway_method" "patch_incident_by_id" {
   resource_id   = aws_api_gateway_resource.incident_by_id.id
   http_method   = "PATCH"
   authorization = "NONE"
-
-  request_parameters = {
-    "method.request.path.id" = true
-  }
+  request_parameters = { "method.request.path.id" = true }
 }
 
 resource "aws_api_gateway_integration" "patch_incident_by_id" {
@@ -188,6 +186,44 @@ resource "aws_api_gateway_integration" "patch_incident_by_id" {
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = local.lambda_uri
+}
+
+# OPTIONS /incidents/{id} — required for CORS preflight on PATCH
+resource "aws_api_gateway_method" "options_incident_by_id" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.incident_by_id.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "options_incident_by_id" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.incident_by_id.id
+  http_method = aws_api_gateway_method.options_incident_by_id.http_method
+  type        = "MOCK"
+  request_templates = { "application/json" = "{\"statusCode\": 200}" }
+}
+
+resource "aws_api_gateway_method_response" "options_incident_by_id" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.incident_by_id.id
+  http_method = aws_api_gateway_method.options_incident_by_id.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "options_incident_by_id" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.incident_by_id.id
+  http_method = aws_api_gateway_method.options_incident_by_id.http_method
+  status_code = aws_api_gateway_method_response.options_incident_by_id.status_code
+  response_parameters = local.cors_response_parameters
+  response_templates  = local.cors_response_templates
+  depends_on          = [aws_api_gateway_integration.options_incident_by_id]
 }
 
 # ===========================================================================
@@ -227,10 +263,7 @@ resource "aws_api_gateway_method" "get_event_by_id" {
   resource_id   = aws_api_gateway_resource.event_by_id.id
   http_method   = "GET"
   authorization = "NONE"
-
-  request_parameters = {
-    "method.request.path.id" = true
-  }
+  request_parameters = { "method.request.path.id" = true }
 }
 
 resource "aws_api_gateway_integration" "get_event_by_id" {
@@ -262,6 +295,264 @@ resource "aws_api_gateway_integration" "get_trust_relationships" {
   rest_api_id             = aws_api_gateway_rest_api.radius.id
   resource_id             = aws_api_gateway_resource.trust_relationships.id
   http_method             = aws_api_gateway_method.get_trust_relationships.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = local.lambda_uri
+}
+
+# ===========================================================================
+# /remediation/config
+# ===========================================================================
+resource "aws_api_gateway_resource" "remediation" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  parent_id   = aws_api_gateway_rest_api.radius.root_resource_id
+  path_part   = "remediation"
+}
+
+resource "aws_api_gateway_resource" "remediation_config" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  parent_id   = aws_api_gateway_resource.remediation.id
+  path_part   = "config"
+}
+
+resource "aws_api_gateway_method" "get_remediation_config" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.remediation_config.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "get_remediation_config" {
+  rest_api_id             = aws_api_gateway_rest_api.radius.id
+  resource_id             = aws_api_gateway_resource.remediation_config.id
+  http_method             = aws_api_gateway_method.get_remediation_config.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = local.lambda_uri
+}
+
+# /remediation/config/mode
+resource "aws_api_gateway_resource" "remediation_config_mode" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  parent_id   = aws_api_gateway_resource.remediation_config.id
+  path_part   = "mode"
+}
+
+resource "aws_api_gateway_method" "put_remediation_config_mode" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.remediation_config_mode.id
+  http_method   = "PUT"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "put_remediation_config_mode" {
+  rest_api_id             = aws_api_gateway_rest_api.radius.id
+  resource_id             = aws_api_gateway_resource.remediation_config_mode.id
+  http_method             = aws_api_gateway_method.put_remediation_config_mode.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = local.lambda_uri
+}
+
+# OPTIONS /remediation/config/mode
+resource "aws_api_gateway_method" "options_remediation_config_mode" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.remediation_config_mode.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "options_remediation_config_mode" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.remediation_config_mode.id
+  http_method = aws_api_gateway_method.options_remediation_config_mode.http_method
+  type        = "MOCK"
+  request_templates = { "application/json" = "{\"statusCode\": 200}" }
+}
+
+resource "aws_api_gateway_method_response" "options_remediation_config_mode" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.remediation_config_mode.id
+  http_method = aws_api_gateway_method.options_remediation_config_mode.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "options_remediation_config_mode" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.remediation_config_mode.id
+  http_method = aws_api_gateway_method.options_remediation_config_mode.http_method
+  status_code = aws_api_gateway_method_response.options_remediation_config_mode.status_code
+  response_parameters = local.cors_response_parameters
+  response_templates  = local.cors_response_templates
+  depends_on          = [aws_api_gateway_integration.options_remediation_config_mode]
+}
+
+# ===========================================================================
+# /remediation/rules
+# ===========================================================================
+resource "aws_api_gateway_resource" "remediation_rules" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  parent_id   = aws_api_gateway_resource.remediation.id
+  path_part   = "rules"
+}
+
+resource "aws_api_gateway_method" "get_remediation_rules" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.remediation_rules.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "get_remediation_rules" {
+  rest_api_id             = aws_api_gateway_rest_api.radius.id
+  resource_id             = aws_api_gateway_resource.remediation_rules.id
+  http_method             = aws_api_gateway_method.get_remediation_rules.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = local.lambda_uri
+}
+
+resource "aws_api_gateway_method" "post_remediation_rules" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.remediation_rules.id
+  http_method   = "POST"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "post_remediation_rules" {
+  rest_api_id             = aws_api_gateway_rest_api.radius.id
+  resource_id             = aws_api_gateway_resource.remediation_rules.id
+  http_method             = aws_api_gateway_method.post_remediation_rules.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = local.lambda_uri
+}
+
+# OPTIONS /remediation/rules
+resource "aws_api_gateway_method" "options_remediation_rules" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.remediation_rules.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "options_remediation_rules" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.remediation_rules.id
+  http_method = aws_api_gateway_method.options_remediation_rules.http_method
+  type        = "MOCK"
+  request_templates = { "application/json" = "{\"statusCode\": 200}" }
+}
+
+resource "aws_api_gateway_method_response" "options_remediation_rules" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.remediation_rules.id
+  http_method = aws_api_gateway_method.options_remediation_rules.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "options_remediation_rules" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.remediation_rules.id
+  http_method = aws_api_gateway_method.options_remediation_rules.http_method
+  status_code = aws_api_gateway_method_response.options_remediation_rules.status_code
+  response_parameters = local.cors_response_parameters
+  response_templates  = local.cors_response_templates
+  depends_on          = [aws_api_gateway_integration.options_remediation_rules]
+}
+
+# /remediation/rules/{rule_id}
+resource "aws_api_gateway_resource" "remediation_rule_by_id" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  parent_id   = aws_api_gateway_resource.remediation_rules.id
+  path_part   = "{rule_id}"
+}
+
+resource "aws_api_gateway_method" "delete_remediation_rule" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.remediation_rule_by_id.id
+  http_method   = "DELETE"
+  authorization = "NONE"
+  request_parameters = { "method.request.path.rule_id" = true }
+}
+
+resource "aws_api_gateway_integration" "delete_remediation_rule" {
+  rest_api_id             = aws_api_gateway_rest_api.radius.id
+  resource_id             = aws_api_gateway_resource.remediation_rule_by_id.id
+  http_method             = aws_api_gateway_method.delete_remediation_rule.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = local.lambda_uri
+}
+
+# OPTIONS /remediation/rules/{rule_id}
+resource "aws_api_gateway_method" "options_remediation_rule_by_id" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.remediation_rule_by_id.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "options_remediation_rule_by_id" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.remediation_rule_by_id.id
+  http_method = aws_api_gateway_method.options_remediation_rule_by_id.http_method
+  type        = "MOCK"
+  request_templates = { "application/json" = "{\"statusCode\": 200}" }
+}
+
+resource "aws_api_gateway_method_response" "options_remediation_rule_by_id" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.remediation_rule_by_id.id
+  http_method = aws_api_gateway_method.options_remediation_rule_by_id.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+
+resource "aws_api_gateway_integration_response" "options_remediation_rule_by_id" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.remediation_rule_by_id.id
+  http_method = aws_api_gateway_method.options_remediation_rule_by_id.http_method
+  status_code = aws_api_gateway_method_response.options_remediation_rule_by_id.status_code
+  response_parameters = local.cors_response_parameters
+  response_templates  = local.cors_response_templates
+  depends_on          = [aws_api_gateway_integration.options_remediation_rule_by_id]
+}
+
+# ===========================================================================
+# /remediation/audit
+# ===========================================================================
+resource "aws_api_gateway_resource" "remediation_audit" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  parent_id   = aws_api_gateway_resource.remediation.id
+  path_part   = "audit"
+}
+
+resource "aws_api_gateway_method" "get_remediation_audit" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.remediation_audit.id
+  http_method   = "GET"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "get_remediation_audit" {
+  rest_api_id             = aws_api_gateway_rest_api.radius.id
+  resource_id             = aws_api_gateway_resource.remediation_audit.id
+  http_method             = aws_api_gateway_method.get_remediation_audit.http_method
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = local.lambda_uri

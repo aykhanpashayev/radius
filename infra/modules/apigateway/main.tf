@@ -107,11 +107,22 @@ resource "aws_api_gateway_deployment" "radius" {
     aws_api_gateway_integration.get_incidents,
     aws_api_gateway_integration.get_incident_by_id,
     aws_api_gateway_integration.patch_incident_by_id,
+    aws_api_gateway_integration.options_incident_by_id,
     # events
     aws_api_gateway_integration.get_events,
     aws_api_gateway_integration.get_event_by_id,
     # trust-relationships
     aws_api_gateway_integration.get_trust_relationships,
+    # remediation
+    aws_api_gateway_integration.get_remediation_config,
+    aws_api_gateway_integration.put_remediation_config_mode,
+    aws_api_gateway_integration.options_remediation_config_mode,
+    aws_api_gateway_integration.get_remediation_rules,
+    aws_api_gateway_integration.post_remediation_rules,
+    aws_api_gateway_integration.options_remediation_rules,
+    aws_api_gateway_integration.delete_remediation_rule,
+    aws_api_gateway_integration.options_remediation_rule_by_id,
+    aws_api_gateway_integration.get_remediation_audit,
   ]
 }
 
