@@ -5,6 +5,13 @@
 - [What Gets Deployed](#what-gets-deployed)
 - [Supported Environments](#supported-environments)
 - [Prerequisites](#prerequisites)
+  - [1. Python 3.11 or higher](#1-python-311-or-higher)
+  - [2. pip](#2-pip)
+  - [3. Terraform 1.5.0 or higher](#3-terraform-150-or-higher)
+  - [4. AWS CLI v2](#4-aws-cli-v2)
+  - [5. Configure AWS credentials](#5-configure-aws-credentials)
+  - [6. zip utility](#6-zip-utility-linuxmacos-only)
+  - [7. git](#7-git)
 - [Quick Start — Local Testing (No AWS Required)](#quick-start--local-testing-no-aws-required)
 - [Full AWS Deployment](#full-aws-deployment)
   - [Step 1 — Run the preflight check](#step-1--run-the-preflight-check)
@@ -63,20 +70,152 @@ Running the full deployment creates the following AWS resources in your account:
 
 ## Prerequisites
 
-You need the following tools installed before starting. The preflight script checks all of these automatically.
+Install all of the following tools **before** cloning the repo or running any commands. The preflight script will verify each one is present and at the right version.
 
-| Tool | Minimum Version | How to install |
-|---|---|---|
-| Python | 3.11 | https://python.org — use the installer for your OS |
-| pip | 23+ | Included with Python 3.11 |
-| Terraform | 1.5.0 | https://developer.hashicorp.com/terraform/downloads |
-| AWS CLI | 2.x | https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html |
-| zip | any | Built-in on Linux/macOS; on Windows use WSL2 |
+### 1. Python 3.11 or higher
 
-You also need:
+Python runs the backend tests, the demo script, and the Lambda build tooling.
 
-- An **AWS account** with permissions to create Lambda, DynamoDB, S3, SNS, EventBridge, API Gateway, CloudTrail, KMS, IAM, and CloudWatch resources. `AdministratorAccess` is easiest for a first deployment.
-- AWS credentials configured locally. Run `aws configure` if you haven't already, or set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` as environment variables.
+**Linux (Ubuntu/Debian):**
+```bash
+sudo apt update && sudo apt install -y python3.11 python3-pip python3.11-venv
+```
+
+**macOS:**
+```bash
+brew install python@3.11
+```
+
+**Windows:** Download the installer from https://python.org/downloads — tick "Add Python to PATH" during installation.
+
+Verify: `python --version` should print `3.11.x` or higher.
+
+---
+
+### 2. pip
+
+pip is included with Python 3.11. Verify it works:
+```bash
+pip --version
+```
+
+If it's missing: `python -m ensurepip --upgrade`
+
+---
+
+### 3. Terraform 1.5.0 or higher
+
+Terraform provisions all AWS infrastructure.
+
+**Linux:**
+```bash
+sudo apt install -y gnupg software-properties-common
+wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+sudo apt update && sudo apt install terraform
+```
+
+**macOS:**
+```bash
+brew tap hashicorp/tap && brew install hashicorp/tap/terraform
+```
+
+**Windows:** Download the zip from https://developer.hashicorp.com/terraform/downloads, extract `terraform.exe`, and add it to your PATH. Or use `winget install HashiCorp.Terraform`.
+
+Verify: `terraform version` should print `Terraform v1.5.x` or higher.
+
+---
+
+### 4. AWS CLI v2
+
+The AWS CLI is used to create S3 buckets, verify deployments, and interact with AWS services.
+
+**Linux:**
+```bash
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip && sudo ./aws/install
+```
+
+**macOS:**
+```bash
+brew install awscli
+```
+
+**Windows:** Download and run the MSI installer from https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html. Or use `winget install Amazon.AWSCLI`.
+
+Verify: `aws --version` should print `aws-cli/2.x.x`.
+
+---
+
+### 5. Configure AWS credentials
+
+After installing the AWS CLI, configure it with your credentials:
+
+```bash
+aws configure
+```
+
+You will be prompted for:
+- **AWS Access Key ID** — from your IAM user or SSO session
+- **AWS Secret Access Key** — from your IAM user or SSO session
+- **Default region** — enter `us-east-1` (or your preferred region)
+- **Default output format** — enter `json`
+
+Verify credentials work:
+```bash
+aws sts get-caller-identity
+```
+
+Expected output (values will differ):
+```json
+{
+    "UserId": "AIDAEXAMPLEID",
+    "Account": "123456789012",
+    "Arn": "arn:aws:iam::123456789012:user/your-username"
+}
+```
+
+If this fails, your credentials are wrong or expired. Re-run `aws configure`.
+
+**Required IAM permissions:** Your AWS user or role needs the following managed policies (or equivalent):
+- `AdministratorAccess` — simplest for a first deployment
+- Minimum custom policy: IAM, Lambda, DynamoDB, S3, SNS, EventBridge, API Gateway, CloudTrail, CloudWatch, KMS, SQS create/update/delete
+
+---
+
+### 6. zip utility (Linux/macOS only)
+
+The Lambda build script uses `zip` to package function code.
+
+**Linux:** `sudo apt install zip`
+**macOS:** Built-in, no action needed.
+**Windows:** Not needed — use WSL2 where `zip` is available, or install via `winget install GnuWin32.Zip`.
+
+---
+
+### 7. git
+
+To clone the repository.
+
+**Linux:** `sudo apt install git`
+**macOS:** `brew install git` or install Xcode Command Line Tools: `xcode-select --install`
+**Windows:** Download from https://git-scm.com/download/win — this also installs Git Bash.
+
+---
+
+### Quick prerequisite check
+
+Once everything is installed, run the preflight script to confirm all tools are ready before proceeding:
+
+```bash
+# Linux/macOS/WSL2:
+bash scripts/preflight.sh --env dev --skip-aws
+
+# Windows (PowerShell):
+.\scripts\preflight.ps1 -Env dev -SkipAws
+```
+
+All items should show `[PASS]`. Fix any `[FAIL]` items before continuing.
 
 ---
 
