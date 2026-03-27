@@ -94,7 +94,7 @@ def log_error(
     if correlation_id:
         fields["correlation_id"] = correlation_id
 
-    logger.error(message, extra=fields)
+    logger.error(message, extra=fields, exc_info=True)
 
 
 def log_request(

@@ -90,6 +90,10 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     except ValidationError as exc:
         response = bad_request(str(exc))
     except Exception as exc:
+        import traceback as _tb
+        print(f"EXCEPTION_TYPE: {type(exc).__name__}")
+        print(f"EXCEPTION_MSG: {exc}")
+        print(f"TRACEBACK:\n{_tb.format_exc()}")
         log_error(log, "Unhandled error in API handler", exc, correlation_id,
                   method=method, resource=resource)
         response = server_error()
