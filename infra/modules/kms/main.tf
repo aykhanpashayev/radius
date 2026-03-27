@@ -53,6 +53,31 @@ resource "aws_kms_key" "dynamodb" {
           "kms:DescribeKey"
         ]
         Resource = "*"
+      },
+      {
+        # All Lambda execution roles need Decrypt to read encrypted DynamoDB items.
+        # The root account key policy alone is not sufficient — Lambda roles must
+        # be explicitly listed here because the Lambda IAM policy references the
+        # Lambda KMS key ARN, not the DynamoDB KMS key ARN.
+        Sid    = "AllowLambdaRoles"
+        Effect = "Allow"
+        Principal = {
+          AWS = [
+            "arn:aws:iam::${local.account_id}:role/${var.prefix}-api-handler-role",
+            "arn:aws:iam::${local.account_id}:role/${var.prefix}-event-normalizer-role",
+            "arn:aws:iam::${local.account_id}:role/${var.prefix}-detection-engine-role",
+            "arn:aws:iam::${local.account_id}:role/${var.prefix}-incident-processor-role",
+            "arn:aws:iam::${local.account_id}:role/${var.prefix}-identity-collector-role",
+            "arn:aws:iam::${local.account_id}:role/${var.prefix}-score-engine-role",
+            "arn:aws:iam::${local.account_id}:role/${var.prefix}-remediation-engine-role",
+          ]
+        }
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
       }
     ]
   })
