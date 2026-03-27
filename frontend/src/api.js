@@ -20,8 +20,20 @@ async function request(path, options = {}) {
   return res.json();
 }
 
+// Unwraps the standard list envelope { data: [...], metadata: { next_token, count } }
+// Returns { items: [], nextToken: string|null }
+async function requestList(path) {
+  const res = await fetch(`${BASE}${path}`);
+  if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
+  const json = await res.json();
+  return {
+    items: Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : []),
+    nextToken: json.metadata?.next_token ?? null,
+  };
+}
+
 export const getScores = (params = {}) =>
-  request(`/scores?${new URLSearchParams(params)}`);
+  requestList(`/scores?${new URLSearchParams(params)}`);
 
 export const getIdentity = (arn) =>
   request(`/identities/${encodeURIComponent(arn)}`);
@@ -30,7 +42,7 @@ export const getScore = (arn) =>
   request(`/scores/${encodeURIComponent(arn)}`);
 
 export const getIncidents = (params = {}) =>
-  request(`/incidents?${new URLSearchParams(params)}`);
+  requestList(`/incidents?${new URLSearchParams(params)}`);
 
 export const patchIncident = (id, status) =>
   request(`/incidents/${id}`, {
@@ -40,4 +52,4 @@ export const patchIncident = (id, status) =>
   });
 
 export const getEvents = (params = {}) =>
-  request(`/events?${new URLSearchParams(params)}`);
+  requestList(`/events?${new URLSearchParams(params)}`);

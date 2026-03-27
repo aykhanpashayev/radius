@@ -20,9 +20,9 @@ export default function IncidentFeed() {
 
   useEffect(() => {
     getIncidents({ limit: 25 })
-      .then((data) => {
-        setIncidents(data.incidents ?? []);
-        setNextToken(data.next_token ?? null);
+      .then(({ items, nextToken: token }) => {
+        setIncidents(items);
+        setNextToken(token);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -31,9 +31,9 @@ export default function IncidentFeed() {
   function handleLoadMore() {
     setLoadingMore(true);
     getIncidents({ limit: 25, next_token: nextToken })
-      .then((data) => {
-        setIncidents((prev) => [...prev, ...(data.incidents ?? [])]);
-        setNextToken(data.next_token ?? null);
+      .then(({ items, nextToken: token }) => {
+        setIncidents((prev) => [...prev, ...items]);
+        setNextToken(token);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoadingMore(false));

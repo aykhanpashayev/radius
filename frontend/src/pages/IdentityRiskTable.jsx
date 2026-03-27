@@ -19,18 +19,15 @@ export default function IdentityRiskTable() {
       getIncidents({ status: "open", limit: 100 }),
     ]).then(([scoresResult, incidentsResult]) => {
       if (scoresResult.status === "fulfilled") {
-        const data = scoresResult.value;
-        setScores(data.scores ?? data);
-        setNextToken(data.next_token ?? null);
+        setScores(scoresResult.value.items);
+        setNextToken(scoresResult.value.nextToken);
       } else {
         setError(scoresResult.reason?.message ?? "Failed to load scores.");
       }
 
       if (incidentsResult.status === "fulfilled") {
-        const data = incidentsResult.value;
-        setIncidents(data.incidents ?? data);
+        setIncidents(incidentsResult.value.items);
       }
-      // incidents failure is non-fatal — SummaryStrip handles null gracefully
 
       setLoading(false);
     });
@@ -39,13 +36,11 @@ export default function IdentityRiskTable() {
   function handleLoadMore() {
     setLoadingMore(true);
     getScores({ limit: 25, next_token: nextToken })
-      .then((data) => {
-        setScores((prev) => [...(prev ?? []), ...(data.scores ?? data)]);
-        setNextToken(data.next_token ?? null);
+      .then(({ items, nextToken: newToken }) => {
+        setScores((prev) => [...(prev ?? []), ...items]);
+        setNextToken(newToken);
       })
-      .catch(() => {
-        // non-fatal — existing rows remain visible
-      })
+      .catch(() => {})
       .finally(() => setLoadingMore(false));
   }
 

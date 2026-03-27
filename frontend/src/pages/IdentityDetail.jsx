@@ -46,7 +46,7 @@ export default function IdentityDetail() {
 
       // Events
       if (eventsResult.status === "fulfilled") {
-        setEvents(eventsResult.value);
+        setEvents(eventsResult.value.items);
       } else {
         setEventsError(eventsResult.reason?.message || "Failed to load events.");
       }
@@ -154,7 +154,7 @@ export default function IdentityDetail() {
           <p className="error-message">{eventsError}</p>
         ) : (
           <>
-            {events && events.items?.length > 0 ? (
+            {events && events.length > 0 ? (
               <table>
                 <thead>
                   <tr>
@@ -164,7 +164,7 @@ export default function IdentityDetail() {
                   </tr>
                 </thead>
                 <tbody>
-                  {events.items.map((evt, i) => (
+                  {events.map((evt, i) => (
                     <tr key={i}>
                       <td>{evt.event_type}</td>
                       <td>{evt.timestamp ? new Date(evt.timestamp).toLocaleString() : "—"}</td>
