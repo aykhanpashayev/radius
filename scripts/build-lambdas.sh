@@ -105,18 +105,39 @@ for FUNC in "${FUNCTION_NAMES[@]}"; do
   rm -rf "$PACKAGE_DIR"
   mkdir -p "$PACKAGE_DIR"
 
-  # Copy function code
-  cp -r "${FUNC_DIR}/." "$PACKAGE_DIR/"
+  # Build the full backend.functions.<name> package path inside the zip.
+  # Lambda handler is "handler.lambda_handler" but the code uses absolute
+  # imports like "from backend.functions.api_handler import handlers".
+  # The zip must contain:
+  #   handler.py                        (Lambda entry point at root)
+  #   backend/__init__.py
+  #   backend/common/...                (shared utilities)
+  #   backend/functions/__init__.py
+  #   backend/functions/<name>/...      (function code)
 
-  # Copy shared common utilities
+  FUNC_PKG_DIR="${PACKAGE_DIR}/backend/functions/${FUNC}"
+  mkdir -p "$FUNC_PKG_DIR"
+  mkdir -p "${PACKAGE_DIR}/backend/functions"
   mkdir -p "${PACKAGE_DIR}/backend/common"
-  cp -r "${COMMON_DIR}/." "${PACKAGE_DIR}/backend/common/"
-  touch "${PACKAGE_DIR}/backend/__init__.py"
 
-  # Install dependencies
-  # NOTE: We do NOT use --platform here because that requires --only-binary
-  # and breaks on many packages. Lambda arm64 packages are handled by Terraform
-  # layer configuration. For local builds, install native packages normally.
+  # Copy function code into backend/functions/<name>/
+  cp -r "${FUNC_DIR}/." "$FUNC_PKG_DIR/"
+
+  # Copy shared common utilities into backend/common/
+  cp -r "${COMMON_DIR}/." "${PACKAGE_DIR}/backend/common/"
+
+  # Create __init__.py files for the package hierarchy
+  touch "${PACKAGE_DIR}/backend/__init__.py"
+  touch "${PACKAGE_DIR}/backend/functions/__init__.py"
+  touch "${PACKAGE_DIR}/backend/common/__init__.py"
+
+  # Create a root-level handler.py that is a direct copy of the function's handler.
+  # Lambda entry point is "handler.lambda_handler" (root level).
+  # All imports use "from backend.functions.<name>..." so the full backend/ tree
+  # must also exist at the root of the zip.
+  cp "${FUNC_DIR}/handler.py" "${PACKAGE_DIR}/handler.py"
+
+  # Install dependencies into the package root (alongside backend/)
   REQUIREMENTS="${FUNC_DIR}/requirements.txt"
   if [[ -f "$REQUIREMENTS" ]]; then
     pip install \
