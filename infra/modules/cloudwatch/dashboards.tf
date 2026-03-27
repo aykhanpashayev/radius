@@ -1,11 +1,7 @@
 # CloudWatch dashboards for Radius.
 # Four dashboards: Lambda, DynamoDB, API Gateway, EventBridge.
 # Every metric widget must include "region" — CloudWatch rejects dashboards without it.
-
-locals {
-  lambda_names = values(var.lambda_function_names)
-  table_names  = values(var.dynamodb_table_names)
-}
+# Note: local.lambda_names is defined in main.tf — do not redefine it here.
 
 resource "aws_cloudwatch_dashboard" "lambda" {
   dashboard_name = "${var.prefix}-lambda"
@@ -76,7 +72,7 @@ resource "aws_cloudwatch_dashboard" "dynamodb" {
           period = 300
           stat   = "Sum"
           view   = "timeSeries"
-          metrics = [for name in local.table_names :
+          metrics = [for name in values(var.dynamodb_table_names) :
             ["AWS/DynamoDB", "ConsumedReadCapacityUnits", "TableName", name]
           ]
         }
@@ -91,7 +87,7 @@ resource "aws_cloudwatch_dashboard" "dynamodb" {
           period = 300
           stat   = "Sum"
           view   = "timeSeries"
-          metrics = [for name in local.table_names :
+          metrics = [for name in values(var.dynamodb_table_names) :
             ["AWS/DynamoDB", "ConsumedWriteCapacityUnits", "TableName", name]
           ]
         }
@@ -106,7 +102,7 @@ resource "aws_cloudwatch_dashboard" "dynamodb" {
           period = 60
           stat   = "Sum"
           view   = "timeSeries"
-          metrics = [for name in local.table_names :
+          metrics = [for name in values(var.dynamodb_table_names) :
             ["AWS/DynamoDB", "ThrottledRequests", "TableName", name]
           ]
         }
