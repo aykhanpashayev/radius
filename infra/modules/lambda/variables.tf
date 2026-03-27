@@ -37,9 +37,9 @@ variable "timeout_configs" {
 }
 
 variable "concurrency_limit" {
-  description = "Reserved concurrent executions per function (null = unreserved)"
+  description = "Reserved concurrent executions per function. 0 = unreserved (recommended for dev)."
   type        = number
-  default     = null
+  default     = 0
 }
 
 variable "dynamodb_table_names" {

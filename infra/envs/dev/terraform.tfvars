@@ -32,8 +32,13 @@ lambda_timeout = {
   remediation_engine = 60
 }
 
-# Max concurrent Lambda executions (10 is safe for dev to control costs)
-lambda_concurrency_limit = 10
+# Max concurrent Lambda executions per function.
+# Set to 0 to use unreserved concurrency (recommended for dev).
+# If you set this to a number, it reserves that many executions PER function.
+# With 7 functions at concurrency=10, that's 70 reserved total — your account
+# needs at least 80 total concurrent executions available (70 reserved + 10 unreserved minimum).
+# Most accounts default to 1000, so this is fine. Set to 0 if you hit concurrency errors.
+lambda_concurrency_limit = 0
 
 # CloudWatch log retention in days
 log_retention_days = 7

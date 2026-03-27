@@ -12,6 +12,9 @@ locals {
     },
     var.tags
   )
+  # -1 means unreserved concurrency in Terraform's aws_lambda_function resource.
+  # We use 0 in tfvars as a human-friendly "unreserved" signal and convert here.
+  effective_concurrency = var.concurrency_limit == 0 ? -1 : var.concurrency_limit
 }
 
 # ---------------------------------------------------------------------------
@@ -109,7 +112,7 @@ resource "aws_lambda_function" "event_normalizer" {
   timeout       = var.timeout_configs.event_normalizer
   memory_size   = var.function_configs.event_normalizer
 
-  reserved_concurrent_executions = var.concurrency_limit
+  reserved_concurrent_executions = local.effective_concurrency
 
   kms_key_arn = var.kms_key_arn
 
@@ -128,7 +131,10 @@ resource "aws_lambda_function" "event_normalizer" {
     target_arn = aws_sqs_queue.event_normalizer_dlq.arn
   }
 
-  depends_on = [aws_cloudwatch_log_group.event_normalizer]
+  depends_on = [
+    aws_cloudwatch_log_group.event_normalizer,
+    aws_iam_role_policy.event_normalizer,
+  ]
 
   tags = merge(local.common_tags, { Function = "event-normalizer" })
 }
@@ -144,7 +150,7 @@ resource "aws_lambda_function" "detection_engine" {
   timeout       = var.timeout_configs.detection_engine
   memory_size   = var.function_configs.detection_engine
 
-  reserved_concurrent_executions = var.concurrency_limit
+  reserved_concurrent_executions = local.effective_concurrency
 
   kms_key_arn = var.kms_key_arn
 
@@ -161,7 +167,10 @@ resource "aws_lambda_function" "detection_engine" {
     target_arn = aws_sqs_queue.detection_engine_dlq.arn
   }
 
-  depends_on = [aws_cloudwatch_log_group.detection_engine]
+  depends_on = [
+    aws_cloudwatch_log_group.detection_engine,
+    aws_iam_role_policy.detection_engine,
+  ]
 
   tags = merge(local.common_tags, { Function = "detection-engine" })
 }
@@ -177,7 +186,7 @@ resource "aws_lambda_function" "incident_processor" {
   timeout       = var.timeout_configs.incident_processor
   memory_size   = var.function_configs.incident_processor
 
-  reserved_concurrent_executions = var.concurrency_limit
+  reserved_concurrent_executions = local.effective_concurrency
 
   kms_key_arn = var.kms_key_arn
 
@@ -195,7 +204,10 @@ resource "aws_lambda_function" "incident_processor" {
     target_arn = aws_sqs_queue.incident_processor_dlq.arn
   }
 
-  depends_on = [aws_cloudwatch_log_group.incident_processor]
+  depends_on = [
+    aws_cloudwatch_log_group.incident_processor,
+    aws_iam_role_policy.incident_processor,
+  ]
 
   tags = merge(local.common_tags, { Function = "incident-processor" })
 }
@@ -211,7 +223,7 @@ resource "aws_lambda_function" "identity_collector" {
   timeout       = var.timeout_configs.identity_collector
   memory_size   = var.function_configs.identity_collector
 
-  reserved_concurrent_executions = var.concurrency_limit
+  reserved_concurrent_executions = local.effective_concurrency
 
   kms_key_arn = var.kms_key_arn
 
@@ -228,7 +240,10 @@ resource "aws_lambda_function" "identity_collector" {
     target_arn = aws_sqs_queue.identity_collector_dlq.arn
   }
 
-  depends_on = [aws_cloudwatch_log_group.identity_collector]
+  depends_on = [
+    aws_cloudwatch_log_group.identity_collector,
+    aws_iam_role_policy.identity_collector,
+  ]
 
   tags = merge(local.common_tags, { Function = "identity-collector" })
 }
@@ -255,7 +270,10 @@ resource "aws_lambda_function" "score_engine" {
     }
   }
 
-  depends_on = [aws_cloudwatch_log_group.score_engine]
+  depends_on = [
+    aws_cloudwatch_log_group.score_engine,
+    aws_iam_role_policy.score_engine,
+  ]
 
   tags = merge(local.common_tags, { Function = "score-engine" })
 }
@@ -287,7 +305,10 @@ resource "aws_lambda_function" "api_handler" {
     }
   }
 
-  depends_on = [aws_cloudwatch_log_group.api_handler]
+  depends_on = [
+    aws_cloudwatch_log_group.api_handler,
+    aws_iam_role_policy.api_handler,
+  ]
 
   tags = merge(local.common_tags, { Function = "api-handler" })
 }
@@ -303,7 +324,7 @@ resource "aws_lambda_function" "remediation_engine" {
   timeout       = 60
   memory_size   = 256
 
-  reserved_concurrent_executions = var.concurrency_limit
+  reserved_concurrent_executions = local.effective_concurrency
 
   kms_key_arn = var.kms_key_arn
 
@@ -322,7 +343,10 @@ resource "aws_lambda_function" "remediation_engine" {
     target_arn = aws_sqs_queue.remediation_engine_dlq.arn
   }
 
-  depends_on = [aws_cloudwatch_log_group.remediation_engine]
+  depends_on = [
+    aws_cloudwatch_log_group.remediation_engine,
+    aws_iam_role_policy.remediation_engine,
+  ]
 
   tags = merge(local.common_tags, { Function = "remediation-engine" })
 }

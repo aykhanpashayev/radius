@@ -57,6 +57,12 @@ variable "alarm_sns_topic_arn" {
   type        = string
 }
 
+variable "aws_region" {
+  description = "AWS region for dashboard metric widgets"
+  type        = string
+  default     = "us-east-1"
+}
+
 variable "tags" {
   description = "Additional tags for CloudWatch resources"
   type        = map(string)

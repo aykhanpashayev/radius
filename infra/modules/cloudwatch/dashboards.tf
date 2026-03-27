@@ -1,5 +1,11 @@
 # CloudWatch dashboards for Radius.
 # Four dashboards: Lambda, DynamoDB, API Gateway, EventBridge.
+# Every metric widget must include "region" — CloudWatch rejects dashboards without it.
+
+locals {
+  lambda_names = values(var.lambda_function_names)
+  table_names  = values(var.dynamodb_table_names)
+}
 
 resource "aws_cloudwatch_dashboard" "lambda" {
   dashboard_name = "${var.prefix}-lambda"
@@ -12,8 +18,10 @@ resource "aws_cloudwatch_dashboard" "lambda" {
         height = 6
         properties = {
           title  = "Lambda Invocations"
+          region = var.aws_region
           period = 300
           stat   = "Sum"
+          view   = "timeSeries"
           metrics = [for name in local.lambda_names :
             ["AWS/Lambda", "Invocations", "FunctionName", name]
           ]
@@ -25,8 +33,10 @@ resource "aws_cloudwatch_dashboard" "lambda" {
         height = 6
         properties = {
           title  = "Lambda Errors"
+          region = var.aws_region
           period = 300
           stat   = "Sum"
+          view   = "timeSeries"
           metrics = [for name in local.lambda_names :
             ["AWS/Lambda", "Errors", "FunctionName", name]
           ]
@@ -38,8 +48,10 @@ resource "aws_cloudwatch_dashboard" "lambda" {
         height = 6
         properties = {
           title  = "Lambda Duration (p99)"
+          region = var.aws_region
           period = 300
           stat   = "p99"
+          view   = "timeSeries"
           metrics = [for name in local.lambda_names :
             ["AWS/Lambda", "Duration", "FunctionName", name]
           ]
@@ -60,9 +72,11 @@ resource "aws_cloudwatch_dashboard" "dynamodb" {
         height = 6
         properties = {
           title  = "DynamoDB Consumed Read Capacity"
+          region = var.aws_region
           period = 300
           stat   = "Sum"
-          metrics = [for name in values(var.dynamodb_table_names) :
+          view   = "timeSeries"
+          metrics = [for name in local.table_names :
             ["AWS/DynamoDB", "ConsumedReadCapacityUnits", "TableName", name]
           ]
         }
@@ -73,9 +87,11 @@ resource "aws_cloudwatch_dashboard" "dynamodb" {
         height = 6
         properties = {
           title  = "DynamoDB Consumed Write Capacity"
+          region = var.aws_region
           period = 300
           stat   = "Sum"
-          metrics = [for name in values(var.dynamodb_table_names) :
+          view   = "timeSeries"
+          metrics = [for name in local.table_names :
             ["AWS/DynamoDB", "ConsumedWriteCapacityUnits", "TableName", name]
           ]
         }
@@ -86,9 +102,11 @@ resource "aws_cloudwatch_dashboard" "dynamodb" {
         height = 6
         properties = {
           title  = "DynamoDB Throttled Requests"
+          region = var.aws_region
           period = 60
           stat   = "Sum"
-          metrics = [for name in values(var.dynamodb_table_names) :
+          view   = "timeSeries"
+          metrics = [for name in local.table_names :
             ["AWS/DynamoDB", "ThrottledRequests", "TableName", name]
           ]
         }
@@ -108,8 +126,10 @@ resource "aws_cloudwatch_dashboard" "api_gateway" {
         height = 6
         properties = {
           title  = "API Gateway Request Count"
+          region = var.aws_region
           period = 300
           stat   = "Sum"
+          view   = "timeSeries"
           metrics = [
             ["AWS/ApiGateway", "Count", "ApiName", var.api_gateway_name]
           ]
@@ -121,8 +141,10 @@ resource "aws_cloudwatch_dashboard" "api_gateway" {
         height = 6
         properties = {
           title  = "API Gateway Latency (p99)"
+          region = var.aws_region
           period = 300
           stat   = "p99"
+          view   = "timeSeries"
           metrics = [
             ["AWS/ApiGateway", "Latency", "ApiName", var.api_gateway_name]
           ]
@@ -134,8 +156,10 @@ resource "aws_cloudwatch_dashboard" "api_gateway" {
         height = 6
         properties = {
           title  = "API Gateway 4xx / 5xx Errors"
+          region = var.aws_region
           period = 300
           stat   = "Sum"
+          view   = "timeSeries"
           metrics = [
             ["AWS/ApiGateway", "4XXError", "ApiName", var.api_gateway_name],
             ["AWS/ApiGateway", "5XXError", "ApiName", var.api_gateway_name]
@@ -157,8 +181,10 @@ resource "aws_cloudwatch_dashboard" "eventbridge" {
         height = 6
         properties = {
           title  = "EventBridge Rule Invocations"
+          region = var.aws_region
           period = 300
           stat   = "Sum"
+          view   = "timeSeries"
           metrics = [
             ["AWS/Events", "Invocations", "RuleName", "${var.prefix}-cloudtrail-management-events"]
           ]
@@ -170,8 +196,10 @@ resource "aws_cloudwatch_dashboard" "eventbridge" {
         height = 6
         properties = {
           title  = "EventBridge Failed Invocations"
+          region = var.aws_region
           period = 300
           stat   = "Sum"
+          view   = "timeSeries"
           metrics = [
             ["AWS/Events", "FailedInvocations", "RuleName", "${var.prefix}-cloudtrail-management-events"]
           ]

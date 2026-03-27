@@ -158,6 +158,7 @@ module "cloudwatch" {
   environment = var.environment
   prefix      = local.name_prefix
 
+  aws_region            = var.aws_region
   log_retention_days    = var.log_retention_days
   lambda_function_names = module.lambda.function_names
   dynamodb_table_names  = module.dynamodb.table_names
