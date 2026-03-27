@@ -131,7 +131,7 @@ module "apigateway" {
   lambda_function_arn  = module.lambda.function_arns.api_handler
   lambda_function_name = module.lambda.function_names.api_handler
   log_retention_days   = var.log_retention_days
-  enable_logging       = true
+  enable_logging       = false
 
   tags = var.tags
 }

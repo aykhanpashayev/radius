@@ -29,9 +29,9 @@ variable "cors_allowed_origins" {
 }
 
 variable "enable_logging" {
-  description = "Enable CloudWatch access logging for API Gateway"
+  description = "Enable CloudWatch access logging for API Gateway. Requires the account-level CloudWatch role to be configured (handled automatically by Terraform)."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "log_retention_days" {

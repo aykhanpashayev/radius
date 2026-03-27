@@ -12,6 +12,40 @@ locals {
 }
 
 # ---------------------------------------------------------------------------
+# Account-level CloudWatch Logs role for API Gateway
+#
+# API Gateway requires a single IAM role to be set at the AWS account level
+# before it can write access logs to CloudWatch. This is a one-time account
+# setting. Without it, any stage with logging enabled fails with:
+#   "CloudWatch Logs role ARN must be set in account settings to enable logging"
+# ---------------------------------------------------------------------------
+resource "aws_iam_role" "api_gateway_cloudwatch" {
+  name = "${var.prefix}-apigw-cloudwatch-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Action    = "sts:AssumeRole"
+      Principal = { Service = "apigateway.amazonaws.com" }
+    }]
+  })
+
+  tags = local.common_tags
+}
+
+resource "aws_iam_role_policy_attachment" "api_gateway_cloudwatch" {
+  role       = aws_iam_role.api_gateway_cloudwatch.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+}
+
+resource "aws_api_gateway_account" "radius" {
+  cloudwatch_role_arn = aws_iam_role.api_gateway_cloudwatch.arn
+
+  depends_on = [aws_iam_role_policy_attachment.api_gateway_cloudwatch]
+}
+
+# ---------------------------------------------------------------------------
 # REST API
 # ---------------------------------------------------------------------------
 resource "aws_api_gateway_rest_api" "radius" {
@@ -106,6 +140,10 @@ resource "aws_api_gateway_stage" "radius" {
   }
 
   xray_tracing_enabled = false
+
+  # Must wait for the account-level CloudWatch role to be set before
+  # enabling logging — otherwise AWS returns a 400 BadRequestException.
+  depends_on = [aws_api_gateway_account.radius]
 
   tags = local.common_tags
 }

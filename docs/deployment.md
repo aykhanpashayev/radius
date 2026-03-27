@@ -591,7 +591,74 @@ bash scripts/build-lambdas.sh --env dev
 bash scripts/deploy-infra.sh --env dev
 ```
 
-### "Error acquiring the state lock"
+### "CloudWatch Logs role ARN must be set in account settings to enable logging"
+
+**Symptom:** Terraform fails with `BadRequestException: CloudWatch Logs role ARN must be set in account settings to enable logging` on the API Gateway stage resource.
+
+**Cause:** API Gateway requires a single IAM role to be configured at the AWS account level before any stage can write access logs to CloudWatch. This is a one-time account setting that was missing.
+
+**Fix:** This is now handled automatically by Terraform — the `aws_api_gateway_account` resource in the `apigateway` module creates the required IAM role and sets it account-wide. Re-run the deploy and it will be created before the stage is configured.
+
+If you hit this on an older checkout, pull the latest changes and re-run:
+```bash
+bash scripts/deploy-infra.sh --env dev
+```
+
+---
+
+### "ResourceConflictException: Function already exists" during terraform apply
+
+**Symptom:** Terraform fails with `ResourceConflictException: Function already exist: radius-dev-<name>` for one or more Lambda functions.
+
+**Cause:** A previous `terraform apply` failed partway through. Some Lambda functions were created in AWS before the error, but Terraform's state file doesn't know about them. On the next apply, Terraform tries to create them again.
+
+**Fix:** Import the existing functions into Terraform state, then re-apply.
+
+```bash
+cd infra/envs/dev
+
+# Replace <function-name> with the name from the error, e.g. radius-dev-identity-collector
+terraform import -var-file=terraform.tfvars \
+  module.radius.module.lambda.aws_lambda_function.<short_name> \
+  <function-name>
+```
+
+The `<short_name>` mapping is:
+
+| Function name in AWS | short_name for import |
+|---|---|
+| radius-dev-event-normalizer | event_normalizer |
+| radius-dev-detection-engine | detection_engine |
+| radius-dev-incident-processor | incident_processor |
+| radius-dev-identity-collector | identity_collector |
+| radius-dev-score-engine | score_engine |
+| radius-dev-api-handler | api_handler |
+| radius-dev-remediation-engine | remediation_engine |
+
+Example — importing two functions:
+```bash
+terraform import -var-file=terraform.tfvars \
+  module.radius.module.lambda.aws_lambda_function.identity_collector \
+  radius-dev-identity-collector
+
+terraform import -var-file=terraform.tfvars \
+  module.radius.module.lambda.aws_lambda_function.remediation_engine \
+  radius-dev-remediation-engine
+```
+
+After importing all affected functions, re-run:
+```bash
+bash scripts/deploy-infra.sh --env dev
+```
+
+**Alternative — destroy and start fresh:**
+If multiple resource types are in a partial state, it may be faster to destroy everything and re-apply:
+```bash
+terraform -chdir=infra/envs/dev destroy -var-file=terraform.tfvars
+bash scripts/deploy-infra.sh --env dev
+```
+
+
 
 This happens when a previous `terraform apply` was interrupted. Get the lock ID from the error message, then:
 
