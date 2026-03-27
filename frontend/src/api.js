@@ -1,6 +1,20 @@
 const BASE = import.meta.env.VITE_API_BASE_URL;
 
+if (!BASE) {
+  console.error(
+    "VITE_API_BASE_URL is not set. Create frontend/.env with:\n" +
+    "VITE_API_BASE_URL=https://<your-api-id>.execute-api.<region>.amazonaws.com/dev\n" +
+    "Then restart the dev server."
+  );
+}
+
 async function request(path, options = {}) {
+  if (!BASE) {
+    throw new Error(
+      "API URL not configured. Create frontend/.env with VITE_API_BASE_URL=<your api_endpoint>. " +
+      "Run: terraform -chdir=infra/envs/dev output api_endpoint"
+    );
+  }
   const res = await fetch(`${BASE}${path}`, options);
   if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
   return res.json();
