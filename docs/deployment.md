@@ -24,6 +24,11 @@
   - [Step 8 — Verify the deployment](#step-8--verify-the-deployment)
   - [Step 9 — Seed test data (optional)](#step-9--seed-test-data-optional)
 - [Post-Deployment Validation](#post-deployment-validation)
+- [Viewing the Dashboard and Monitoring](#viewing-the-dashboard-and-monitoring)
+  - [React Dashboard](#react-dashboard)
+  - [CloudWatch Dashboards](#cloudwatch-dashboards)
+  - [CloudWatch Logs](#cloudwatch-logs-lambda-execution-logs)
+  - [DynamoDB Tables](#dynamodb-tables-raw-data)
 - [Dev vs Prod Differences](#dev-vs-prod-differences)
 - [Rollback](#rollback)
 - [Cleanup — Destroy All Resources](#cleanup--destroy-all-resources)
@@ -490,6 +495,136 @@ aws dynamodb scan \
 ```
 
 If incidents and scores appear, the pipeline is working end-to-end.
+
+---
+
+## Viewing the Dashboard and Monitoring
+
+### React Dashboard
+
+The React dashboard is the main UI for viewing identities, blast radius scores, incidents, and events. It connects to your deployed API Gateway endpoint.
+
+**Step 1 — Get your API endpoint**
+
+After `deploy-infra.sh` completes, it prints the `api_endpoint` output. You can also retrieve it any time:
+
+```bash
+terraform -chdir=infra/envs/dev output api_endpoint
+```
+
+It looks like: `https://abc123xyz.execute-api.us-east-1.amazonaws.com/dev`
+
+**Step 2 — Install Node.js** (if not already installed)
+
+The dashboard is a React/Vite app and requires Node.js 18+.
+
+- Linux: `sudo apt install nodejs npm` or use [nvm](https://github.com/nvm-sh/nvm)
+- macOS: `brew install node`
+- Windows: Download from https://nodejs.org
+
+Verify: `node --version` should print `v18.x` or higher.
+
+**Step 3 — Configure the API URL**
+
+Create a `.env` file in the `frontend/` directory:
+
+```bash
+# Replace the URL with your actual api_endpoint output
+echo 'VITE_API_BASE_URL=https://abc123xyz.execute-api.us-east-1.amazonaws.com/dev' > frontend/.env
+```
+
+**Step 4 — Install dependencies and start the dashboard**
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open http://localhost:5173 in your browser. You should see the Radius dashboard with your deployed data.
+
+**Step 5 — Seed some data so the dashboard has something to show**
+
+```bash
+# Seed sample identities, scores, and incidents
+python scripts/seed-dev-data.py --env dev --region us-east-1
+
+# Inject sample CloudTrail events to trigger the detection pipeline
+python scripts/inject-events.py --env dev --dir sample-data/cloud-trail-events
+```
+
+Wait 30–60 seconds, then refresh the dashboard.
+
+---
+
+### CloudWatch Dashboards
+
+Terraform creates four CloudWatch dashboards for infrastructure monitoring. View them in the AWS Console:
+
+1. Go to **AWS Console → CloudWatch → Dashboards**
+2. You will see four dashboards:
+   - `radius-dev-lambda` — Lambda invocations, errors, and duration per function
+   - `radius-dev-dynamodb` — DynamoDB read/write capacity and throttling per table
+   - `radius-dev-api-gateway` — API request count, latency, and error rates
+   - `radius-dev-eventbridge` — EventBridge rule invocations and failures
+
+Or open them directly via URL:
+```
+https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=radius-dev-lambda
+```
+
+---
+
+### CloudWatch Logs (Lambda execution logs)
+
+Every Lambda function writes structured JSON logs to CloudWatch. To see what's happening in the pipeline:
+
+```bash
+# View recent Event_Normalizer logs
+aws logs tail /aws/lambda/radius-dev-event-normalizer \
+  --region us-east-1 \
+  --follow
+
+# View Detection_Engine logs
+aws logs tail /aws/lambda/radius-dev-detection-engine \
+  --region us-east-1 \
+  --follow
+
+# View Incident_Processor logs
+aws logs tail /aws/lambda/radius-dev-incident-processor \
+  --region us-east-1 \
+  --follow
+```
+
+Or in the AWS Console: **CloudWatch → Log groups → /aws/lambda/radius-dev-event-normalizer**
+
+---
+
+### DynamoDB Tables (raw data)
+
+View the raw data in any table directly from the AWS Console:
+
+1. Go to **AWS Console → DynamoDB → Tables**
+2. Select a table (e.g. `radius-dev-incident`)
+3. Click **Explore table items**
+
+Or query via CLI:
+```bash
+# See all open incidents
+aws dynamodb scan \
+  --table-name radius-dev-incident \
+  --filter-expression "#s = :open" \
+  --expression-attribute-names '{"#s": "status"}' \
+  --expression-attribute-values '{":open": {"S": "open"}}' \
+  --region us-east-1 \
+  --output table
+
+# See all blast radius scores
+aws dynamodb scan \
+  --table-name radius-dev-blast-radius-score \
+  --region us-east-1 \
+  --output table
+```
 
 ---
 
