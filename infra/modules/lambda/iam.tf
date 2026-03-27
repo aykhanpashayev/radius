@@ -334,7 +334,7 @@ resource "aws_iam_role_policy" "api_handler" {
       {
         Sid    = "ReadAllTables"
         Effect = "Allow"
-        Action = ["dynamodb:GetItem", "dynamodb:Query"]
+        Action = ["dynamodb:GetItem", "dynamodb:Query", "dynamodb:Scan"]
         Resource = concat(
           [
             var.dynamodb_table_arns.identity_profile,
