@@ -112,3 +112,9 @@ variable "score_engine_schedule" {
   type        = string
   default     = "rate(24 hours)"
 }
+
+variable "remediation_dry_run" {
+  description = "When true, Remediation_Engine logs actions without executing them. Defaults to true — must be explicitly set to false in prod to enable live remediation."
+  type        = bool
+  default     = true
+}

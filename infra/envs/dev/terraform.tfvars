@@ -52,6 +52,10 @@ enable_pitr = false
 # How often Score_Engine rescores all identities
 score_engine_schedule = "rate(24 hours)"
 
+# Remediation dry-run mode — true means actions are logged but not executed.
+# Safe default for dev. Set to false in prod only when you're ready for live remediation.
+remediation_dry_run = true
+
 # Optional: email addresses to receive SNS security alerts
 # email_subscriptions = ["your-email@example.com"]
 email_subscriptions = []

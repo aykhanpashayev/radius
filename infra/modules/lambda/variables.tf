@@ -110,3 +110,9 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "dry_run" {
+  description = "When true, Remediation_Engine logs actions without executing them."
+  type        = bool
+  default     = true
+}

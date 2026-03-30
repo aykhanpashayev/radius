@@ -98,6 +98,7 @@ module "lambda" {
   sns_topic_arn        = module.sns.alert_topic_arn
   remediation_topic_arn = module.sns.remediation_topic_arn
   kms_key_arn          = module.kms.lambda_key_arn
+  dry_run              = var.remediation_dry_run
 
   tags = var.tags
 }

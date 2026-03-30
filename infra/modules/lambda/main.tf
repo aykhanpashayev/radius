@@ -378,7 +378,7 @@ resource "aws_lambda_function" "remediation_engine" {
       REMEDIATION_CONFIG_TABLE = var.dynamodb_table_names.remediation_config
       REMEDIATION_AUDIT_TABLE  = var.dynamodb_table_names.remediation_audit_log
       REMEDIATION_TOPIC_ARN    = var.remediation_topic_arn
-      DRY_RUN                  = "false"
+      DRY_RUN                  = tostring(var.dry_run)
     }
   }
 

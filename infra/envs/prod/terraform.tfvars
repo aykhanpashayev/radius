@@ -39,6 +39,10 @@ enable_pitr = true
 
 score_engine_schedule = "rate(6 hours)"
 
+# Remediation dry-run mode — set to false to enable live IAM remediation actions in prod.
+# Ensure remediation rules are reviewed before disabling dry-run.
+remediation_dry_run = false
+
 # Required in prod: at least one email for security alerts
 email_subscriptions = ["<REPLACE: ops-team@example.com>"]
 https_subscriptions = []
