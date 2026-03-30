@@ -30,7 +30,7 @@ lambda_timeout = {
 # No concurrency limit in prod (unreserved)
 lambda_concurrency_limit = 0
 
-log_retention_days = 30
+log_retention_days = 365
 
 # Set to true when deploying from an AWS Organizations management account
 cloudtrail_organization_enabled = false
