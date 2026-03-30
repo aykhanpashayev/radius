@@ -157,6 +157,7 @@ for FUNC in "${FUNCTION_NAMES[@]}"; do
   rm -f "$ZIP_FILE"
   (cd "$PACKAGE_DIR" && zip -r "$ZIP_FILE" . \
     -x "*.pyc" \
+    -x "__pycache__/*" \
     -x "*/__pycache__/*" \
     -x "*.dist-info/*" \
     -x "*.egg-info/*") > /dev/null
