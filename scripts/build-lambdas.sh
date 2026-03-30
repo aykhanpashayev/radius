@@ -85,6 +85,10 @@ FUNCTION_NAMES=(
 SUCCESS_COUNT=0
 FAIL_COUNT=0
 
+# Clean entire build dir to avoid stale artifacts from previous runs
+rm -rf "$BUILD_DIR"
+mkdir -p "$BUILD_DIR"
+
 # ---------------------------------------------------------------------------
 # Build loop
 # ---------------------------------------------------------------------------
