@@ -29,34 +29,30 @@ from backend.functions.api_handler.utils import bad_request, server_error
 
 logger = get_logger(__name__)
 
-# Route table: (method, resource_path_pattern) → handler function
-# resource_path uses {param} placeholders matching API Gateway path parameters.
-_ROUTES: list[tuple[str, str, Any]] = [
-    ("GET",    "/identities",                    handlers.list_identities),
-    ("GET",    "/identities/{arn}",              handlers.get_identity),
-    ("GET",    "/scores",                        handlers.list_scores),
-    ("GET",    "/scores/{arn}",                  handlers.get_score),
-    ("GET",    "/incidents",                     handlers.list_incidents),
-    ("GET",    "/incidents/{id}",                handlers.get_incident),
-    ("PATCH",  "/incidents/{id}",                handlers.patch_incident),
-    ("GET",    "/events",                        handlers.list_events),
-    ("GET",    "/events/{id}",                   handlers.get_event),
-    ("GET",    "/trust-relationships",           handlers.list_trust_relationships),
-    ("GET",    "/remediation/config",            handlers.get_remediation_config),
-    ("PUT",    "/remediation/config/mode",       handlers.put_remediation_mode),
-    ("GET",    "/remediation/rules",             handlers.list_remediation_rules),
-    ("POST",   "/remediation/rules",             handlers.create_remediation_rule),
-    ("DELETE", "/remediation/rules/{rule_id}",   handlers.delete_remediation_rule),
-    ("GET",    "/remediation/audit",             handlers.list_remediation_audit),
-]
+# Route table: (method, resource_path) → handler function
+_ROUTES: dict[tuple[str, str], Any] = {
+    ("GET",    "/identities"):                    handlers.list_identities,
+    ("GET",    "/identities/{arn}"):              handlers.get_identity,
+    ("GET",    "/scores"):                        handlers.list_scores,
+    ("GET",    "/scores/{arn}"):                  handlers.get_score,
+    ("GET",    "/incidents"):                     handlers.list_incidents,
+    ("GET",    "/incidents/{id}"):                handlers.get_incident,
+    ("PATCH",  "/incidents/{id}"):                handlers.patch_incident,
+    ("GET",    "/events"):                        handlers.list_events,
+    ("GET",    "/events/{id}"):                   handlers.get_event,
+    ("GET",    "/trust-relationships"):           handlers.list_trust_relationships,
+    ("GET",    "/remediation/config"):            handlers.get_remediation_config,
+    ("PUT",    "/remediation/config/mode"):       handlers.put_remediation_mode,
+    ("GET",    "/remediation/rules"):             handlers.list_remediation_rules,
+    ("POST",   "/remediation/rules"):             handlers.create_remediation_rule,
+    ("DELETE", "/remediation/rules/{rule_id}"):   handlers.delete_remediation_rule,
+    ("GET",    "/remediation/audit"):             handlers.list_remediation_audit,
+}
 
 
 def _match_route(method: str, resource: str):
     """Return the handler for the given method + resource path, or None."""
-    for route_method, route_resource, fn in _ROUTES:
-        if route_method == method and route_resource == resource:
-            return fn
-    return None
+    return _ROUTES.get((method, resource))
 
 
 def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
