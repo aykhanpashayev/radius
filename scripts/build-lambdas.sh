@@ -141,11 +141,17 @@ for FUNC in "${FUNCTION_NAMES[@]}"; do
   touch "${PACKAGE_DIR}/backend/functions/__init__.py"
   touch "${PACKAGE_DIR}/backend/common/__init__.py"
 
-  # Create a root-level handler.py that is a direct copy of the function's handler.
-  # Lambda entry point is "handler.lambda_handler" (root level).
-  # All imports use "from backend.functions.<name>..." so the full backend/ tree
-  # must also exist at the root of the zip.
-  cp "${FUNC_DIR}/handler.py" "${PACKAGE_DIR}/handler.py"
+  # Create a root-level handler.py shim — Lambda entry point is "handler.lambda_handler".
+  # We write it explicitly rather than copying to avoid any shell glob/naming confusion
+  # between handler.py and handlers.py.
+  python3 -c "
+import sys
+src = '${FUNC_DIR}/handler.py'
+dst = '${PACKAGE_DIR}/handler.py'
+content = open(src).read()
+open(dst, 'w').write(content)
+print('    Wrote root handler.py ({} bytes)'.format(len(content)))
+"
 
   # Install dependencies into the package root (alongside backend/)
   REQUIREMENTS="${FUNC_DIR}/requirements.txt"
