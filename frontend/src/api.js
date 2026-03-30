@@ -28,7 +28,7 @@ async function request(path, options = {}) {
       signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': token,
+        ...(token ? { 'Authorization': token } : {}),
         ...options.headers,
       },
     });
@@ -54,7 +54,9 @@ async function requestList(path) {
     const token = await getIdToken();
     const res = await fetch(`${BASE}${path}`, {
       signal: controller.signal,
-      headers: { 'Authorization': token },
+      headers: {
+        ...(token ? { 'Authorization': token } : {}),
+      },
     });
 
     if (res.status === 401) {
