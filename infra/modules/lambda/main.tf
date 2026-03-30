@@ -1,7 +1,7 @@
 # Lambda functions for Radius
 # Seven functions: Event_Normalizer, Detection_Engine, Incident_Processor,
 # Identity_Collector, Score_Engine, API_Handler, Remediation_Engine.
-# All use Python 3.11 on arm64 (Remediation_Engine uses Python 3.12).
+# All use Python 3.11 on arm64.
 # Event-driven functions have DLQs.
 
 locals {
@@ -355,7 +355,7 @@ resource "aws_lambda_function" "api_handler" {
 resource "aws_lambda_function" "remediation_engine" {
   function_name = "${var.prefix}-remediation-engine"
   role          = aws_iam_role.remediation_engine.arn
-  runtime       = "python3.12"
+  runtime       = "python3.11"
   architectures = ["arm64"]
   handler       = "handler.lambda_handler"
   s3_bucket     = var.lambda_s3_bucket
