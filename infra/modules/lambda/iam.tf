@@ -375,6 +375,7 @@ resource "aws_iam_role_policy" "api_handler" {
           "dynamodb:PutItem",
           "dynamodb:UpdateItem",
           "dynamodb:Query",
+          "dynamodb:Scan",
         ]
         Resource = concat(
           [var.dynamodb_table_arns.remediation_audit_log],
