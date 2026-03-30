@@ -23,9 +23,15 @@ variable "lambda_function_name" {
 }
 
 variable "cors_allowed_origins" {
-  description = "List of allowed CORS origins"
+  description = "List of allowed CORS origins. Passed into the CORS Allow-Origin response header."
   type        = list(string)
   default     = ["*"]
+}
+
+variable "cognito_user_pool_arn" {
+  description = "ARN of the Cognito User Pool used to authorize API requests. Required when environment is 'prod'."
+  type        = string
+  default     = ""
 }
 
 variable "enable_logging" {

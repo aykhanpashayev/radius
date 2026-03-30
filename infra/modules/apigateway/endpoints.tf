@@ -6,15 +6,23 @@
 locals {
   lambda_uri = "arn:aws:apigateway:${data.aws_region.current.name}:lambda:path/2015-03-31/functions/${var.lambda_function_arn}/invocations"
 
+  # Use the first entry from cors_allowed_origins. For multi-origin support,
+  # the Lambda handler should echo back the request Origin if it matches the list.
+  cors_origin = length(var.cors_allowed_origins) == 1 ? "'${var.cors_allowed_origins[0]}'" : "'${var.cors_allowed_origins[0]}'"
+
   cors_response_parameters = {
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
     "method.response.header.Access-Control-Allow-Methods" = "'GET,POST,PUT,PATCH,DELETE,OPTIONS'"
-    "method.response.header.Access-Control-Allow-Origin"  = "'*'"
+    "method.response.header.Access-Control-Allow-Origin"  = local.cors_origin
   }
 
   cors_response_templates = {
     "application/json" = ""
   }
+
+  # Authorizer ID — empty string when no Cognito pool is configured (dev/local).
+  authorizer_id = var.cognito_user_pool_arn != "" ? aws_api_gateway_authorizer.cognito[0].id : null
+  authorization = var.cognito_user_pool_arn != "" ? "COGNITO_USER_POOLS" : "NONE"
 }
 
 data "aws_region" "current" {}
@@ -37,7 +45,8 @@ resource "aws_api_gateway_method" "get_identities" {
   rest_api_id   = aws_api_gateway_rest_api.radius.id
   resource_id   = aws_api_gateway_resource.identities.id
   http_method   = "GET"
-  authorization = "NONE"
+  authorization = local.authorization
+  authorizer_id = local.authorizer_id
 }
 
 resource "aws_api_gateway_integration" "get_identities" {
@@ -60,7 +69,8 @@ resource "aws_api_gateway_method" "get_identity_by_arn" {
   rest_api_id   = aws_api_gateway_rest_api.radius.id
   resource_id   = aws_api_gateway_resource.identity_by_arn.id
   http_method   = "GET"
-  authorization = "NONE"
+  authorization = local.authorization
+  authorizer_id = local.authorizer_id
   request_parameters = { "method.request.path.arn" = true }
 }
 
@@ -86,7 +96,8 @@ resource "aws_api_gateway_method" "get_scores" {
   rest_api_id   = aws_api_gateway_rest_api.radius.id
   resource_id   = aws_api_gateway_resource.scores.id
   http_method   = "GET"
-  authorization = "NONE"
+  authorization = local.authorization
+  authorizer_id = local.authorizer_id
 }
 
 resource "aws_api_gateway_integration" "get_scores" {
@@ -109,7 +120,8 @@ resource "aws_api_gateway_method" "get_score_by_arn" {
   rest_api_id   = aws_api_gateway_rest_api.radius.id
   resource_id   = aws_api_gateway_resource.score_by_arn.id
   http_method   = "GET"
-  authorization = "NONE"
+  authorization = local.authorization
+  authorizer_id = local.authorizer_id
   request_parameters = { "method.request.path.arn" = true }
 }
 
@@ -135,7 +147,8 @@ resource "aws_api_gateway_method" "get_incidents" {
   rest_api_id   = aws_api_gateway_rest_api.radius.id
   resource_id   = aws_api_gateway_resource.incidents.id
   http_method   = "GET"
-  authorization = "NONE"
+  authorization = local.authorization
+  authorizer_id = local.authorizer_id
 }
 
 resource "aws_api_gateway_integration" "get_incidents" {
@@ -158,7 +171,8 @@ resource "aws_api_gateway_method" "get_incident_by_id" {
   rest_api_id   = aws_api_gateway_rest_api.radius.id
   resource_id   = aws_api_gateway_resource.incident_by_id.id
   http_method   = "GET"
-  authorization = "NONE"
+  authorization = local.authorization
+  authorizer_id = local.authorizer_id
   request_parameters = { "method.request.path.id" = true }
 }
 
@@ -175,7 +189,8 @@ resource "aws_api_gateway_method" "patch_incident_by_id" {
   rest_api_id   = aws_api_gateway_rest_api.radius.id
   resource_id   = aws_api_gateway_resource.incident_by_id.id
   http_method   = "PATCH"
-  authorization = "NONE"
+  authorization = local.authorization
+  authorizer_id = local.authorizer_id
   request_parameters = { "method.request.path.id" = true }
 }
 
@@ -239,7 +254,8 @@ resource "aws_api_gateway_method" "get_events" {
   rest_api_id   = aws_api_gateway_rest_api.radius.id
   resource_id   = aws_api_gateway_resource.events.id
   http_method   = "GET"
-  authorization = "NONE"
+  authorization = local.authorization
+  authorizer_id = local.authorizer_id
 }
 
 resource "aws_api_gateway_integration" "get_events" {
@@ -262,7 +278,8 @@ resource "aws_api_gateway_method" "get_event_by_id" {
   rest_api_id   = aws_api_gateway_rest_api.radius.id
   resource_id   = aws_api_gateway_resource.event_by_id.id
   http_method   = "GET"
-  authorization = "NONE"
+  authorization = local.authorization
+  authorizer_id = local.authorizer_id
   request_parameters = { "method.request.path.id" = true }
 }
 
@@ -288,7 +305,8 @@ resource "aws_api_gateway_method" "get_trust_relationships" {
   rest_api_id   = aws_api_gateway_rest_api.radius.id
   resource_id   = aws_api_gateway_resource.trust_relationships.id
   http_method   = "GET"
-  authorization = "NONE"
+  authorization = local.authorization
+  authorizer_id = local.authorizer_id
 }
 
 resource "aws_api_gateway_integration" "get_trust_relationships" {
@@ -319,7 +337,8 @@ resource "aws_api_gateway_method" "get_remediation_config" {
   rest_api_id   = aws_api_gateway_rest_api.radius.id
   resource_id   = aws_api_gateway_resource.remediation_config.id
   http_method   = "GET"
-  authorization = "NONE"
+  authorization = local.authorization
+  authorizer_id = local.authorizer_id
 }
 
 resource "aws_api_gateway_integration" "get_remediation_config" {
@@ -342,7 +361,8 @@ resource "aws_api_gateway_method" "put_remediation_config_mode" {
   rest_api_id   = aws_api_gateway_rest_api.radius.id
   resource_id   = aws_api_gateway_resource.remediation_config_mode.id
   http_method   = "PUT"
-  authorization = "NONE"
+  authorization = local.authorization
+  authorizer_id = local.authorizer_id
 }
 
 resource "aws_api_gateway_integration" "put_remediation_config_mode" {
@@ -405,7 +425,8 @@ resource "aws_api_gateway_method" "get_remediation_rules" {
   rest_api_id   = aws_api_gateway_rest_api.radius.id
   resource_id   = aws_api_gateway_resource.remediation_rules.id
   http_method   = "GET"
-  authorization = "NONE"
+  authorization = local.authorization
+  authorizer_id = local.authorizer_id
 }
 
 resource "aws_api_gateway_integration" "get_remediation_rules" {
@@ -421,7 +442,8 @@ resource "aws_api_gateway_method" "post_remediation_rules" {
   rest_api_id   = aws_api_gateway_rest_api.radius.id
   resource_id   = aws_api_gateway_resource.remediation_rules.id
   http_method   = "POST"
-  authorization = "NONE"
+  authorization = local.authorization
+  authorizer_id = local.authorizer_id
 }
 
 resource "aws_api_gateway_integration" "post_remediation_rules" {
@@ -482,7 +504,8 @@ resource "aws_api_gateway_method" "delete_remediation_rule" {
   rest_api_id   = aws_api_gateway_rest_api.radius.id
   resource_id   = aws_api_gateway_resource.remediation_rule_by_id.id
   http_method   = "DELETE"
-  authorization = "NONE"
+  authorization = local.authorization
+  authorizer_id = local.authorizer_id
   request_parameters = { "method.request.path.rule_id" = true }
 }
 
@@ -546,7 +569,8 @@ resource "aws_api_gateway_method" "get_remediation_audit" {
   rest_api_id   = aws_api_gateway_rest_api.radius.id
   resource_id   = aws_api_gateway_resource.remediation_audit.id
   http_method   = "GET"
-  authorization = "NONE"
+  authorization = local.authorization
+  authorizer_id = local.authorizer_id
 }
 
 resource "aws_api_gateway_integration" "get_remediation_audit" {
