@@ -28,6 +28,7 @@ variable "lambda_memory" {
     identity_collector = number
     score_engine       = number
     api_handler        = number
+    remediation_engine = number
   })
   default = {
     event_normalizer   = 512
@@ -36,6 +37,7 @@ variable "lambda_memory" {
     identity_collector = 512
     score_engine       = 1024
     api_handler        = 256
+    remediation_engine = 256
   }
 }
 
@@ -48,6 +50,7 @@ variable "lambda_timeout" {
     identity_collector = number
     score_engine       = number
     api_handler        = number
+    remediation_engine = number
   })
   default = {
     event_normalizer   = 30
@@ -56,6 +59,7 @@ variable "lambda_timeout" {
     identity_collector = 30
     score_engine       = 60
     api_handler        = 10
+    remediation_engine = 60
   }
 }
 

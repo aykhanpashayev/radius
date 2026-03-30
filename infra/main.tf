@@ -80,6 +80,7 @@ module "lambda" {
     identity_collector = var.lambda_memory.identity_collector
     score_engine       = var.lambda_memory.score_engine
     api_handler        = var.lambda_memory.api_handler
+    remediation_engine = var.lambda_memory.remediation_engine
   }
 
   timeout_configs = {
@@ -89,6 +90,7 @@ module "lambda" {
     identity_collector = var.lambda_timeout.identity_collector
     score_engine       = var.lambda_timeout.score_engine
     api_handler        = var.lambda_timeout.api_handler
+    remediation_engine = var.lambda_timeout.remediation_engine
   }
 
   concurrency_limit    = var.lambda_concurrency_limit

@@ -370,8 +370,8 @@ resource "aws_lambda_function" "remediation_engine" {
   s3_bucket     = var.lambda_s3_bucket
   s3_key        = "functions/remediation_engine.zip"
   source_code_hash = data.aws_s3_object.remediation_engine.etag
-  timeout       = 60
-  memory_size   = 256
+  timeout       = var.timeout_configs.remediation_engine
+  memory_size   = var.function_configs.remediation_engine
 
   reserved_concurrent_executions = local.effective_concurrency
 

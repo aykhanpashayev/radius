@@ -21,6 +21,7 @@ variable "function_configs" {
     identity_collector = number
     score_engine       = number
     api_handler        = number
+    remediation_engine = number
   })
 }
 
@@ -33,6 +34,7 @@ variable "timeout_configs" {
     identity_collector = number
     score_engine       = number
     api_handler        = number
+    remediation_engine = number
   })
 }
 
