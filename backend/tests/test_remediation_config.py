@@ -17,7 +17,7 @@ _TABLE = "remediation-config-test"
 
 class TestLoadConfig:
     def test_returns_defaults_when_table_empty(self):
-        with patch("backend.functions.remediation_engine.config.get_item", return_value=None):
+        with patch("backend.common.remediation_config.get_item", return_value=None):
             config = load_config(_TABLE)
 
         assert config["config_id"] == "global"
@@ -36,7 +36,7 @@ class TestLoadConfig:
             "protected_account_ids": ["123456789012"],
             "allowed_ip_ranges": ["10.0.0.0/8"],
         }
-        with patch("backend.functions.remediation_engine.config.get_item", return_value=stored):
+        with patch("backend.common.remediation_config.get_item", return_value=stored):
             config = load_config(_TABLE)
 
         assert config["risk_mode"] == "enforce"
@@ -46,7 +46,7 @@ class TestLoadConfig:
     def test_merges_missing_keys_with_defaults(self):
         """Partial record — missing keys should be filled from defaults."""
         partial = {"config_id": "global", "risk_mode": "alert"}
-        with patch("backend.functions.remediation_engine.config.get_item", return_value=partial):
+        with patch("backend.common.remediation_config.get_item", return_value=partial):
             config = load_config(_TABLE)
 
         assert config["risk_mode"] == "alert"
@@ -55,7 +55,7 @@ class TestLoadConfig:
 
     def test_does_not_mutate_default_config(self):
         """Repeated calls with empty table must each return independent dicts."""
-        with patch("backend.functions.remediation_engine.config.get_item", return_value=None):
+        with patch("backend.common.remediation_config.get_item", return_value=None):
             c1 = load_config(_TABLE)
             c2 = load_config(_TABLE)
 
@@ -70,7 +70,7 @@ class TestLoadConfig:
 class TestUpdateRiskMode:
     @pytest.mark.parametrize("mode", ["monitor", "alert", "enforce"])
     def test_accepts_valid_modes(self, mode):
-        with patch("backend.functions.remediation_engine.config.update_item") as mock_update:
+        with patch("backend.common.remediation_config.update_item") as mock_update:
             update_risk_mode(_TABLE, mode)
 
         mock_update.assert_called_once_with(
@@ -86,7 +86,7 @@ class TestUpdateRiskMode:
             update_risk_mode(_TABLE, bad_mode)
 
     def test_invalid_mode_does_not_call_dynamodb(self):
-        with patch("backend.functions.remediation_engine.config.update_item") as mock_update:
+        with patch("backend.common.remediation_config.update_item") as mock_update:
             with pytest.raises(ValidationError):
                 update_risk_mode(_TABLE, "invalid")
         mock_update.assert_not_called()
