@@ -133,6 +133,8 @@ module "apigateway" {
   lambda_function_name = module.lambda.function_names.api_handler
   log_retention_days   = var.log_retention_days
   enable_logging       = false
+  throttle_burst_limit = var.api_throttle_burst_limit
+  throttle_rate_limit  = var.api_throttle_rate_limit
 
   tags = var.tags
 }

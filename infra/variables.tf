@@ -118,3 +118,15 @@ variable "remediation_dry_run" {
   type        = bool
   default     = true
 }
+
+variable "api_throttle_burst_limit" {
+  description = "API Gateway throttle burst limit (max concurrent requests)"
+  type        = number
+  default     = 100
+}
+
+variable "api_throttle_rate_limit" {
+  description = "API Gateway throttle rate limit (requests per second)"
+  type        = number
+  default     = 50
+}

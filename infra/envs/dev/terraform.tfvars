@@ -56,6 +56,10 @@ score_engine_schedule = "rate(24 hours)"
 # Safe default for dev. Set to false in prod only when you're ready for live remediation.
 remediation_dry_run = true
 
+# API Gateway throttling — limits per-stage to protect Lambda and DynamoDB from floods
+api_throttle_burst_limit = 50
+api_throttle_rate_limit  = 25
+
 # Optional: email addresses to receive SNS security alerts
 # email_subscriptions = ["your-email@example.com"]
 email_subscriptions = []

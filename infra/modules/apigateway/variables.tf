@@ -51,3 +51,15 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+
+variable "throttle_burst_limit" {
+  description = "API Gateway throttle burst limit (max concurrent requests)"
+  type        = number
+  default     = 100
+}
+
+variable "throttle_rate_limit" {
+  description = "API Gateway throttle rate limit (requests per second)"
+  type        = number
+  default     = 50
+}

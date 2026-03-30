@@ -43,6 +43,10 @@ score_engine_schedule = "rate(6 hours)"
 # Ensure remediation rules are reviewed before disabling dry-run.
 remediation_dry_run = false
 
+# API Gateway throttling — tighter limits in prod to control costs and protect downstream
+api_throttle_burst_limit = 200
+api_throttle_rate_limit  = 100
+
 # Required in prod: at least one email for security alerts
 email_subscriptions = ["<REPLACE: ops-team@example.com>"]
 https_subscriptions = []
