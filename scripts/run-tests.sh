@@ -15,6 +15,9 @@ for arg in "$@"; do
   [[ "$arg" == "--fast" ]] && FAST=true
 done
 
+# Stable JSON coverage report written by pytest-cov; parsed after each suite.
+COVERAGE_JSON=".coverage-report.json"
+
 # ---------------------------------------------------------------------------
 # Parallel arrays to accumulate suite results
 # ---------------------------------------------------------------------------
@@ -30,7 +33,7 @@ TOTAL_FAILURES=0
 # run_suite <name> <pytest-command>
 #
 # Runs a pytest command, captures output, parses pass/fail counts and
-# coverage percentage, and appends results to the parallel arrays above.
+# reads coverage from the JSON report (stable across pytest-cov versions).
 # Uses "|| true" so set -e does not abort the script on test failures.
 # ---------------------------------------------------------------------------
 run_suite() {
@@ -56,7 +59,7 @@ run_suite() {
   local duration_s
   duration_s=$(awk "BEGIN { printf \"%.1f\", ${duration_ns}/1000000000 }")
 
-  # Parse passed count  — pytest summary line: "42 passed" or "42 passed, 1 failed"
+  # Parse passed/failed counts from pytest summary line
   local passed=0
   local failed=0
 
@@ -68,11 +71,19 @@ run_suite() {
     failed=$(echo "${output}" | grep -oE '[0-9]+ failed' | tail -1 | grep -oE '[0-9]+')
   fi
 
-  # Parse coverage percentage from the TOTAL line produced by pytest-cov:
-  # "TOTAL    1234   456   63%"
+  # Parse coverage from the JSON report — stable format regardless of pytest-cov version.
+  # Falls back to "N/A" if the file is absent or malformed.
   local coverage="N/A"
-  if echo "${output}" | grep -qE '^TOTAL\s+'; then
-    coverage=$(echo "${output}" | grep -E '^TOTAL\s+' | tail -1 | awk '{print $NF}')
+  if [[ -f "${COVERAGE_JSON}" ]]; then
+    coverage=$(python3 -c "
+import json, sys
+try:
+    data = json.load(open('${COVERAGE_JSON}'))
+    pct = data['totals']['percent_covered_display']
+    print(pct + '%')
+except Exception:
+    print('N/A')
+")
   fi
 
   local total=$(( passed + failed ))
@@ -152,24 +163,27 @@ run_suite "Unit Tests" \
   "pytest backend/tests/ \
    --ignore=backend/tests/integration \
    --ignore=backend/tests/test_*_properties.py \
-   --cov=backend --cov-report=term-missing -q"
+   --cov=backend --cov-report=term-missing --cov-report=json:${COVERAGE_JSON} -q"
 
 # Suite 2: Integration tests
 run_suite "Integration Tests" \
   "pytest backend/tests/integration/ \
-   --cov=backend --cov-append --cov-report=term-missing -q"
+   --cov=backend --cov-append --cov-report=term-missing --cov-report=json:${COVERAGE_JSON} -q"
 
 # Suite 3: Property-based tests (skipped with --fast)
 if [[ "${FAST}" == "false" ]]; then
   run_suite "Property-Based Tests" \
     "pytest backend/tests/test_*_properties.py \
-     --cov=backend --cov-append --cov-report=term-missing -q"
+     --cov=backend --cov-append --cov-report=term-missing --cov-report=json:${COVERAGE_JSON} -q"
 fi
 
 # ---------------------------------------------------------------------------
 # Summary and exit
 # ---------------------------------------------------------------------------
 print_summary_table
+
+# Clean up the temporary coverage JSON file
+rm -f "${COVERAGE_JSON}"
 
 if [[ "${TOTAL_FAILURES}" -eq 0 ]]; then
   exit 0
