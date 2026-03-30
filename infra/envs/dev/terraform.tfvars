@@ -60,6 +60,10 @@ remediation_dry_run = true
 api_throttle_burst_limit = 50
 api_throttle_rate_limit  = 25
 
+# Cognito OAuth URLs — localhost for dev dashboard
+cognito_callback_urls = ["http://localhost:5173/callback"]
+cognito_logout_urls   = ["http://localhost:5173/logout"]
+
 # Optional: email addresses to receive SNS security alerts
 # email_subscriptions = ["your-email@example.com"]
 email_subscriptions = []

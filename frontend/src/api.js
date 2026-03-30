@@ -1,3 +1,5 @@
+import { getIdToken } from './auth';
+
 const BASE = import.meta.env.VITE_API_BASE_URL;
 
 if (!BASE) {
@@ -15,10 +17,26 @@ async function request(path, options = {}) {
       "Run: terraform -chdir=infra/envs/dev output api_endpoint"
     );
   }
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
+
   try {
-    const res = await fetch(`${BASE}${path}`, { ...options, signal: controller.signal });
+    const token = await getIdToken();
+    const res = await fetch(`${BASE}${path}`, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': token,
+        ...options.headers,
+      },
+    });
+
+    if (res.status === 401) {
+      window.location.href = '/login';
+      return;
+    }
     if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
     return res.json();
   } finally {
@@ -31,8 +49,18 @@ async function request(path, options = {}) {
 async function requestList(path) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 10000);
+
   try {
-    const res = await fetch(`${BASE}${path}`, { signal: controller.signal });
+    const token = await getIdToken();
+    const res = await fetch(`${BASE}${path}`, {
+      signal: controller.signal,
+      headers: { 'Authorization': token },
+    });
+
+    if (res.status === 401) {
+      window.location.href = '/login';
+      return { items: [], nextToken: null };
+    }
     if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
     const json = await res.json();
     return {
@@ -59,7 +87,6 @@ export const getIncidents = (params = {}) =>
 export const patchIncident = (id, status) =>
   request(`/incidents/${id}`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ status }),
   });
 

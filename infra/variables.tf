@@ -144,3 +144,15 @@ variable "log_level" {
     error_message = "log_level must be one of: DEBUG, INFO, WARNING, ERROR."
   }
 }
+
+variable "cognito_callback_urls" {
+  description = "Allowed OAuth callback URLs for the Cognito app client (e.g. https://yourdomain.com/callback)"
+  type        = list(string)
+  default     = ["http://localhost:5173/callback"]
+}
+
+variable "cognito_logout_urls" {
+  description = "Allowed OAuth logout URLs for the Cognito app client"
+  type        = list(string)
+  default     = ["http://localhost:5173/logout"]
+}

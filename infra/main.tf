@@ -37,6 +37,18 @@ module "kms" {
 }
 
 # ---------------------------------------------------------------------------
+# 2. Cognito — user pool for dashboard authentication (no dependencies)
+# ---------------------------------------------------------------------------
+module "cognito" {
+  source  = "./modules/cognito"
+  prefix  = local.name_prefix
+  tags    = var.tags
+
+  callback_urls = var.cognito_callback_urls
+  logout_urls   = var.cognito_logout_urls
+}
+
+# ---------------------------------------------------------------------------
 # 2. DynamoDB — tables (depends on KMS)
 # ---------------------------------------------------------------------------
 module "dynamodb" {
@@ -138,6 +150,7 @@ module "apigateway" {
   enable_logging       = false
   throttle_burst_limit = var.api_throttle_burst_limit
   throttle_rate_limit  = var.api_throttle_rate_limit
+  cognito_user_pool_arn = module.cognito.user_pool_arn
 
   tags = var.tags
 }

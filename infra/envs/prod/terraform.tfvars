@@ -47,6 +47,10 @@ remediation_dry_run = false
 api_throttle_burst_limit = 200
 api_throttle_rate_limit  = 100
 
+# Cognito OAuth URLs — replace with your CloudFront distribution domain
+cognito_callback_urls = ["https://<REPLACE: your-cloudfront-domain>/callback"]
+cognito_logout_urls   = ["https://<REPLACE: your-cloudfront-domain>/logout"]
+
 # Required in prod: at least one email for security alerts
 email_subscriptions = ["<REPLACE: ops-team@example.com>"]
 https_subscriptions = []

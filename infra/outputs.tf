@@ -67,3 +67,18 @@ output "kms_key_arns" {
     cloudtrail = module.kms.cloudtrail_key_arn
   }
 }
+
+output "cognito_user_pool_id" {
+  description = "Cognito User Pool ID"
+  value       = module.cognito.user_pool_id
+}
+
+output "cognito_client_id" {
+  description = "Cognito User Pool Client ID (set as VITE_COGNITO_CLIENT_ID in frontend/.env)"
+  value       = module.cognito.client_id
+}
+
+output "cognito_domain" {
+  description = "Cognito hosted UI domain prefix"
+  value       = module.cognito.domain
+}
