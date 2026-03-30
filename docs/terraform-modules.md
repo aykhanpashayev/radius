@@ -5,9 +5,9 @@ The Radius infrastructure is composed of 8 modules under `infra/modules/`. The r
 ## Module Dependency Order
 
 ```
-kms → dynamodb, sns
+kms, cognito → dynamodb, sns
 dynamodb, sns, kms → lambda
-lambda → eventbridge, apigateway
+lambda, cognito → eventbridge, apigateway
 kms → cloudtrail
 lambda, dynamodb, sns → cloudwatch
 ```
@@ -22,23 +22,43 @@ Manages KMS keys for all services.
 
 Key rotation is enabled on all keys.
 
+## cognito
+
+Manages the Cognito User Pool, App Client, and hosted domain used to authenticate dashboard users.
+
+**Inputs:** `prefix`, `callback_urls`, `logout_urls`, `tags`  
+**Outputs:** `user_pool_id`, `user_pool_arn`, `client_id`, `domain`
+
+Admin-only user creation — no self-registration. Tokens are valid for 1 hour (access/ID) and 7 days (refresh). The App Client is configured for the Authorization Code flow with SRP auth.
+
 ## dynamodb
 
-Manages all 5 DynamoDB tables and their GSIs.
+Manages all 7 DynamoDB tables and their GSIs.
 
 **Inputs:** `kms_key_arn`, `enable_pitr`, `prefix`, `environment`  
 **Outputs:** `table_names` (map), `table_arns` (map), `gsi_arns` (map)
 
-Tables: Identity_Profile, Blast_Radius_Score, Incident, Event_Summary, Trust_Relationship. See `docs/database-schema.md` for full schema.
+Tables: Identity_Profile, Blast_Radius_Score, Incident, Event_Summary, Trust_Relationship, Remediation_Config, Remediation_Audit_Log. See `docs/database-schema.md` for full schema.
+
+PITR is enabled by default (`enable_pitr = true`).
 
 ## lambda
 
-Manages all 6 Lambda functions, IAM roles, DLQs, and CloudWatch log groups.
+Manages all 7 Lambda functions, IAM roles, DLQs, and CloudWatch log groups.
 
-**Inputs:** `function_configs` (memory), `timeout_configs`, `dynamodb_table_names`, `dynamodb_table_arns`, `dynamodb_gsi_arns`, `sns_topic_arn`, `kms_key_arn`, `lambda_s3_bucket`  
+**Inputs:** `function_configs` (memory per function including `remediation_engine`), `timeout_configs` (timeout per function including `remediation_engine`), `dynamodb_table_names`, `dynamodb_table_arns`, `dynamodb_gsi_arns`, `sns_topic_arn`, `kms_key_arn`, `lambda_s3_bucket`, `dry_run`, `log_level`  
 **Outputs:** `function_arns` (map), `function_names` (map), `role_arns` (map), `dlq_arns` (map)
 
-All functions use Python 3.11 on arm64. Deployment packages are uploaded to S3 by `scripts/build-lambdas.sh`.
+All functions use Python 3.11 on arm64. Every function receives `LOG_LEVEL` and `ENVIRONMENT` as environment variables. `remediation_engine` additionally receives `DRY_RUN` (controlled via `var.remediation_dry_run`). Deployment packages are uploaded to S3 by `scripts/build-lambdas.sh`.
+
+## apigateway
+
+Manages the REST API, stage, Cognito authorizer, usage plan, and throttle settings.
+
+**Inputs:** `lambda_function_arn`, `lambda_function_name`, `cognito_user_pool_arn`, `cors_allowed_origins`, `throttle_burst_limit`, `throttle_rate_limit`, `enable_logging`, `log_retention_days`  
+**Outputs:** `api_endpoint`, `api_id`, `api_arn`, `execution_arn`, `stage_name`
+
+All non-OPTIONS methods require a valid Cognito JWT in the `Authorization` header (`COGNITO_USER_POOLS` authorizer). OPTIONS methods remain unauthenticated for CORS preflight. Throttling is enforced at both the stage level (method settings) and via a usage plan. CORS `Allow-Origin` is driven by `var.cors_allowed_origins` — not hardcoded.
 
 ## eventbridge
 

@@ -15,9 +15,10 @@ Event_Normalizer Lambda
     ├──► Detection_Engine Lambda ──────────► Incident_Processor Lambda
     │         (async invoke)                       (async invoke)
     │                                                    │
-    │                                                    ▼
-    │                                          SNS Alert_Topic
-    │                                       (High / Very High / Critical)
+    │                                                    ├──► SNS Alert_Topic
+    │                                                    │  (High / Very High / Critical)
+    │                                                    │
+    │                                                    └──► Remediation_Engine Lambda (async)
     │
     ├──► Identity_Collector Lambda (async invoke)
     │         ├── Identity_Profile table
@@ -26,14 +27,24 @@ Event_Normalizer Lambda
     └──► Score_Engine Lambda (EventBridge schedule or direct invoke)
               └── Blast_Radius_Score table
 
-API_Handler Lambda ◄── API Gateway ◄── React Dashboard
-    ├── Identity_Profile table
-    ├── Blast_Radius_Score table
-    ├── Incident table
-    └── Event_Summary table
+React Dashboard ──► Cognito (login) ──► JWT token
+                                            │
+                                            ▼
+                                    API Gateway (Cognito authorizer)
+                                            │
+                                            ▼
+                                    API_Handler Lambda
+                                        ├── Identity_Profile table
+                                        ├── Blast_Radius_Score table
+                                        ├── Incident table
+                                        ├── Event_Summary table
+                                        ├── Remediation_Config table
+                                        └── Remediation_Audit_Log table
 ```
 
 Event_Normalizer is the single entry point from EventBridge. It invokes Detection_Engine and Identity_Collector **asynchronously** — neither is triggered directly by EventBridge. Score_Engine runs on an EventBridge schedule (per-identity) or via direct Lambda invoke (batch mode).
+
+All API Gateway endpoints (except OPTIONS preflight) require a valid Cognito JWT in the `Authorization` header.
 
 ## Lambda Functions
 
@@ -90,25 +101,27 @@ infra/
 ├── main.tf                  # Root module — composes all service modules
 ├── modules/
 │   ├── kms/                 # KMS keys for DynamoDB, SNS, Lambda, CloudTrail
-│   ├── dynamodb/            # All 5 tables with GSIs, TTL, PITR, encryption
-│   ├── sns/                 # Alert_Topic with KMS encryption and subscriptions
-│   ├── lambda/              # All 6 functions: IAM roles, DLQs, env vars, packaging
+│   ├── cognito/             # Cognito User Pool, App Client, hosted domain
+│   ├── dynamodb/            # All 7 tables with GSIs, TTL, PITR, encryption
+│   ├── sns/                 # Alert_Topic and Remediation_Topic with KMS encryption
+│   ├── lambda/              # All 7 functions: IAM roles, DLQs, env vars, packaging
 │   ├── eventbridge/         # CloudTrail event routing rule + Score_Engine schedule
-│   ├── apigateway/          # REST API with Lambda proxy integration and access logging
+│   ├── apigateway/          # REST API, Cognito authorizer, usage plan, throttling
 │   ├── cloudtrail/          # Org-wide management event trail with S3 and KMS
-│   └── cloudwatch/          # Alarms (Lambda errors/throttles, DynamoDB throttles) + log groups
+│   └── cloudwatch/          # Alarms (infra + business-logic) + dashboards + log groups
 └── envs/
-    └── dev/                 # Dev environment: tfvars, backend config
+    ├── dev/                 # Dev environment: tfvars, backend config
+    └── prod/                # Prod environment: tfvars, backend config
 ```
 
 ### Module Dependencies
 
 ```
-kms
+kms, cognito
  ├──► dynamodb
  ├──► sns
  ├──► lambda ──► eventbridge
- │           └──► apigateway
+ │           └──► apigateway (receives cognito.user_pool_arn)
  └──► cloudtrail
           └──► cloudwatch (consumes all resource names/ARNs)
 ```

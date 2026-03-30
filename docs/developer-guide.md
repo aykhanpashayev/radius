@@ -8,6 +8,9 @@
 - [Running Tests](#running-tests)
 - [Injecting Sample Events](#injecting-sample-events)
 - [Lambda Packaging and Deployment](#lambda-packaging-and-deployment)
+- [Shared Backend Modules](#shared-backend-modules)
+- [Lambda Environment Variables](#lambda-environment-variables)
+- [CI/CD Pipeline](#cicd-pipeline)
 
 This guide covers how to extend Radius with new detection and scoring rules, how the test suite is structured, and how to run tests, inject sample events, and package Lambda functions for deployment.
 
@@ -313,3 +316,73 @@ The script:
 Terraform reads the S3 zip paths and updates Lambda function code if the S3 ETag changed. Always run `build-lambdas.sh` before `deploy-infra.sh` when deploying code changes.
 
 See `docs/deployment.md` for the full deployment workflow including first-time setup and rollback.
+
+---
+
+## Shared Backend Modules
+
+Logic shared between multiple Lambda functions lives in `backend/common/` and is bundled into every Lambda package by `build-lambdas.sh`. Do not import from one Lambda function's directory into another — use `backend/common/` instead.
+
+| Module | Purpose |
+|---|---|
+| `backend/common/logging_utils.py` | Structured JSON logger, `put_metric()` for CloudWatch custom metrics |
+| `backend/common/dynamodb_utils.py` | DynamoDB client helpers (`get_item`, `put_item`, `update_item`, `query_gsi`) |
+| `backend/common/errors.py` | Shared exception types (`ValidationError`, `DynamoDBError`, `EventProcessingError`) |
+| `backend/common/aws_utils.py` | CloudTrail event field extraction helpers |
+| `backend/common/validation.py` | Input validation utilities |
+| `backend/common/incident_utils.py` | `transition_status()` — incident status transition logic shared by `api_handler` and `incident_processor` |
+| `backend/common/remediation_config.py` | `load_config()` / `update_risk_mode()` — remediation config access shared by `api_handler` and `remediation_engine` |
+
+### Emitting custom metrics
+
+Use `put_metric()` from `logging_utils` to emit business-logic metrics to the `Radius` CloudWatch namespace:
+
+```python
+from backend.common.logging_utils import put_metric
+
+put_metric("ScoresWritten", written, dimensions={"Environment": os.environ["ENVIRONMENT"]})
+```
+
+Metric emission is fire-and-forget — all exceptions are swallowed so a CloudWatch API failure never crashes a handler.
+
+---
+
+## Lambda Environment Variables
+
+Every Lambda function receives these environment variables at runtime (injected by Terraform):
+
+| Variable | Description |
+|---|---|
+| `ENVIRONMENT` | `dev` or `prod` |
+| `AWS_ACCOUNT_REGION` | AWS region |
+| `LOG_LEVEL` | Log level: `DEBUG`, `INFO`, `WARNING`, or `ERROR` (default `INFO`) |
+
+Additional function-specific variables (DynamoDB table names, ARNs, etc.) are documented in `infra/modules/lambda/main.tf`.
+
+To change `LOG_LEVEL` without a code redeploy, update `log_level` in `terraform.tfvars` and run `deploy-infra.sh`.
+
+---
+
+## CI/CD Pipeline
+
+Two GitHub Actions workflows automate testing and deployment.
+
+### CI (`.github/workflows/ci.yml`)
+
+Runs on every pull request to `main`:
+- Python unit + integration tests via `run-tests.sh`
+- Frontend build with placeholder env vars (confirms the build compiles)
+- `terraform fmt -check -recursive` to catch formatting drift
+
+### Deploy (`.github/workflows/deploy.yml`)
+
+Runs on merge to `main`, requires manual approval via the `production` GitHub environment:
+1. Runs the full test suite (gates deployment)
+2. Builds Lambda packages and uploads to S3
+3. Runs `terraform plan` then `terraform apply`
+4. Pulls Cognito and API config from SSM Parameter Store
+5. Builds the React frontend with real config values
+6. Syncs `frontend/dist/` to the S3 hosting bucket
+7. Invalidates the CloudFront cache
+
+Authentication to AWS uses OIDC — no long-lived access keys are stored in GitHub Secrets. The deploy role ARN is stored as `AWS_DEPLOY_ROLE_ARN` in GitHub Secrets.

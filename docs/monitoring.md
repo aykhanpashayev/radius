@@ -26,6 +26,8 @@ Access dashboards at: `https://console.aws.amazon.com/cloudwatch/home#dashboards
 
 All alarms publish to the SNS Alert_Topic when triggered.
 
+**Infrastructure alarms:**
+
 | Alarm | Condition | Period |
 |---|---|---|
 | `{prefix}-{fn}-error-rate` | Lambda error rate > 5% | 5 min |
@@ -33,6 +35,16 @@ All alarms publish to the SNS Alert_Topic when triggered.
 | `{prefix}-dynamodb-{table}-throttles` | DynamoDB throttled requests > 10 | 1 min |
 | `{prefix}-{fn}-dlq-messages` | DLQ message count > 0 | 1 min |
 | `{prefix}-api-gateway-5xx` | API Gateway 5xx rate > 1% | 5 min |
+
+**Business-logic alarms** (detect silent pipeline failures):
+
+| Alarm | Condition | Period | Missing data |
+|---|---|---|---|
+| `{prefix}-no-scores-written-6h` | `ScoresWritten` sum < 1 | 6 hours | breaching |
+| `{prefix}-no-incidents-72h` | `IncidentsCreated` sum < 1 | 72 hours | breaching |
+| `{prefix}-scoring-failure-rate` | `ScoringFailures / ScoresWritten` > 10% | 1 hour | not breaching |
+
+Business-logic metrics are emitted to the `Radius` CloudWatch namespace by the Lambda functions themselves via `put_metric()` in `backend/common/logging_utils.py`.
 
 ## Structured Logging
 
@@ -47,7 +59,9 @@ Every log record includes:
 
 Log groups follow the pattern `/aws/lambda/{prefix}-{function-name}`.
 
-Retention: 7 days (dev), 30 days (prod).
+Retention: 7 days (dev), 365 days (prod).
+
+The log level is controlled by the `LOG_LEVEL` environment variable (default `INFO`). Set `log_level = "DEBUG"` in `terraform.tfvars` to enable verbose logging without a code redeploy.
 
 ### Log Groups and Fields
 

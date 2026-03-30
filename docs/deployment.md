@@ -680,12 +680,17 @@ aws dynamodb scan \
 | Setting | Dev | Prod |
 |---|---|---|
 | `cloudtrail_organization_enabled` | `false` (single account) | `true` (requires AWS Organizations management account) |
-| `enable_pitr` | `false` | `true` (DynamoDB point-in-time recovery) |
-| `log_retention_days` | 7 | 30 |
-| `lambda_concurrency_limit` | 10 (cost control) | 0 (unreserved, scales freely) |
+| `enable_pitr` | `true` | `true` (DynamoDB point-in-time recovery) |
+| `log_retention_days` | 7 | 365 |
+| `lambda_concurrency_limit` | 0 (unreserved) | 0 (unreserved, scales freely) |
 | `lambda_memory.detection_engine` | 1024 MB | 2048 MB |
 | `score_engine_schedule` | every 24 hours | every 6 hours |
+| `remediation_dry_run` | `true` (log only, no IAM mutations) | `false` (live remediation — explicit opt-in) |
+| `api_throttle_burst_limit` | 50 | 200 |
+| `api_throttle_rate_limit` | 25 rps | 100 rps |
+| `cognito_callback_urls` | `http://localhost:5173/callback` | CloudFront domain |
 | SNS subscriptions | optional | required (ops team email) |
+| Frontend config source | manual `.env.local` | SSM Parameter Store via `build-frontend.sh` |
 
 To deploy to prod, fill in `infra/envs/prod/terraform.tfvars` and `infra/envs/prod/backend.tfvars`, then run the same steps with `--env prod`.
 
