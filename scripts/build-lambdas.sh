@@ -127,10 +127,12 @@ for FUNC in "${FUNCTION_NAMES[@]}"; do
   # Copy function code into backend/functions/<name>/
   cp -r "${FUNC_DIR}/." "$FUNC_PKG_DIR/"
 
-  # api_handler imports directly from incident_processor — bundle it too
+  # api_handler imports directly from incident_processor and remediation_engine — bundle them too
   if [[ "$FUNC" == "api_handler" ]]; then
     mkdir -p "${PACKAGE_DIR}/backend/functions/incident_processor"
     cp -r "${FUNCTIONS_DIR}/incident_processor/." "${PACKAGE_DIR}/backend/functions/incident_processor/"
+    mkdir -p "${PACKAGE_DIR}/backend/functions/remediation_engine"
+    cp -r "${FUNCTIONS_DIR}/remediation_engine/." "${PACKAGE_DIR}/backend/functions/remediation_engine/"
   fi
 
   # Copy shared common utilities into backend/common/
