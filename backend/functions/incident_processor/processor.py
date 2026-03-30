@@ -12,6 +12,7 @@ from boto3.dynamodb.conditions import Key, Attr
 from backend.common.dynamodb_utils import get_dynamodb_client, put_item, update_item
 from backend.common.errors import ValidationError
 from backend.common.logging_utils import get_logger
+from backend.common.incident_utils import transition_status  # noqa: F401 — re-exported for callers
 
 logger = get_logger(__name__)
 
@@ -161,55 +162,6 @@ def append_event_to_incident(
         "incident_id": incident_id,
         "new_event_count": len(new_event_ids),
     })
-
-
-def transition_status(
-    table_name: str,
-    incident_id: str,
-    current_status: str,
-    new_status: str,
-) -> dict[str, Any]:
-    """Transition an incident to a new status.
-
-    Args:
-        table_name: Incident DynamoDB table name.
-        incident_id: Incident ID.
-        current_status: Current status (for validation).
-        new_status: Target status.
-
-    Returns:
-        Updated incident attributes.
-
-    Raises:
-        ValidationError: If the transition is not allowed.
-    """
-    if new_status not in _VALID_STATUSES:
-        raise ValidationError(f"Invalid status: {new_status!r}")
-
-    allowed = _VALID_TRANSITIONS.get(current_status, set())
-    if new_status not in allowed:
-        raise ValidationError(
-            f"Invalid transition {current_status!r} → {new_status!r}. "
-            f"Allowed: {sorted(allowed)}"
-        )
-
-    now = _utc_now()
-    return update_item(
-        table_name=table_name,
-        key={"incident_id": incident_id},
-        update_expression=(
-            "SET #st = :new_status, "
-            "update_timestamp = :now, "
-            "status_history = list_append(if_not_exists(status_history, :empty), :entry)"
-        ),
-        expression_attribute_values={
-            ":new_status": new_status,
-            ":now": now,
-            ":entry": [{"status": new_status, "timestamp": now}],
-            ":empty": [],
-        },
-        expression_attribute_names={"#st": "status"},
-    )
 
 
 def _invoke_remediation(incident: dict[str, Any], remediation_lambda_arn: str) -> None:

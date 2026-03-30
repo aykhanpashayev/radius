@@ -416,8 +416,7 @@ def patch_incident(
             f"Allowed transitions: {sorted(allowed) or 'none'}"
         )
 
-    # Apply the transition via processor helper
-    from backend.functions.incident_processor.processor import transition_status
+    from backend.common.incident_utils import transition_status
     try:
         updated = transition_status(_INCIDENT_TABLE, incident_id, current_status, new_status)
     except ValidationError as exc:
@@ -636,7 +635,7 @@ def get_remediation_config(
     _event: dict[str, Any],
 ) -> dict[str, Any]:
     """GET /remediation/config — return the global remediation configuration."""
-    from backend.functions.remediation_engine.config import load_config
+    from backend.common.remediation_config import load_config
     try:
         config = load_config(_REMEDIATION_CONFIG_TABLE)
     except DynamoDBError as exc:
@@ -663,7 +662,7 @@ def put_remediation_mode(
             f"Invalid risk_mode {new_mode!r}. Must be one of: {sorted(_VALID_RISK_MODES)}"
         )
 
-    from backend.functions.remediation_engine.config import update_risk_mode
+    from backend.common.remediation_config import update_risk_mode
     try:
         update_risk_mode(_REMEDIATION_CONFIG_TABLE, new_mode)
     except ValidationError as exc:
@@ -684,7 +683,7 @@ def list_remediation_rules(
     _event: dict[str, Any],
 ) -> dict[str, Any]:
     """GET /remediation/rules — return the rules list from the global config."""
-    from backend.functions.remediation_engine.config import load_config
+    from backend.common.remediation_config import load_config
     try:
         config = load_config(_REMEDIATION_CONFIG_TABLE)
     except DynamoDBError as exc:
@@ -760,7 +759,7 @@ def delete_remediation_rule(
     if not rule_id:
         return bad_request("Missing path parameter: rule_id")
 
-    from backend.functions.remediation_engine.config import load_config
+    from backend.common.remediation_config import load_config
     try:
         config = load_config(_REMEDIATION_CONFIG_TABLE)
     except DynamoDBError as exc:
