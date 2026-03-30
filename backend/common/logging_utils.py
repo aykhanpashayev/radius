@@ -2,10 +2,13 @@
 
 import json
 import logging
+import os
 import traceback
 import uuid
 from datetime import datetime, timezone
 from typing import Any
+
+_LOG_LEVEL = getattr(logging, os.environ.get("LOG_LEVEL", "INFO").upper(), logging.INFO)
 
 
 def _utc_now() -> str:
@@ -55,7 +58,7 @@ def get_logger(name: str, correlation_id: str | None = None) -> logging.Logger:
         handler = logging.StreamHandler()
         handler.setFormatter(_JsonFormatter())
         logger.addHandler(handler)
-        logger.setLevel(logging.INFO)
+        logger.setLevel(_LOG_LEVEL)
         logger.propagate = False
 
     if correlation_id:

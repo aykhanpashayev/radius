@@ -116,3 +116,13 @@ variable "dry_run" {
   type        = bool
   default     = true
 }
+
+variable "log_level" {
+  description = "Log level for all Lambda functions (DEBUG, INFO, WARNING, ERROR)"
+  type        = string
+  default     = "INFO"
+  validation {
+    condition     = contains(["DEBUG", "INFO", "WARNING", "ERROR"], var.log_level)
+    error_message = "log_level must be one of: DEBUG, INFO, WARNING, ERROR."
+  }
+}

@@ -154,6 +154,7 @@ resource "aws_lambda_function" "event_normalizer" {
     variables = {
       ENVIRONMENT                  = var.environment
       AWS_ACCOUNT_REGION           = var.aws_region
+      LOG_LEVEL                    = var.log_level
       EVENT_SUMMARY_TABLE          = var.dynamodb_table_names.event_summary
       DETECTION_ENGINE_ARN         = aws_lambda_function.detection_engine.arn
       IDENTITY_COLLECTOR_ARN       = aws_lambda_function.identity_collector.arn
@@ -193,6 +194,7 @@ resource "aws_lambda_function" "detection_engine" {
     variables = {
       ENVIRONMENT              = var.environment
       AWS_ACCOUNT_REGION       = var.aws_region
+      LOG_LEVEL                = var.log_level
       EVENT_SUMMARY_TABLE      = var.dynamodb_table_names.event_summary
       INCIDENT_PROCESSOR_ARN   = aws_lambda_function.incident_processor.arn
     }
@@ -230,6 +232,7 @@ resource "aws_lambda_function" "incident_processor" {
     variables = {
       ENVIRONMENT      = var.environment
       AWS_ACCOUNT_REGION = var.aws_region
+      LOG_LEVEL        = var.log_level
       INCIDENT_TABLE   = var.dynamodb_table_names.incident
       SNS_TOPIC_ARN    = var.sns_topic_arn
       REMEDIATION_LAMBDA_ARN = aws_lambda_function.remediation_engine.arn
@@ -268,6 +271,7 @@ resource "aws_lambda_function" "identity_collector" {
     variables = {
       ENVIRONMENT              = var.environment
       AWS_ACCOUNT_REGION       = var.aws_region
+      LOG_LEVEL                = var.log_level
       IDENTITY_PROFILE_TABLE   = var.dynamodb_table_names.identity_profile
       TRUST_RELATIONSHIP_TABLE = var.dynamodb_table_names.trust_relationship
     }
@@ -303,6 +307,7 @@ resource "aws_lambda_function" "score_engine" {
     variables = {
       ENVIRONMENT              = var.environment
       AWS_ACCOUNT_REGION       = var.aws_region
+      LOG_LEVEL                = var.log_level
       IDENTITY_PROFILE_TABLE   = var.dynamodb_table_names.identity_profile
       BLAST_RADIUS_SCORE_TABLE = var.dynamodb_table_names.blast_radius_score
       EVENT_SUMMARY_TABLE      = var.dynamodb_table_names.event_summary
@@ -337,6 +342,7 @@ resource "aws_lambda_function" "api_handler" {
     variables = {
       ENVIRONMENT              = var.environment
       AWS_ACCOUNT_REGION       = var.aws_region
+      LOG_LEVEL                = var.log_level
       IDENTITY_PROFILE_TABLE   = var.dynamodb_table_names.identity_profile
       BLAST_RADIUS_SCORE_TABLE = var.dynamodb_table_names.blast_radius_score
       INCIDENT_TABLE           = var.dynamodb_table_names.incident
@@ -375,6 +381,7 @@ resource "aws_lambda_function" "remediation_engine" {
     variables = {
       ENVIRONMENT              = var.environment
       AWS_ACCOUNT_REGION       = var.aws_region
+      LOG_LEVEL                = var.log_level
       REMEDIATION_CONFIG_TABLE = var.dynamodb_table_names.remediation_config
       REMEDIATION_AUDIT_TABLE  = var.dynamodb_table_names.remediation_audit_log
       REMEDIATION_TOPIC_ARN    = var.remediation_topic_arn
