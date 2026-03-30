@@ -232,7 +232,7 @@ resource "aws_lambda_function" "incident_processor" {
       AWS_ACCOUNT_REGION = var.aws_region
       INCIDENT_TABLE   = var.dynamodb_table_names.incident
       SNS_TOPIC_ARN    = var.sns_topic_arn
-      REMEDIATION_LAMBDA_ARN = ""
+      REMEDIATION_LAMBDA_ARN = aws_lambda_function.remediation_engine.arn
     }
   }
 
