@@ -31,6 +31,7 @@ def _should_retry(error: ClientError) -> bool:
 
 def _with_retry(fn, *args, **kwargs):
     """Execute *fn* with exponential backoff on retryable DynamoDB errors."""
+    from botocore.exceptions import BotoCoreError
     last_error: Exception | None = None
     for attempt in range(_MAX_RETRIES):
         try:
@@ -46,6 +47,8 @@ def _with_retry(fn, *args, **kwargs):
                 last_error = exc
             else:
                 raise DynamoDBError(f"DynamoDB operation failed: {exc}") from exc
+        except BotoCoreError as exc:
+            raise DynamoDBError(f"DynamoDB operation failed: {exc}") from exc
     raise DynamoDBError(f"DynamoDB operation failed after {_MAX_RETRIES} retries") from last_error
 
 

@@ -420,6 +420,8 @@ def patch_incident(
     from backend.functions.incident_processor.processor import transition_status
     try:
         updated = transition_status(_INCIDENT_TABLE, incident_id, current_status, new_status)
+    except ValidationError as exc:
+        return bad_request(str(exc))
     except DynamoDBError as exc:
         return server_error(str(exc))
 
