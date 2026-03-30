@@ -173,3 +173,86 @@ resource "aws_cloudwatch_metric_alarm" "api_gateway_5xx" {
   ok_actions    = [var.alarm_sns_topic_arn]
   tags          = local.common_tags
 }
+
+# ---------------------------------------------------------------------------
+# Business-logic alarms — detect silent pipeline failures
+# ---------------------------------------------------------------------------
+
+# Alert if Score_Engine writes zero records in a 6-hour window
+resource "aws_cloudwatch_metric_alarm" "no_scores_written" {
+  alarm_name          = "${var.prefix}-no-scores-written-6h"
+  alarm_description   = "Score_Engine has written zero scores in the last 6 hours — batch scoring may be broken"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = 1
+  threshold           = 1
+  treat_missing_data  = "breaching"
+
+  namespace   = "Radius"
+  metric_name = "ScoresWritten"
+  dimensions  = { Environment = var.environment }
+  period      = 21600 # 6 hours
+  statistic   = "Sum"
+
+  alarm_actions = [var.alarm_sns_topic_arn]
+  tags          = local.common_tags
+}
+
+# Alert if no incidents created in 72 hours (detection pipeline may be broken)
+resource "aws_cloudwatch_metric_alarm" "no_incidents_72h" {
+  alarm_name          = "${var.prefix}-no-incidents-72h"
+  alarm_description   = "No incidents created in 72 hours — detection pipeline may be broken"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = 1
+  threshold           = 1
+  treat_missing_data  = "breaching"
+
+  namespace   = "Radius"
+  metric_name = "IncidentsCreated"
+  dimensions  = { Environment = var.environment }
+  period      = 259200 # 72 hours
+  statistic   = "Sum"
+
+  alarm_actions = [var.alarm_sns_topic_arn]
+  tags          = local.common_tags
+}
+
+# Alert if scoring failures exceed 10% of attempts in a 1-hour window
+resource "aws_cloudwatch_metric_alarm" "high_scoring_failure_rate" {
+  alarm_name          = "${var.prefix}-scoring-failure-rate"
+  alarm_description   = "More than 10% of scoring attempts are failing"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  threshold           = 10
+  treat_missing_data  = "notBreaching"
+
+  metric_query {
+    id          = "failure_rate"
+    expression  = "failures / MAX([failures, written]) * 100"
+    return_data = true
+  }
+
+  metric_query {
+    id = "failures"
+    metric {
+      namespace   = "Radius"
+      metric_name = "ScoringFailures"
+      dimensions  = { Environment = var.environment }
+      period      = 3600
+      stat        = "Sum"
+    }
+  }
+
+  metric_query {
+    id = "written"
+    metric {
+      namespace   = "Radius"
+      metric_name = "ScoresWritten"
+      dimensions  = { Environment = var.environment }
+      period      = 3600
+      stat        = "Sum"
+    }
+  }
+
+  alarm_actions = [var.alarm_sns_topic_arn]
+  tags          = local.common_tags
+}

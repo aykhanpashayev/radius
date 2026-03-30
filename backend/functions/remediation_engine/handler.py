@@ -10,7 +10,7 @@ import os
 from typing import Any
 
 from backend.common.errors import ValidationError
-from backend.common.logging_utils import get_logger
+from backend.common.logging_utils import get_logger, put_metric
 from backend.functions.remediation_engine.engine import RemediationRuleEngine
 
 logger = get_logger(__name__)
@@ -49,6 +49,10 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
 
     try:
         result = _engine.process(event)
+        put_metric("RemediationExecuted", 1, dimensions={
+            "Environment": os.environ.get("ENVIRONMENT", "unknown"),
+            "Outcome": result.get("outcome", "unknown") if isinstance(result, dict) else "executed",
+        })
         return {"status": "processed", "result": result}
     except ValidationError as exc:
         logger.warning(

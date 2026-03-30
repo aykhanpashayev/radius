@@ -8,7 +8,46 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
+import boto3
+
 _LOG_LEVEL = getattr(logging, os.environ.get("LOG_LEVEL", "INFO").upper(), logging.INFO)
+
+# CloudWatch client for custom metric emission — instantiated lazily so unit
+# tests that don't mock boto3 don't fail on import.
+_cloudwatch = None
+_NAMESPACE = "Radius"
+
+
+def _get_cloudwatch():
+    global _cloudwatch
+    if _cloudwatch is None:
+        _cloudwatch = boto3.client("cloudwatch")
+    return _cloudwatch
+
+
+def put_metric(
+    name: str,
+    value: float,
+    unit: str = "Count",
+    dimensions: dict[str, str] | None = None,
+) -> None:
+    """Emit a custom CloudWatch metric.
+
+    Swallows all exceptions — metric emission must never crash a handler.
+
+    Args:
+        name: Metric name (e.g. "ScoresWritten").
+        value: Numeric value.
+        unit: CloudWatch unit string (Count, Milliseconds, etc.).
+        dimensions: Optional dict of dimension name → value.
+    """
+    metric: dict[str, Any] = {"MetricName": name, "Value": value, "Unit": unit}
+    if dimensions:
+        metric["Dimensions"] = [{"Name": k, "Value": v} for k, v in dimensions.items()]
+    try:
+        _get_cloudwatch().put_metric_data(Namespace=_NAMESPACE, MetricData=[metric])
+    except Exception:
+        pass  # Never let metric emission crash the handler
 
 
 def _utc_now() -> str:

@@ -10,7 +10,7 @@ import time
 from typing import Any
 
 from backend.common.dynamodb_utils import get_dynamodb_client, get_item, put_item
-from backend.common.logging_utils import generate_correlation_id, get_logger, log_error
+from backend.common.logging_utils import generate_correlation_id, get_logger, log_error, put_metric
 from backend.functions.score_engine.context import ScoringContext
 from backend.functions.score_engine.engine import RuleEngine
 from backend.functions.score_engine.interfaces import ScoreResult
@@ -91,6 +91,11 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         "duration_ms": duration_ms,
         "correlation_id": correlation_id,
     })
+
+    env = os.environ.get("ENVIRONMENT", "unknown")
+    put_metric("ScoresWritten", written, dimensions={"Environment": env})
+    put_metric("ScoringFailures", failures, dimensions={"Environment": env})
+
     return {"status": "ok", "records_written": written, "failures": failures}
 
 

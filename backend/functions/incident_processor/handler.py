@@ -5,10 +5,11 @@ and publishes SNS alerts for high-severity incidents.
 """
 
 import os
+import os
 from typing import Any
 
 from backend.common.errors import EventProcessingError, ValidationError
-from backend.common.logging_utils import generate_correlation_id, get_logger, log_error
+from backend.common.logging_utils import generate_correlation_id, get_logger, log_error, put_metric
 from backend.functions.incident_processor.processor import (
     append_event_to_incident,
     create_incident,
@@ -68,6 +69,10 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
 
         # Create new incident
         incident = create_incident(_INCIDENT_TABLE, event)
+        put_metric("IncidentsCreated", 1, dimensions={
+            "Environment": os.environ.get("ENVIRONMENT", "unknown"),
+            "Severity": incident.get("severity", "unknown"),
+        })
 
         # Alert for high-severity incidents
         try:
