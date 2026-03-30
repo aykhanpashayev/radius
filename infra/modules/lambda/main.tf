@@ -305,6 +305,9 @@ resource "aws_lambda_function" "score_engine" {
       AWS_ACCOUNT_REGION       = var.aws_region
       IDENTITY_PROFILE_TABLE   = var.dynamodb_table_names.identity_profile
       BLAST_RADIUS_SCORE_TABLE = var.dynamodb_table_names.blast_radius_score
+      EVENT_SUMMARY_TABLE      = var.dynamodb_table_names.event_summary
+      TRUST_RELATIONSHIP_TABLE = var.dynamodb_table_names.trust_relationship
+      INCIDENT_TABLE           = var.dynamodb_table_names.incident
     }
   }
 
