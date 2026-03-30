@@ -245,15 +245,18 @@ resource "aws_iam_role_policy_attachment" "github_deploy" {
 }
 
 # SSM — frontend S3 bucket and CloudFront distribution ID.
-# These are written here as placeholders; update once the CloudFront module exists.
-# The deploy workflow reads these to push the built frontend and bust the CDN cache.
+# These are only written when values are provided — they depend on the
+# CloudFront module which is not yet deployed. The deploy workflow reads
+# these to push the built frontend and bust the CDN cache.
 resource "aws_ssm_parameter" "frontend_bucket" {
+  count = var.frontend_s3_bucket != "" ? 1 : 0
   name  = "/radius/${var.environment}/frontend/bucket"
   type  = "String"
   value = var.frontend_s3_bucket
 }
 
 resource "aws_ssm_parameter" "cloudfront_distribution_id" {
+  count = var.cloudfront_distribution_id != "" ? 1 : 0
   name  = "/radius/${var.environment}/cloudfront/distribution_id"
   type  = "String"
   value = var.cloudfront_distribution_id
