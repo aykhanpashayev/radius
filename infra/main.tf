@@ -48,6 +48,26 @@ module "cognito" {
   logout_urls   = var.cognito_logout_urls
 }
 
+# SSM parameters — config values written here so CI/CD can read them at
+# frontend build time without hardcoding anything in the repo.
+resource "aws_ssm_parameter" "cognito_user_pool_id" {
+  name  = "/radius/${var.environment}/cognito/user_pool_id"
+  type  = "String"
+  value = module.cognito.user_pool_id
+}
+
+resource "aws_ssm_parameter" "cognito_client_id" {
+  name  = "/radius/${var.environment}/cognito/client_id"
+  type  = "String"
+  value = module.cognito.client_id
+}
+
+resource "aws_ssm_parameter" "api_endpoint" {
+  name  = "/radius/${var.environment}/api/endpoint"
+  type  = "String"
+  value = module.apigateway.api_endpoint
+}
+
 # ---------------------------------------------------------------------------
 # 2. DynamoDB — tables (depends on KMS)
 # ---------------------------------------------------------------------------
