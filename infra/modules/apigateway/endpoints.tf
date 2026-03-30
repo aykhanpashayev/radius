@@ -6,9 +6,10 @@
 locals {
   lambda_uri = "arn:aws:apigateway:${data.aws_region.current.name}:lambda:path/2015-03-31/functions/${var.lambda_function_arn}/invocations"
 
-  # Use the first entry from cors_allowed_origins. For multi-origin support,
-  # the Lambda handler should echo back the request Origin if it matches the list.
-  cors_origin = length(var.cors_allowed_origins) == 1 ? "'${var.cors_allowed_origins[0]}'" : "'${var.cors_allowed_origins[0]}'"
+  # Join multiple allowed origins with a comma. API Gateway only supports a
+  # single value in this header, so callers should pass exactly one origin for
+  # prod. The join keeps the variable contract flexible for dev (["*"]).
+  cors_origin = "'${join(",", var.cors_allowed_origins)}'"
 
   cors_response_parameters = {
     "method.response.header.Access-Control-Allow-Headers" = "'Content-Type,Authorization'"
