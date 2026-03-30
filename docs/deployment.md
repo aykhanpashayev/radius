@@ -264,6 +264,53 @@ python scripts/simulate-attack.py --mode mock
 
 ---
 
+## Production — Org-Wide CloudTrail Prerequisites
+
+Enabling `cloudtrail_organization_enabled = true` in `infra/envs/prod/terraform.tfvars` requires additional AWS Organizations setup that must be completed manually before running Terraform. These steps cannot be automated.
+
+### Requirement 1: Management account or delegated admin
+
+The AWS account running Terraform must be either:
+- The Organizations **management account**, OR
+- A **delegated administrator** for CloudTrail (recommended for prod)
+
+To designate a delegated admin from the management account:
+```bash
+aws organizations register-delegated-administrator \
+  --account-id YOUR_SECURITY_ACCOUNT_ID \
+  --service-principal cloudtrail.amazonaws.com
+```
+
+### Requirement 2: Enable trusted access for CloudTrail
+
+From the management account:
+```bash
+aws organizations enable-aws-service-access \
+  --service-principal cloudtrail.amazonaws.com
+```
+
+Verify it's enabled:
+```bash
+aws organizations list-aws-service-access-for-organization \
+  --query "EnabledServicePrincipals[?ServicePrincipal=='cloudtrail.amazonaws.com']"
+```
+
+### Requirement 3: S3 bucket policy for org trail
+
+The S3 bucket receiving CloudTrail logs needs a policy that allows all accounts in the org to write to it. Terraform handles this automatically via the `cloudtrail` module — but the bucket must be in the management account or delegated admin account, not a member account.
+
+Verify your `terraform.tfvars` has the correct account context:
+```hcl
+cloudtrail_organization_enabled = true
+# The account running Terraform must be mgmt or delegated admin
+```
+
+### What happens if you skip these steps
+
+Terraform apply will succeed but the CloudTrail trail will silently fail to capture events from member accounts. You will see events only from the account that created the trail. There is no error — it simply doesn't work.
+
+---
+
 ## Full AWS Deployment
 
 Follow these steps in order. Each step explains what you're doing and what success looks like.
