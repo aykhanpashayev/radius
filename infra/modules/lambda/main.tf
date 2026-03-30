@@ -101,13 +101,34 @@ resource "aws_cloudwatch_log_group" "remediation_engine" {
 # S3 object data sources â€” used to get ETags for source_code_hash triggers.
 # This ensures Terraform redeploys Lambda whenever the zip changes in S3.
 # ---------------------------------------------------------------------------
-data "aws_s3_object" "event_normalizer"   { bucket = var.lambda_s3_bucket; key = "functions/event_normalizer.zip" }
-data "aws_s3_object" "detection_engine"   { bucket = var.lambda_s3_bucket; key = "functions/detection_engine.zip" }
-data "aws_s3_object" "incident_processor" { bucket = var.lambda_s3_bucket; key = "functions/incident_processor.zip" }
-data "aws_s3_object" "identity_collector" { bucket = var.lambda_s3_bucket; key = "functions/identity_collector.zip" }
-data "aws_s3_object" "score_engine"       { bucket = var.lambda_s3_bucket; key = "functions/score_engine.zip" }
-data "aws_s3_object" "api_handler"        { bucket = var.lambda_s3_bucket; key = "functions/api_handler.zip" }
-data "aws_s3_object" "remediation_engine" { bucket = var.lambda_s3_bucket; key = "functions/remediation_engine.zip" }
+data "aws_s3_object" "event_normalizer" {
+  bucket = var.lambda_s3_bucket
+  key    = "functions/event_normalizer.zip"
+}
+data "aws_s3_object" "detection_engine" {
+  bucket = var.lambda_s3_bucket
+  key    = "functions/detection_engine.zip"
+}
+data "aws_s3_object" "incident_processor" {
+  bucket = var.lambda_s3_bucket
+  key    = "functions/incident_processor.zip"
+}
+data "aws_s3_object" "identity_collector" {
+  bucket = var.lambda_s3_bucket
+  key    = "functions/identity_collector.zip"
+}
+data "aws_s3_object" "score_engine" {
+  bucket = var.lambda_s3_bucket
+  key    = "functions/score_engine.zip"
+}
+data "aws_s3_object" "api_handler" {
+  bucket = var.lambda_s3_bucket
+  key    = "functions/api_handler.zip"
+}
+data "aws_s3_object" "remediation_engine" {
+  bucket = var.lambda_s3_bucket
+  key    = "functions/remediation_engine.zip"
+}
 
 # ---------------------------------------------------------------------------
 # Lambda Functions
