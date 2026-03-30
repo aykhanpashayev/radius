@@ -15,21 +15,33 @@ async function request(path, options = {}) {
       "Run: terraform -chdir=infra/envs/dev output api_endpoint"
     );
   }
-  const res = await fetch(`${BASE}${path}`, options);
-  if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
-  return res.json();
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    const res = await fetch(`${BASE}${path}`, { ...options, signal: controller.signal });
+    if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
+    return res.json();
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 // Unwraps the standard list envelope { data: [...], metadata: { next_token, count } }
 // Returns { items: [], nextToken: string|null }
 async function requestList(path) {
-  const res = await fetch(`${BASE}${path}`);
-  if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
-  const json = await res.json();
-  return {
-    items: Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : []),
-    nextToken: json.metadata?.next_token ?? null,
-  };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    const res = await fetch(`${BASE}${path}`, { signal: controller.signal });
+    if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
+    const json = await res.json();
+    return {
+      items: Array.isArray(json.data) ? json.data : (Array.isArray(json) ? json : []),
+      nextToken: json.metadata?.next_token ?? null,
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export const getScores = (params = {}) =>
