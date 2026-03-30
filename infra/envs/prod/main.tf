@@ -41,9 +41,10 @@ module "radius" {
 # ---------------------------------------------------------------------------
 # Pass-through variables (values come from terraform.tfvars)
 # ---------------------------------------------------------------------------
-variable "environment"                     { type = string }
-variable "aws_region"                      { type = string }
-variable "resource_prefix"                 { type = string }
+variable "environment"    { type = string }
+variable "aws_region"     { type = string }
+variable "resource_prefix" { type = string }
+
 variable "lambda_memory" {
   type = object({
     event_normalizer   = number
@@ -55,6 +56,7 @@ variable "lambda_memory" {
     remediation_engine = number
   })
 }
+
 variable "lambda_timeout" {
   type = object({
     event_normalizer   = number
@@ -66,24 +68,67 @@ variable "lambda_timeout" {
     remediation_engine = number
   })
 }
+
 variable "lambda_concurrency_limit"        { type = number }
 variable "log_retention_days"              { type = number }
 variable "cloudtrail_organization_enabled" { type = bool }
 variable "enable_pitr"                     { type = bool }
-variable "lambda_s3_bucket"                { type = string; default = "" }
-variable "email_subscriptions"             { type = list(string); default = [] }
-variable "https_subscriptions"             { type = list(string); default = [] }
-variable "tags"                            { type = map(string) }
-variable "score_engine_schedule"           { type = string; default = "rate(6 hours)" }
-variable "remediation_dry_run"             { type = bool; default = false }
-variable "log_level"                       { type = string; default = "INFO" }
-variable "api_throttle_burst_limit"        { type = number; default = 200 }
-variable "api_throttle_rate_limit"         { type = number; default = 100 }
-variable "cognito_callback_urls"           { type = list(string) }
-variable "cognito_logout_urls"             { type = list(string) }
-variable "github_repo"                     { type = string }
-variable "frontend_s3_bucket"              { type = string; default = "" }
-variable "cloudfront_distribution_id"      { type = string; default = "" }
+
+variable "lambda_s3_bucket" {
+  type    = string
+  default = ""
+}
+
+variable "email_subscriptions" {
+  type    = list(string)
+  default = []
+}
+
+variable "https_subscriptions" {
+  type    = list(string)
+  default = []
+}
+
+variable "tags" { type = map(string) }
+
+variable "score_engine_schedule" {
+  type    = string
+  default = "rate(6 hours)"
+}
+
+variable "remediation_dry_run" {
+  type    = bool
+  default = false
+}
+
+variable "log_level" {
+  type    = string
+  default = "INFO"
+}
+
+variable "api_throttle_burst_limit" {
+  type    = number
+  default = 200
+}
+
+variable "api_throttle_rate_limit" {
+  type    = number
+  default = 100
+}
+
+variable "cognito_callback_urls" { type = list(string) }
+variable "cognito_logout_urls"   { type = list(string) }
+variable "github_repo"           { type = string }
+
+variable "frontend_s3_bucket" {
+  type    = string
+  default = ""
+}
+
+variable "cloudfront_distribution_id" {
+  type    = string
+  default = ""
+}
 
 # ---------------------------------------------------------------------------
 # Outputs

@@ -39,9 +39,10 @@ module "radius" {
 # ---------------------------------------------------------------------------
 # Pass-through variables (values come from terraform.tfvars)
 # ---------------------------------------------------------------------------
-variable "environment"                     { type = string }
-variable "aws_region"                      { type = string }
-variable "resource_prefix"                 { type = string }
+variable "environment" { type = string }
+variable "aws_region"  { type = string }
+variable "resource_prefix" { type = string }
+
 variable "lambda_memory" {
   type = object({
     event_normalizer   = number
@@ -53,6 +54,7 @@ variable "lambda_memory" {
     remediation_engine = number
   })
 }
+
 variable "lambda_timeout" {
   type = object({
     event_normalizer   = number
@@ -64,22 +66,68 @@ variable "lambda_timeout" {
     remediation_engine = number
   })
 }
+
 variable "lambda_concurrency_limit"        { type = number }
 variable "log_retention_days"              { type = number }
 variable "cloudtrail_organization_enabled" { type = bool }
 variable "enable_pitr"                     { type = bool }
-variable "lambda_s3_bucket"                { type = string; default = "" }
-variable "email_subscriptions"             { type = list(string); default = [] }
-variable "https_subscriptions"             { type = list(string); default = [] }
-variable "tags"                            { type = map(string) }
-variable "score_engine_schedule"           { type = string; default = "rate(24 hours)" }
-variable "remediation_dry_run"             { type = bool; default = true }
-variable "log_level"                       { type = string; default = "INFO" }
-variable "api_throttle_burst_limit"        { type = number; default = 50 }
-variable "api_throttle_rate_limit"         { type = number; default = 25 }
-variable "cognito_callback_urls"           { type = list(string); default = ["http://localhost:5173/callback"] }
-variable "cognito_logout_urls"             { type = list(string); default = ["http://localhost:5173/logout"] }
-variable "github_repo"                     { type = string; default = "YOUR_ORG/radius" }
+
+variable "lambda_s3_bucket" {
+  type    = string
+  default = ""
+}
+
+variable "email_subscriptions" {
+  type    = list(string)
+  default = []
+}
+
+variable "https_subscriptions" {
+  type    = list(string)
+  default = []
+}
+
+variable "tags" { type = map(string) }
+
+variable "score_engine_schedule" {
+  type    = string
+  default = "rate(24 hours)"
+}
+
+variable "remediation_dry_run" {
+  type    = bool
+  default = true
+}
+
+variable "log_level" {
+  type    = string
+  default = "INFO"
+}
+
+variable "api_throttle_burst_limit" {
+  type    = number
+  default = 50
+}
+
+variable "api_throttle_rate_limit" {
+  type    = number
+  default = 25
+}
+
+variable "cognito_callback_urls" {
+  type    = list(string)
+  default = ["http://localhost:5173/callback"]
+}
+
+variable "cognito_logout_urls" {
+  type    = list(string)
+  default = ["http://localhost:5173/logout"]
+}
+
+variable "github_repo" {
+  type    = string
+  default = "YOUR_ORG/radius"
+}
 
 # ---------------------------------------------------------------------------
 # Outputs
