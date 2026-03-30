@@ -156,3 +156,21 @@ variable "cognito_logout_urls" {
   type        = list(string)
   default     = ["http://localhost:5173/logout"]
 }
+
+variable "github_repo" {
+  description = "GitHub repository in org/repo format — used to scope the OIDC deploy role (e.g. my-org/radius)"
+  type        = string
+  default     = "YOUR_ORG/radius"
+}
+
+variable "frontend_s3_bucket" {
+  description = "S3 bucket name hosting the built React frontend. Set once the CloudFront module is added."
+  type        = string
+  default     = ""
+}
+
+variable "cloudfront_distribution_id" {
+  description = "CloudFront distribution ID for the frontend. Set once the CloudFront module is added."
+  type        = string
+  default     = ""
+}

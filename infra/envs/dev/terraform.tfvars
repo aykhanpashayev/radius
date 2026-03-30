@@ -64,6 +64,9 @@ api_throttle_rate_limit  = 25
 cognito_callback_urls = ["http://localhost:5173/callback"]
 cognito_logout_urls   = ["http://localhost:5173/logout"]
 
+# GitHub OIDC deploy role — replace with your actual org/repo
+github_repo = "<REPLACE: your-org/radius>"
+
 # Optional: email addresses to receive SNS security alerts
 # email_subscriptions = ["your-email@example.com"]
 email_subscriptions = []

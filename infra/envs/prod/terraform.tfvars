@@ -51,6 +51,13 @@ api_throttle_rate_limit  = 100
 cognito_callback_urls = ["https://<REPLACE: your-cloudfront-domain>/callback"]
 cognito_logout_urls   = ["https://<REPLACE: your-cloudfront-domain>/logout"]
 
+# GitHub OIDC deploy role — replace with your actual org/repo
+github_repo = "<REPLACE: your-org/radius>"
+
+# Frontend hosting — fill in once CloudFront module is deployed
+frontend_s3_bucket         = "<REPLACE: your-frontend-bucket>"
+cloudfront_distribution_id = "<REPLACE: your-cloudfront-distribution-id>"
+
 # Required in prod: at least one email for security alerts
 email_subscriptions = ["<REPLACE: ops-team@example.com>"]
 https_subscriptions = []
