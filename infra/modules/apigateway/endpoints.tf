@@ -21,9 +21,9 @@ locals {
     "application/json" = ""
   }
 
-  # Authorizer ID — empty string when no Cognito pool is configured (dev/local).
-  authorizer_id = var.cognito_user_pool_arn != "" ? aws_api_gateway_authorizer.cognito[0].id : null
-  authorization = var.cognito_user_pool_arn != "" ? "COGNITO_USER_POOLS" : "NONE"
+  # Authorizer — always present, sourced from the Cognito module.
+  authorizer_id = aws_api_gateway_authorizer.cognito.id
+  authorization = "COGNITO_USER_POOLS"
 }
 
 data "aws_region" "current" {}

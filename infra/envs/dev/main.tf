@@ -27,6 +27,13 @@ module "radius" {
   https_subscriptions             = var.https_subscriptions
   tags                            = var.tags
   score_engine_schedule           = var.score_engine_schedule
+  remediation_dry_run             = var.remediation_dry_run
+  log_level                       = var.log_level
+  api_throttle_burst_limit        = var.api_throttle_burst_limit
+  api_throttle_rate_limit         = var.api_throttle_rate_limit
+  cognito_callback_urls           = var.cognito_callback_urls
+  cognito_logout_urls             = var.cognito_logout_urls
+  github_repo                     = var.github_repo
 }
 
 # ---------------------------------------------------------------------------
@@ -35,34 +42,52 @@ module "radius" {
 variable "environment"                     { type = string }
 variable "aws_region"                      { type = string }
 variable "resource_prefix"                 { type = string }
-variable "lambda_memory"                   { type = map(number) }
-variable "lambda_timeout"                  { type = map(number) }
+variable "lambda_memory" {
+  type = object({
+    event_normalizer   = number
+    detection_engine   = number
+    incident_processor = number
+    identity_collector = number
+    score_engine       = number
+    api_handler        = number
+    remediation_engine = number
+  })
+}
+variable "lambda_timeout" {
+  type = object({
+    event_normalizer   = number
+    detection_engine   = number
+    incident_processor = number
+    identity_collector = number
+    score_engine       = number
+    api_handler        = number
+    remediation_engine = number
+  })
+}
 variable "lambda_concurrency_limit"        { type = number }
 variable "log_retention_days"              { type = number }
 variable "cloudtrail_organization_enabled" { type = bool }
 variable "enable_pitr"                     { type = bool }
-variable "lambda_s3_bucket" {
-  type    = string
-  default = ""
-}
-variable "email_subscriptions" {
-  type    = list(string)
-  default = []
-}
-variable "https_subscriptions" {
-  type    = list(string)
-  default = []
-}
+variable "lambda_s3_bucket"                { type = string; default = "" }
+variable "email_subscriptions"             { type = list(string); default = [] }
+variable "https_subscriptions"             { type = list(string); default = [] }
 variable "tags"                            { type = map(string) }
-variable "score_engine_schedule" {
-  type    = string
-  default = "rate(24 hours)"
-}
+variable "score_engine_schedule"           { type = string; default = "rate(24 hours)" }
+variable "remediation_dry_run"             { type = bool; default = true }
+variable "log_level"                       { type = string; default = "INFO" }
+variable "api_throttle_burst_limit"        { type = number; default = 50 }
+variable "api_throttle_rate_limit"         { type = number; default = 25 }
+variable "cognito_callback_urls"           { type = list(string); default = ["http://localhost:5173/callback"] }
+variable "cognito_logout_urls"             { type = list(string); default = ["http://localhost:5173/logout"] }
+variable "github_repo"                     { type = string; default = "YOUR_ORG/radius" }
 
 # ---------------------------------------------------------------------------
 # Outputs
 # ---------------------------------------------------------------------------
-output "environment"     { value = module.radius.environment }
-output "aws_region"      { value = module.radius.aws_region }
-output "resource_prefix" { value = module.radius.resource_prefix }
-output "api_endpoint"    { value = module.radius.api_endpoint }
+output "environment"          { value = module.radius.environment }
+output "aws_region"           { value = module.radius.aws_region }
+output "resource_prefix"      { value = module.radius.resource_prefix }
+output "api_endpoint"         { value = module.radius.api_endpoint }
+output "cognito_user_pool_id" { value = module.radius.cognito_user_pool_id }
+output "cognito_client_id"    { value = module.radius.cognito_client_id }
+output "cognito_domain"       { value = module.radius.cognito_domain }

@@ -71,10 +71,9 @@ resource "aws_cloudwatch_log_group" "api_gateway" {
 
 # ---------------------------------------------------------------------------
 # Cognito User Pool authorizer
-# All non-OPTIONS methods use this authorizer when cognito_user_pool_arn is set.
+# All non-OPTIONS methods use this authorizer.
 # ---------------------------------------------------------------------------
 resource "aws_api_gateway_authorizer" "cognito" {
-  count           = var.cognito_user_pool_arn != "" ? 1 : 0
   name            = "${var.prefix}-cognito-authorizer"
   rest_api_id     = aws_api_gateway_rest_api.radius.id
   type            = "COGNITO_USER_POOLS"

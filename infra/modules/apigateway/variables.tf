@@ -29,9 +29,8 @@ variable "cors_allowed_origins" {
 }
 
 variable "cognito_user_pool_arn" {
-  description = "ARN of the Cognito User Pool used to authorize API requests. Required when environment is 'prod'."
+  description = "ARN of the Cognito User Pool used to authorize API requests."
   type        = string
-  default     = ""
 }
 
 variable "enable_logging" {
