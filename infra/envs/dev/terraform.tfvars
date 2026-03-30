@@ -46,8 +46,8 @@ log_retention_days = 7
 # Set to true only in a production AWS Organizations management account
 cloudtrail_organization_enabled = false
 
-# Point-in-time recovery for DynamoDB (not needed in dev)
-enable_pitr = false
+# Point-in-time recovery for DynamoDB — enabled by default, disable only to cut costs in throwaway envs
+enable_pitr = true
 
 # How often Score_Engine rescores all identities
 score_engine_schedule = "rate(24 hours)"

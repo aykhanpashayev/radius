@@ -80,7 +80,7 @@ variable "cloudtrail_organization_enabled" {
 variable "enable_pitr" {
   description = "Enable point-in-time recovery for DynamoDB tables"
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "lambda_s3_bucket" {
