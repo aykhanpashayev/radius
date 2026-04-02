@@ -23,6 +23,7 @@
   - [Step 8 — Verify the deployment](#step-8--verify-the-deployment)
   - [Step 9 — Seed test data (optional)](#step-9--seed-test-data-optional)
 - [Post-Deployment Validation](#post-deployment-validation)
+- [Testing the Remediation Engine](#testing-the-remediation-engine)
 - [Viewing the Dashboard and Monitoring](#viewing-the-dashboard-and-monitoring)
   - [React Dashboard](#react-dashboard)
   - [Adding More Users](#adding-more-users)
@@ -544,6 +545,132 @@ aws dynamodb scan \
 ```
 
 If incidents and scores appear, the pipeline is working end-to-end.
+
+---
+
+## Testing the Remediation Engine
+
+The Remediation_Engine evaluates rules against high-severity incidents and optionally executes IAM actions. Follow these steps to confirm it's working.
+
+### Step 1 — Confirm dry-run mode
+
+By default `remediation_dry_run = true` in dev — actions are logged but no real IAM changes are made. Verify the current setting:
+
+```bash
+terraform -chdir=infra/envs/dev output -json | python3 -c "import json,sys; print('dry_run not in outputs — check terraform.tfvars')"
+```
+
+Or check directly in your `terraform.tfvars`:
+```hcl
+remediation_dry_run = true   # safe — logs only, no IAM mutations
+```
+
+### Step 2 — Create a remediation rule
+
+Use the API to create a rule that fires on Critical incidents:
+
+Linux/macOS/WSL2:
+```bash
+curl -s -X POST \
+  "https://<your-api-endpoint>/remediation/rules" \
+  -H "Authorization: <your-cognito-id-token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Test — notify on Critical",
+    "min_severity": "Critical",
+    "actions": ["notify_security_team"],
+    "active": true,
+    "priority": 1
+  }'
+```
+
+Windows PowerShell:
+```powershell
+Invoke-RestMethod -Method POST `
+  -Uri "https://<your-api-endpoint>/remediation/rules" `
+  -Headers @{ Authorization = "<your-cognito-id-token>"; "Content-Type" = "application/json" } `
+  -Body '{"name":"Test — notify on Critical","min_severity":"Critical","actions":["notify_security_team"],"active":true,"priority":1}'
+```
+
+### Step 3 — Trigger a high-severity incident
+
+Inject a privilege escalation event which produces a Critical severity incident:
+
+```bash
+python scripts/inject-events.py --env dev \
+  --file sample-data/cloud-trail-events/suspicious-privilege-escalation.json
+```
+
+Wait 30–60 seconds for the pipeline to process it.
+
+### Step 4 — Check the remediation audit log
+
+```bash
+aws dynamodb scan \
+  --table-name radius-dev-remediation-audit-log \
+  --region us-east-1 \
+  --query "Items[*].{action:action_name.S, outcome:outcome.S, mode:risk_mode.S, dry_run:dry_run.BOOL, identity:identity_arn.S}" \
+  --output table
+```
+
+**What to look for:**
+
+| outcome | dry_run | Meaning |
+|---|---|---|
+| `executed` | `true` | Action ran in dry-run — logged only, no real IAM change |
+| `executed` | `false` | Action ran for real — IAM was mutated |
+| `suppressed` | — | Safety control fired (cooldown, excluded ARN, protected account) |
+| `skipped` | — | No rules matched the incident |
+
+If you see `executed` with `dry_run=true`, the engine is working correctly in safe mode.
+
+### Step 5 — Check the remediation config via the API
+
+```bash
+curl -s \
+  "https://<your-api-endpoint>/remediation/config" \
+  -H "Authorization: <your-cognito-id-token>" | python3 -m json.tool
+```
+
+This returns the current `risk_mode`, active rules, and exclusion lists.
+
+### Step 6 — Enable live remediation (prod only)
+
+When you're confident the rules are correct, switch off dry-run in `terraform.tfvars`:
+
+```hcl
+remediation_dry_run = false
+```
+
+Then redeploy:
+```bash
+bash scripts/deploy-infra.sh --env prod
+```
+
+> **Warning:** With `dry_run = false` and `risk_mode = enforce`, the engine will execute real IAM mutations (detach policies, disable access keys, etc.) on matching identities. Review all rules carefully before enabling.
+
+### Changing the risk mode without redeploying
+
+The risk mode can be changed at runtime via the API without a Terraform redeploy:
+
+Linux/macOS/WSL2:
+```bash
+curl -s -X PUT \
+  "https://<your-api-endpoint>/remediation/config/mode" \
+  -H "Authorization: <your-cognito-id-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"risk_mode": "alert"}'
+```
+
+Windows PowerShell:
+```powershell
+Invoke-RestMethod -Method PUT `
+  -Uri "https://<your-api-endpoint>/remediation/config/mode" `
+  -Headers @{ Authorization = "<your-cognito-id-token>"; "Content-Type" = "application/json" } `
+  -Body '{"risk_mode":"alert"}'
+```
+
+Valid values: `monitor` (log only), `alert` (log + SNS notification), `enforce` (log + SNS + IAM actions).
 
 ---
 
