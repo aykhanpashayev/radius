@@ -59,6 +59,41 @@ resource "aws_api_gateway_integration" "get_identities" {
   uri                     = local.lambda_uri
 }
 
+# OPTIONS /identities
+resource "aws_api_gateway_method" "options_identities" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.identities.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+resource "aws_api_gateway_integration" "options_identities" {
+  rest_api_id       = aws_api_gateway_rest_api.radius.id
+  resource_id       = aws_api_gateway_resource.identities.id
+  http_method       = aws_api_gateway_method.options_identities.http_method
+  type              = "MOCK"
+  request_templates = { "application/json" = "{\"statusCode\": 200}" }
+}
+resource "aws_api_gateway_method_response" "options_identities" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.identities.id
+  http_method = aws_api_gateway_method.options_identities.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+resource "aws_api_gateway_integration_response" "options_identities" {
+  rest_api_id         = aws_api_gateway_rest_api.radius.id
+  resource_id         = aws_api_gateway_resource.identities.id
+  http_method         = aws_api_gateway_method.options_identities.http_method
+  status_code         = aws_api_gateway_method_response.options_identities.status_code
+  response_parameters = local.cors_response_parameters
+  response_templates  = local.cors_response_templates
+  depends_on          = [aws_api_gateway_integration.options_identities]
+}
+
 # /identities/{arn}
 resource "aws_api_gateway_resource" "identity_by_arn" {
   rest_api_id = aws_api_gateway_rest_api.radius.id
@@ -110,6 +145,41 @@ resource "aws_api_gateway_integration" "get_scores" {
   uri                     = local.lambda_uri
 }
 
+# OPTIONS /scores
+resource "aws_api_gateway_method" "options_scores" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.scores.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+resource "aws_api_gateway_integration" "options_scores" {
+  rest_api_id       = aws_api_gateway_rest_api.radius.id
+  resource_id       = aws_api_gateway_resource.scores.id
+  http_method       = aws_api_gateway_method.options_scores.http_method
+  type              = "MOCK"
+  request_templates = { "application/json" = "{\"statusCode\": 200}" }
+}
+resource "aws_api_gateway_method_response" "options_scores" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.scores.id
+  http_method = aws_api_gateway_method.options_scores.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+resource "aws_api_gateway_integration_response" "options_scores" {
+  rest_api_id         = aws_api_gateway_rest_api.radius.id
+  resource_id         = aws_api_gateway_resource.scores.id
+  http_method         = aws_api_gateway_method.options_scores.http_method
+  status_code         = aws_api_gateway_method_response.options_scores.status_code
+  response_parameters = local.cors_response_parameters
+  response_templates  = local.cors_response_templates
+  depends_on          = [aws_api_gateway_integration.options_scores]
+}
+
 # /scores/{arn}
 resource "aws_api_gateway_resource" "score_by_arn" {
   rest_api_id = aws_api_gateway_rest_api.radius.id
@@ -159,6 +229,41 @@ resource "aws_api_gateway_integration" "get_incidents" {
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = local.lambda_uri
+}
+
+# OPTIONS /incidents
+resource "aws_api_gateway_method" "options_incidents" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.incidents.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+resource "aws_api_gateway_integration" "options_incidents" {
+  rest_api_id       = aws_api_gateway_rest_api.radius.id
+  resource_id       = aws_api_gateway_resource.incidents.id
+  http_method       = aws_api_gateway_method.options_incidents.http_method
+  type              = "MOCK"
+  request_templates = { "application/json" = "{\"statusCode\": 200}" }
+}
+resource "aws_api_gateway_method_response" "options_incidents" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.incidents.id
+  http_method = aws_api_gateway_method.options_incidents.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+resource "aws_api_gateway_integration_response" "options_incidents" {
+  rest_api_id         = aws_api_gateway_rest_api.radius.id
+  resource_id         = aws_api_gateway_resource.incidents.id
+  http_method         = aws_api_gateway_method.options_incidents.http_method
+  status_code         = aws_api_gateway_method_response.options_incidents.status_code
+  response_parameters = local.cors_response_parameters
+  response_templates  = local.cors_response_templates
+  depends_on          = [aws_api_gateway_integration.options_incidents]
 }
 
 # /incidents/{id}
@@ -268,6 +373,41 @@ resource "aws_api_gateway_integration" "get_events" {
   uri                     = local.lambda_uri
 }
 
+# OPTIONS /events
+resource "aws_api_gateway_method" "options_events" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.events.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+resource "aws_api_gateway_integration" "options_events" {
+  rest_api_id       = aws_api_gateway_rest_api.radius.id
+  resource_id       = aws_api_gateway_resource.events.id
+  http_method       = aws_api_gateway_method.options_events.http_method
+  type              = "MOCK"
+  request_templates = { "application/json" = "{\"statusCode\": 200}" }
+}
+resource "aws_api_gateway_method_response" "options_events" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.events.id
+  http_method = aws_api_gateway_method.options_events.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+resource "aws_api_gateway_integration_response" "options_events" {
+  rest_api_id         = aws_api_gateway_rest_api.radius.id
+  resource_id         = aws_api_gateway_resource.events.id
+  http_method         = aws_api_gateway_method.options_events.http_method
+  status_code         = aws_api_gateway_method_response.options_events.status_code
+  response_parameters = local.cors_response_parameters
+  response_templates  = local.cors_response_templates
+  depends_on          = [aws_api_gateway_integration.options_events]
+}
+
 # /events/{id}
 resource "aws_api_gateway_resource" "event_by_id" {
   rest_api_id = aws_api_gateway_rest_api.radius.id
@@ -319,6 +459,41 @@ resource "aws_api_gateway_integration" "get_trust_relationships" {
   uri                     = local.lambda_uri
 }
 
+# OPTIONS /trust-relationships
+resource "aws_api_gateway_method" "options_trust_relationships" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.trust_relationships.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+resource "aws_api_gateway_integration" "options_trust_relationships" {
+  rest_api_id       = aws_api_gateway_rest_api.radius.id
+  resource_id       = aws_api_gateway_resource.trust_relationships.id
+  http_method       = aws_api_gateway_method.options_trust_relationships.http_method
+  type              = "MOCK"
+  request_templates = { "application/json" = "{\"statusCode\": 200}" }
+}
+resource "aws_api_gateway_method_response" "options_trust_relationships" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.trust_relationships.id
+  http_method = aws_api_gateway_method.options_trust_relationships.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+resource "aws_api_gateway_integration_response" "options_trust_relationships" {
+  rest_api_id         = aws_api_gateway_rest_api.radius.id
+  resource_id         = aws_api_gateway_resource.trust_relationships.id
+  http_method         = aws_api_gateway_method.options_trust_relationships.http_method
+  status_code         = aws_api_gateway_method_response.options_trust_relationships.status_code
+  response_parameters = local.cors_response_parameters
+  response_templates  = local.cors_response_templates
+  depends_on          = [aws_api_gateway_integration.options_trust_relationships]
+}
+
 # ===========================================================================
 # /remediation/config
 # ===========================================================================
@@ -349,6 +524,41 @@ resource "aws_api_gateway_integration" "get_remediation_config" {
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = local.lambda_uri
+}
+
+# OPTIONS /remediation/config
+resource "aws_api_gateway_method" "options_remediation_config" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.remediation_config.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+resource "aws_api_gateway_integration" "options_remediation_config" {
+  rest_api_id       = aws_api_gateway_rest_api.radius.id
+  resource_id       = aws_api_gateway_resource.remediation_config.id
+  http_method       = aws_api_gateway_method.options_remediation_config.http_method
+  type              = "MOCK"
+  request_templates = { "application/json" = "{\"statusCode\": 200}" }
+}
+resource "aws_api_gateway_method_response" "options_remediation_config" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.remediation_config.id
+  http_method = aws_api_gateway_method.options_remediation_config.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+resource "aws_api_gateway_integration_response" "options_remediation_config" {
+  rest_api_id         = aws_api_gateway_rest_api.radius.id
+  resource_id         = aws_api_gateway_resource.remediation_config.id
+  http_method         = aws_api_gateway_method.options_remediation_config.http_method
+  status_code         = aws_api_gateway_method_response.options_remediation_config.status_code
+  response_parameters = local.cors_response_parameters
+  response_templates  = local.cors_response_templates
+  depends_on          = [aws_api_gateway_integration.options_remediation_config]
 }
 
 # /remediation/config/mode
@@ -581,4 +791,39 @@ resource "aws_api_gateway_integration" "get_remediation_audit" {
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = local.lambda_uri
+}
+
+# OPTIONS /remediation/audit
+resource "aws_api_gateway_method" "options_remediation_audit" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.remediation_audit.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+resource "aws_api_gateway_integration" "options_remediation_audit" {
+  rest_api_id       = aws_api_gateway_rest_api.radius.id
+  resource_id       = aws_api_gateway_resource.remediation_audit.id
+  http_method       = aws_api_gateway_method.options_remediation_audit.http_method
+  type              = "MOCK"
+  request_templates = { "application/json" = "{\"statusCode\": 200}" }
+}
+resource "aws_api_gateway_method_response" "options_remediation_audit" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.remediation_audit.id
+  http_method = aws_api_gateway_method.options_remediation_audit.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+resource "aws_api_gateway_integration_response" "options_remediation_audit" {
+  rest_api_id         = aws_api_gateway_rest_api.radius.id
+  resource_id         = aws_api_gateway_resource.remediation_audit.id
+  http_method         = aws_api_gateway_method.options_remediation_audit.http_method
+  status_code         = aws_api_gateway_method_response.options_remediation_audit.status_code
+  response_parameters = local.cors_response_parameters
+  response_templates  = local.cors_response_templates
+  depends_on          = [aws_api_gateway_integration.options_remediation_audit]
 }
