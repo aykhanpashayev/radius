@@ -10,8 +10,7 @@
   - [3. Terraform 1.5.0 or higher](#3-terraform-150-or-higher)
   - [4. AWS CLI v2](#4-aws-cli-v2)
   - [5. Configure AWS credentials](#5-configure-aws-credentials)
-  - [6. zip utility](#6-zip-utility-linuxmacos-only)
-  - [7. git](#7-git)
+  - [6. git](#6-git)
 - [Quick Start — Local Testing (No AWS Required)](#quick-start--local-testing-no-aws-required)
 - [Full AWS Deployment](#full-aws-deployment)
   - [Step 1 — Run the preflight check](#step-1--run-the-preflight-check)
@@ -26,6 +25,7 @@
 - [Post-Deployment Validation](#post-deployment-validation)
 - [Viewing the Dashboard and Monitoring](#viewing-the-dashboard-and-monitoring)
   - [React Dashboard](#react-dashboard)
+  - [Adding More Users](#adding-more-users)
   - [CloudWatch Dashboards](#cloudwatch-dashboards)
   - [CloudWatch Logs](#cloudwatch-logs-lambda-execution-logs)
   - [DynamoDB Tables](#dynamodb-tables-raw-data)
@@ -551,17 +551,17 @@ If incidents and scores appear, the pipeline is working end-to-end.
 
 ### React Dashboard
 
-The React dashboard is the main UI for viewing identities, blast radius scores, incidents, and events. It connects to your deployed API Gateway endpoint.
+The React dashboard is the main UI for viewing identities, blast radius scores, incidents, and events. It requires authentication via Cognito — you will be redirected to a login page on first visit.
 
-**Step 1 — Get your API endpoint**
+**Step 1 — Get your deployment outputs**
 
-After `deploy-infra.sh` completes, it prints the `api_endpoint` output. You can also retrieve it any time:
+After `deploy-infra.sh` completes, retrieve the three values you need:
 
 ```bash
-terraform -chdir=infra/envs/dev output api_endpoint
+terraform -chdir=infra/envs/dev output -raw api_endpoint
+terraform -chdir=infra/envs/dev output -raw cognito_user_pool_id
+terraform -chdir=infra/envs/dev output -raw cognito_client_id
 ```
-
-It looks like: `https://abc123xyz.execute-api.us-east-1.amazonaws.com/dev`
 
 **Step 2 — Install Node.js** (if not already installed)
 
@@ -573,16 +573,41 @@ The dashboard is a React/Vite app and requires Node.js 18+.
 
 Verify: `node --version` should print `v18.x` or higher.
 
-**Step 3 — Configure the API URL**
+**Step 3 — Configure the frontend environment**
 
-Create a `.env` file in the `frontend/` directory:
+Create `frontend/.env.local` with the values from Step 1:
 
 ```bash
-# Replace the URL with your actual api_endpoint output
-echo 'VITE_API_BASE_URL=https://abc123xyz.execute-api.us-east-1.amazonaws.com/dev' > frontend/.env
+cat > frontend/.env.local << EOF
+VITE_API_BASE_URL=https://<your-api-endpoint>
+VITE_COGNITO_USER_POOL_ID=<your-user-pool-id>
+VITE_COGNITO_CLIENT_ID=<your-client-id>
+EOF
 ```
 
-**Step 4 — Install dependencies and start the dashboard**
+**Step 4 — Create your first dashboard user**
+
+The Cognito User Pool is admin-only — there is no self-registration. Create a user with the AWS CLI:
+
+```bash
+# Create the user (sends a temporary password)
+aws cognito-idp admin-create-user \
+  --user-pool-id <your-user-pool-id> \
+  --username your@email.com \
+  --region us-east-1
+
+# Set a permanent password so you don't have to change it on first login
+aws cognito-idp admin-set-user-password \
+  --user-pool-id <your-user-pool-id> \
+  --username your@email.com \
+  --password "YourStr0ng!Password" \
+  --permanent \
+  --region us-east-1
+```
+
+Password requirements: minimum 12 characters, uppercase, lowercase, numbers, and symbols.
+
+**Step 5 — Install dependencies and start the dashboard**
 
 ```bash
 cd frontend
@@ -590,9 +615,9 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:5173 in your browser. You should see the Radius dashboard with your deployed data.
+Open http://localhost:5173 — you will be redirected to the login page. Sign in with the email and password you set in Step 4.
 
-**Step 5 — Seed some data so the dashboard has something to show**
+**Step 6 — Seed some data so the dashboard has something to show**
 
 ```bash
 # Seed sample identities, scores, and incidents
@@ -603,6 +628,24 @@ python scripts/inject-events.py --env dev --dir sample-data/cloud-trail-events
 ```
 
 Wait 30–60 seconds, then refresh the dashboard.
+
+**Adding more users**
+
+To give additional team members access:
+
+```bash
+aws cognito-idp admin-create-user \
+  --user-pool-id <your-user-pool-id> \
+  --username colleague@example.com \
+  --region us-east-1
+
+aws cognito-idp admin-set-user-password \
+  --user-pool-id <your-user-pool-id> \
+  --username colleague@example.com \
+  --password "TheirStr0ng!Password" \
+  --permanent \
+  --region us-east-1
+```
 
 ---
 
