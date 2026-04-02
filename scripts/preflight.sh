@@ -189,22 +189,29 @@ ENV_DIR="infra/envs/${ENV}"
 
 if [[ -f "${ENV_DIR}/terraform.tfvars" ]]; then
   if grep -q "<REPLACE" "${ENV_DIR}/terraform.tfvars"; then
-    fail "${ENV_DIR}/terraform.tfvars has unfilled placeholder values — open the file and replace every <REPLACE: ...>"
+    # Show exactly which lines still have placeholders
+    UNFILLED=$(grep -n "<REPLACE" "${ENV_DIR}/terraform.tfvars" | awk -F: '{print "    line "$1": "$2}')
+    fail "${ENV_DIR}/terraform.tfvars still has unfilled placeholders:
+${UNFILLED}"
   else
     ok "${ENV_DIR}/terraform.tfvars"
   fi
 else
-  fail "${ENV_DIR}/terraform.tfvars not found — it was created as a template; fill in the values"
+  fail "${ENV_DIR}/terraform.tfvars not found — copy the example and fill in your values:
+    cp ${ENV_DIR}/terraform.tfvars.example ${ENV_DIR}/terraform.tfvars"
 fi
 
 if [[ -f "${ENV_DIR}/backend.tfvars" ]]; then
   if grep -q "<REPLACE" "${ENV_DIR}/backend.tfvars"; then
-    fail "${ENV_DIR}/backend.tfvars has unfilled placeholder values — open the file and replace every <REPLACE: ...>"
+    UNFILLED=$(grep -n "<REPLACE" "${ENV_DIR}/backend.tfvars" | awk -F: '{print "    line "$1": "$2}')
+    fail "${ENV_DIR}/backend.tfvars still has unfilled placeholders:
+${UNFILLED}"
   else
     ok "${ENV_DIR}/backend.tfvars"
   fi
 else
-  fail "${ENV_DIR}/backend.tfvars not found — it was created as a template; fill in the values"
+  fail "${ENV_DIR}/backend.tfvars not found — copy the example and fill in your values:
+    cp ${ENV_DIR}/backend.tfvars.example ${ENV_DIR}/backend.tfvars"
 fi
 
 if [[ -f "backend/requirements-dev.txt" ]]; then
