@@ -130,7 +130,7 @@ resource "aws_api_gateway_deployment" "radius" {
       aws_api_gateway_rest_api.radius.body,
       # Increment this number to force a redeployment when endpoint changes
       # don't automatically trigger a new hash (e.g. new OPTIONS methods)
-      "v2",
+      "v3",
     ]))
   }
 
@@ -143,10 +143,12 @@ resource "aws_api_gateway_deployment" "radius" {
     aws_api_gateway_integration.get_identities,
     aws_api_gateway_integration.options_identities,
     aws_api_gateway_integration.get_identity_by_arn,
+    aws_api_gateway_integration.options_identity_by_arn,
     # scores
     aws_api_gateway_integration.get_scores,
     aws_api_gateway_integration.options_scores,
     aws_api_gateway_integration.get_score_by_arn,
+    aws_api_gateway_integration.options_score_by_arn,
     # incidents
     aws_api_gateway_integration.get_incidents,
     aws_api_gateway_integration.options_incidents,
@@ -157,6 +159,7 @@ resource "aws_api_gateway_deployment" "radius" {
     aws_api_gateway_integration.get_events,
     aws_api_gateway_integration.options_events,
     aws_api_gateway_integration.get_event_by_id,
+    aws_api_gateway_integration.options_event_by_id,
     # trust-relationships
     aws_api_gateway_integration.get_trust_relationships,
     aws_api_gateway_integration.options_trust_relationships,

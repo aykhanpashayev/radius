@@ -119,6 +119,41 @@ resource "aws_api_gateway_integration" "get_identity_by_arn" {
   uri                     = local.lambda_uri
 }
 
+# OPTIONS /identities/{arn}
+resource "aws_api_gateway_method" "options_identity_by_arn" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.identity_by_arn.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+resource "aws_api_gateway_integration" "options_identity_by_arn" {
+  rest_api_id       = aws_api_gateway_rest_api.radius.id
+  resource_id       = aws_api_gateway_resource.identity_by_arn.id
+  http_method       = aws_api_gateway_method.options_identity_by_arn.http_method
+  type              = "MOCK"
+  request_templates = { "application/json" = "{\"statusCode\": 200}" }
+}
+resource "aws_api_gateway_method_response" "options_identity_by_arn" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.identity_by_arn.id
+  http_method = aws_api_gateway_method.options_identity_by_arn.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+resource "aws_api_gateway_integration_response" "options_identity_by_arn" {
+  rest_api_id         = aws_api_gateway_rest_api.radius.id
+  resource_id         = aws_api_gateway_resource.identity_by_arn.id
+  http_method         = aws_api_gateway_method.options_identity_by_arn.http_method
+  status_code         = aws_api_gateway_method_response.options_identity_by_arn.status_code
+  response_parameters = local.cors_response_parameters
+  response_templates  = local.cors_response_templates
+  depends_on          = [aws_api_gateway_integration.options_identity_by_arn]
+}
+
 # ===========================================================================
 # /scores
 # ===========================================================================
@@ -203,6 +238,41 @@ resource "aws_api_gateway_integration" "get_score_by_arn" {
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = local.lambda_uri
+}
+
+# OPTIONS /scores/{arn}
+resource "aws_api_gateway_method" "options_score_by_arn" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.score_by_arn.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+resource "aws_api_gateway_integration" "options_score_by_arn" {
+  rest_api_id       = aws_api_gateway_rest_api.radius.id
+  resource_id       = aws_api_gateway_resource.score_by_arn.id
+  http_method       = aws_api_gateway_method.options_score_by_arn.http_method
+  type              = "MOCK"
+  request_templates = { "application/json" = "{\"statusCode\": 200}" }
+}
+resource "aws_api_gateway_method_response" "options_score_by_arn" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.score_by_arn.id
+  http_method = aws_api_gateway_method.options_score_by_arn.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+resource "aws_api_gateway_integration_response" "options_score_by_arn" {
+  rest_api_id         = aws_api_gateway_rest_api.radius.id
+  resource_id         = aws_api_gateway_resource.score_by_arn.id
+  http_method         = aws_api_gateway_method.options_score_by_arn.http_method
+  status_code         = aws_api_gateway_method_response.options_score_by_arn.status_code
+  response_parameters = local.cors_response_parameters
+  response_templates  = local.cors_response_templates
+  depends_on          = [aws_api_gateway_integration.options_score_by_arn]
 }
 
 # ===========================================================================
@@ -431,6 +501,41 @@ resource "aws_api_gateway_integration" "get_event_by_id" {
   integration_http_method = "POST"
   type                    = "AWS_PROXY"
   uri                     = local.lambda_uri
+}
+
+# OPTIONS /events/{id}
+resource "aws_api_gateway_method" "options_event_by_id" {
+  rest_api_id   = aws_api_gateway_rest_api.radius.id
+  resource_id   = aws_api_gateway_resource.event_by_id.id
+  http_method   = "OPTIONS"
+  authorization = "NONE"
+}
+resource "aws_api_gateway_integration" "options_event_by_id" {
+  rest_api_id       = aws_api_gateway_rest_api.radius.id
+  resource_id       = aws_api_gateway_resource.event_by_id.id
+  http_method       = aws_api_gateway_method.options_event_by_id.http_method
+  type              = "MOCK"
+  request_templates = { "application/json" = "{\"statusCode\": 200}" }
+}
+resource "aws_api_gateway_method_response" "options_event_by_id" {
+  rest_api_id = aws_api_gateway_rest_api.radius.id
+  resource_id = aws_api_gateway_resource.event_by_id.id
+  http_method = aws_api_gateway_method.options_event_by_id.http_method
+  status_code = "200"
+  response_parameters = {
+    "method.response.header.Access-Control-Allow-Headers" = true
+    "method.response.header.Access-Control-Allow-Methods" = true
+    "method.response.header.Access-Control-Allow-Origin"  = true
+  }
+}
+resource "aws_api_gateway_integration_response" "options_event_by_id" {
+  rest_api_id         = aws_api_gateway_rest_api.radius.id
+  resource_id         = aws_api_gateway_resource.event_by_id.id
+  http_method         = aws_api_gateway_method.options_event_by_id.http_method
+  status_code         = aws_api_gateway_method_response.options_event_by_id.status_code
+  response_parameters = local.cors_response_parameters
+  response_templates  = local.cors_response_templates
+  depends_on          = [aws_api_gateway_integration.options_event_by_id]
 }
 
 # ===========================================================================
