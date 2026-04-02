@@ -26,7 +26,11 @@ _winpath() {
 }
 
 if ! command -v aws &>/dev/null && command -v aws.exe &>/dev/null; then
-  aws() { local a=(); for x in "$@"; do a+=("$(_winpath "$x")"); done; aws.exe "${a[@]}"; }
+  aws() {
+    local a=()
+    for x in "$@"; do a+=("$(_winpath "$x")"); done
+    aws.exe "${a[@]}" | tr -d '\r'
+  }
   export -f aws _winpath
 fi
 
