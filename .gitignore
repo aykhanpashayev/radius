@@ -1,8 +1,10 @@
 # Terraform
 *.tfstate
 *.tfstate.*
-# Track the template tfvars files (they contain <REPLACE> placeholders, not real secrets)
-# but ignore any local overrides named *.local.tfvars
+# Ignore all tfvars (contain real bucket names, ARNs, emails, etc.)
+# Use *.tfvars.example as committed templates instead.
+*.tfvars
+*.tfvars.json
 *.local.tfvars
 .terraform/
 .terraform.lock.hcl

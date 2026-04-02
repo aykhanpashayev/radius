@@ -1,0 +1,62 @@
+# Production environment configuration for Radius
+# Copy this file to terraform.tfvars and fill in all <REPLACE> values
+#
+#   cp terraform.tfvars.example terraform.tfvars
+
+environment     = "prod"
+aws_region      = "us-east-1"
+resource_prefix = "radius"
+
+lambda_s3_bucket = "<REPLACE: your-s3-bucket-name>"
+
+lambda_memory = {
+  event_normalizer   = 512
+  detection_engine   = 2048
+  incident_processor = 512
+  identity_collector = 512
+  score_engine       = 2048
+  api_handler        = 512
+  remediation_engine = 512
+}
+
+lambda_timeout = {
+  event_normalizer   = 30
+  detection_engine   = 120
+  incident_processor = 30
+  identity_collector = 30
+  score_engine       = 120
+  api_handler        = 10
+  remediation_engine = 60
+}
+
+lambda_concurrency_limit = 0
+
+log_retention_days = 365
+
+cloudtrail_organization_enabled = false
+
+enable_pitr = true
+
+score_engine_schedule = "rate(6 hours)"
+
+remediation_dry_run = false
+
+api_throttle_burst_limit = 200
+api_throttle_rate_limit  = 100
+
+cognito_callback_urls = ["https://<REPLACE: your-cloudfront-domain>/callback"]
+cognito_logout_urls   = ["https://<REPLACE: your-cloudfront-domain>/logout"]
+
+github_repo = "<REPLACE: your-org/radius>"
+
+frontend_s3_bucket         = "<REPLACE: your-frontend-bucket>"
+cloudfront_distribution_id = "<REPLACE: your-cloudfront-distribution-id>"
+
+email_subscriptions = ["<REPLACE: ops-team@example.com>"]
+https_subscriptions = []
+
+tags = {
+  Project     = "Radius"
+  Environment = "prod"
+  ManagedBy   = "Terraform"
+}
