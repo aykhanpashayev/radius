@@ -554,16 +554,29 @@ The Remediation_Engine evaluates rules against high-severity incidents and optio
 
 ### Step 1 — Confirm dry-run mode
 
-By default `remediation_dry_run = true` in dev — actions are logged but no real IAM changes are made. Verify the current setting:
+By default `remediation_dry_run = true` in dev — actions are logged but no real IAM changes are made. Check your `infra/envs/dev/terraform.tfvars`:
 
-```bash
-terraform -chdir=infra/envs/dev output -json | python3 -c "import json,sys; print('dry_run not in outputs — check terraform.tfvars')"
-```
-
-Or check directly in your `terraform.tfvars`:
 ```hcl
 remediation_dry_run = true   # safe — logs only, no IAM mutations
 ```
+
+To check the live Lambda environment variable:
+
+Linux/macOS/WSL2:
+```bash
+aws lambda get-function-configuration \
+  --function-name radius-dev-remediation-engine \
+  --region us-east-1 \
+  --query 'Environment.Variables.DRY_RUN' \
+  --output text
+```
+
+Windows PowerShell:
+```powershell
+aws lambda get-function-configuration --function-name radius-dev-remediation-engine --region us-east-1 --query "Environment.Variables.DRY_RUN" --output text
+```
+
+Should print `true` if dry-run is active.
 
 ### Step 2 — Create a remediation rule
 
@@ -594,23 +607,35 @@ Invoke-RestMethod -Method POST `
 
 ### Step 3 — Trigger a high-severity incident
 
-Inject a privilege escalation event which produces a Critical severity incident:
+Inject a privilege escalation event which produces a Critical severity incident.
 
+Linux/macOS/WSL2:
 ```bash
 python scripts/inject-events.py --env dev \
   --file sample-data/cloud-trail-events/suspicious-privilege-escalation.json
+```
+
+Windows PowerShell:
+```powershell
+python scripts/inject-events.py --env dev --file sample-data/cloud-trail-events/suspicious-privilege-escalation.json
 ```
 
 Wait 30–60 seconds for the pipeline to process it.
 
 ### Step 4 — Check the remediation audit log
 
+Linux/macOS/WSL2:
 ```bash
 aws dynamodb scan \
   --table-name radius-dev-remediation-audit-log \
   --region us-east-1 \
   --query "Items[*].{action:action_name.S, outcome:outcome.S, mode:risk_mode.S, dry_run:dry_run.BOOL, identity:identity_arn.S}" \
   --output table
+```
+
+Windows PowerShell:
+```powershell
+aws dynamodb scan --table-name radius-dev-remediation-audit-log --region us-east-1 --query "Items[*].{action:action_name.S, outcome:outcome.S, mode:risk_mode.S, dry_run:dry_run.BOOL, identity:identity_arn.S}" --output table
 ```
 
 **What to look for:**
@@ -626,10 +651,16 @@ If you see `executed` with `dry_run=true`, the engine is working correctly in sa
 
 ### Step 5 — Check the remediation config via the API
 
+Linux/macOS/WSL2:
 ```bash
 curl -s \
   "https://<your-api-endpoint>/remediation/config" \
-  -H "Authorization: <your-cognito-id-token>" | python3 -m json.tool
+  -H "Authorization: <your-cognito-id-token>"
+```
+
+Windows PowerShell:
+```powershell
+Invoke-RestMethod -Uri "https://<your-api-endpoint>/remediation/config" -Headers @{ Authorization = "<your-cognito-id-token>" }
 ```
 
 This returns the current `risk_mode`, active rules, and exclusion lists.
