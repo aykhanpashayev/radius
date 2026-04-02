@@ -34,6 +34,21 @@ if ! command -v aws &>/dev/null && command -v aws.exe &>/dev/null; then
   export -f aws
 fi
 
+if ! command -v terraform &>/dev/null && command -v terraform.exe &>/dev/null; then
+  terraform() {
+    local args=()
+    for arg in "$@"; do
+      if [[ "$arg" =~ ^/mnt/([a-z])/(.*) ]]; then
+        args+=("${BASH_REMATCH[1]^^}:\\${BASH_REMATCH[2]//\//\\}")
+      else
+        args+=("$arg")
+      fi
+    done
+    terraform.exe "${args[@]}"
+  }
+  export -f terraform
+fi
+
 ENV="dev"
 SKIP_AWS=false
 PASS=0

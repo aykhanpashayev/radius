@@ -14,7 +14,7 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# Windows/WSL2 compatibility — fall back to aws.exe if aws is not found
+# Windows/WSL2 compatibility — fall back to *.exe if tools not in WSL2 PATH
 # ---------------------------------------------------------------------------
 if ! command -v aws &>/dev/null && command -v aws.exe &>/dev/null; then
   aws() {
@@ -29,6 +29,11 @@ if ! command -v aws &>/dev/null && command -v aws.exe &>/dev/null; then
     aws.exe "${args[@]}"
   }
   export -f aws
+fi
+
+if ! command -v npm &>/dev/null && command -v npm.cmd &>/dev/null; then
+  npm() { npm.cmd "$@"; }
+  export -f npm
 fi
 
 ENV=""

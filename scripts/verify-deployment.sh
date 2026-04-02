@@ -15,7 +15,7 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# Windows/WSL2 compatibility — fall back to aws.exe if aws is not found
+# Windows/WSL2 compatibility — fall back to *.exe if tools not in WSL2 PATH
 # ---------------------------------------------------------------------------
 if ! command -v aws &>/dev/null && command -v aws.exe &>/dev/null; then
   aws() {
@@ -30,6 +30,12 @@ if ! command -v aws &>/dev/null && command -v aws.exe &>/dev/null; then
     aws.exe "${args[@]}"
   }
   export -f aws
+fi
+
+# curl.exe ships with Windows 10+ and is accessible from WSL2
+if ! command -v curl &>/dev/null && command -v curl.exe &>/dev/null; then
+  curl() { curl.exe "$@"; }
+  export -f curl
 fi
 
 # ---------------------------------------------------------------------------

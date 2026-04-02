@@ -22,7 +22,7 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# Windows/WSL2 compatibility — fall back to aws.exe if aws is not found
+# Windows/WSL2 compatibility — fall back to *.exe if tools not in WSL2 PATH
 # ---------------------------------------------------------------------------
 if ! command -v aws &>/dev/null && command -v aws.exe &>/dev/null; then
   aws() {
@@ -37,6 +37,21 @@ if ! command -v aws &>/dev/null && command -v aws.exe &>/dev/null; then
     aws.exe "${args[@]}"
   }
   export -f aws
+fi
+
+if ! command -v terraform &>/dev/null && command -v terraform.exe &>/dev/null; then
+  terraform() {
+    local args=()
+    for arg in "$@"; do
+      if [[ "$arg" =~ ^/mnt/([a-z])/(.*) ]]; then
+        args+=("${BASH_REMATCH[1]^^}:\\${BASH_REMATCH[2]//\//\\}")
+      else
+        args+=("$arg")
+      fi
+    done
+    terraform.exe "${args[@]}"
+  }
+  export -f terraform
 fi
 
 # ---------------------------------------------------------------------------

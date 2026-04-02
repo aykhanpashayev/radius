@@ -8,6 +8,21 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
+# Windows/WSL2 compatibility — date +%s%N may not work on all systems.
+# Fall back to Python for nanosecond timestamps if needed.
+# ---------------------------------------------------------------------------
+_timestamp_ns() {
+  local ts
+  ts=$(date +%s%N 2>/dev/null)
+  if [[ "$ts" == *N* ]] || [[ -z "$ts" ]]; then
+    # date doesn't support %N (macOS without coreutils, some WSL2 setups)
+    python3 -c "import time; print(int(time.time() * 1e9))"
+  else
+    echo "$ts"
+  fi
+}
+
+# ---------------------------------------------------------------------------
 # Argument parsing
 # ---------------------------------------------------------------------------
 FAST=false
@@ -45,14 +60,14 @@ run_suite() {
   echo "  cmd: ${pytest_cmd}"
 
   local start_ts
-  start_ts=$(date +%s%N)   # nanoseconds
+  start_ts=$(_timestamp_ns)
 
   # Capture output; allow non-zero exit so we can record failures
   local output
   output=$(eval "${pytest_cmd}" 2>&1) || true
 
   local end_ts
-  end_ts=$(date +%s%N)
+  end_ts=$(_timestamp_ns)
 
   # Duration in seconds with one decimal place
   local duration_ns=$(( end_ts - start_ts ))
