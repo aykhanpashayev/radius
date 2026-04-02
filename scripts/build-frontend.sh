@@ -14,21 +14,20 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# Windows/WSL2 compatibility — fall back to *.exe if tools not in WSL2 PATH
+# Windows/WSL2 compatibility
 # ---------------------------------------------------------------------------
+_winpath() {
+  local p="$1"
+  if [[ "$p" =~ ^/mnt/([a-z])/(.*)$ ]]; then
+    echo "${BASH_REMATCH[1]^^}:\\${BASH_REMATCH[2]//\//\\}"
+  else
+    echo "$p"
+  fi
+}
+
 if ! command -v aws &>/dev/null && command -v aws.exe &>/dev/null; then
-  aws() {
-    local args=()
-    for arg in "$@"; do
-      if [[ "$arg" =~ ^/mnt/([a-z])/(.*) ]]; then
-        args+=("${BASH_REMATCH[1]^^}:\\${BASH_REMATCH[2]//\//\\}")
-      else
-        args+=("$arg")
-      fi
-    done
-    aws.exe "${args[@]}"
-  }
-  export -f aws
+  aws() { local a=(); for x in "$@"; do a+=("$(_winpath "$x")"); done; aws.exe "${a[@]}"; }
+  export -f aws _winpath
 fi
 
 if ! command -v npm &>/dev/null && command -v npm.cmd &>/dev/null; then

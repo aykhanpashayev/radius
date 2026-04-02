@@ -22,36 +22,40 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# Windows/WSL2 compatibility — fall back to *.exe if tools not in WSL2 PATH
+# Windows/WSL2 compatibility
+# Converts /mnt/c/foo/bar → C:\foo\bar for Windows .exe tools
 # ---------------------------------------------------------------------------
+_winpath() {
+  local p="$1"
+  if [[ "$p" =~ ^/mnt/([a-z])/(.*)$ ]]; then
+    echo "${BASH_REMATCH[1]^^}:\\${BASH_REMATCH[2]//\//\\}"
+  else
+    echo "$p"
+  fi
+}
+
 if ! command -v aws &>/dev/null && command -v aws.exe &>/dev/null; then
-  aws() {
-    local args=()
-    for arg in "$@"; do
-      if [[ "$arg" =~ ^/mnt/([a-z])/(.*) ]]; then
-        args+=("${BASH_REMATCH[1]^^}:\\${BASH_REMATCH[2]//\//\\}")
-      else
-        args+=("$arg")
-      fi
-    done
-    aws.exe "${args[@]}"
-  }
-  export -f aws
+  aws() { local a=(); for x in "$@"; do a+=("$(_winpath "$x")"); done; aws.exe "${a[@]}"; }
+  export -f aws _winpath
 fi
 
 if ! command -v terraform &>/dev/null && command -v terraform.exe &>/dev/null; then
   terraform() {
-    local args=()
-    for arg in "$@"; do
-      if [[ "$arg" =~ ^/mnt/([a-z])/(.*) ]]; then
-        args+=("${BASH_REMATCH[1]^^}:\\${BASH_REMATCH[2]//\//\\}")
+    local a=()
+    for x in "$@"; do
+      # Handle -chdir=/mnt/... style flags
+      if [[ "$x" =~ ^(-chdir=)(/mnt/[a-z]/.*)$ ]]; then
+        a+=("${BASH_REMATCH[1]}$(_winpath "${BASH_REMATCH[2]}")")
+      # Handle -backend-config=/mnt/... and -var-file=/mnt/... style flags
+      elif [[ "$x" =~ ^(-[a-z-]+=)(/mnt/[a-z]/.*)$ ]]; then
+        a+=("${BASH_REMATCH[1]}$(_winpath "${BASH_REMATCH[2]}")")
       else
-        args+=("$arg")
+        a+=("$(_winpath "$x")")
       fi
     done
-    terraform.exe "${args[@]}"
+    terraform.exe "${a[@]}"
   }
-  export -f terraform
+  export -f terraform _winpath
 fi
 
 # ---------------------------------------------------------------------------
@@ -91,15 +95,15 @@ if [[ ! -d "$ENV_DIR" ]]; then
 fi
 
 # Check for placeholder values that haven't been filled in
-if grep -q "<REPLACE" "$TFVARS" 2>/dev/null; then
-  echo "ERROR: ${TFVARS} still contains placeholder values."
-  echo "       Open the file and replace every value marked <REPLACE: ...>"
+if grep -qF "TODO:" "$TFVARS" 2>/dev/null; then
+  echo "ERROR: ${TFVARS} still contains unfilled TODO: values."
+  echo "       Open the file and fill in every value marked TODO:"
   exit 1
 fi
 
-if grep -q "<REPLACE" "$BACKEND_VARS" 2>/dev/null; then
-  echo "ERROR: ${BACKEND_VARS} still contains placeholder values."
-  echo "       Open the file and replace every value marked <REPLACE: ...>"
+if grep -qF "TODO:" "$BACKEND_VARS" 2>/dev/null; then
+  echo "ERROR: ${BACKEND_VARS} still contains unfilled TODO: values."
+  echo "       Open the file and fill in every value marked TODO:"
   exit 1
 fi
 

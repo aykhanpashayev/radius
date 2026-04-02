@@ -17,36 +17,35 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# Windows/WSL2 compatibility — fall back to aws.exe if aws is not found
+# Windows/WSL2 compatibility
 # ---------------------------------------------------------------------------
+_winpath() {
+  local p="$1"
+  if [[ "$p" =~ ^/mnt/([a-z])/(.*)$ ]]; then
+    echo "${BASH_REMATCH[1]^^}:\\${BASH_REMATCH[2]//\//\\}"
+  else
+    echo "$p"
+  fi
+}
+
 if ! command -v aws &>/dev/null && command -v aws.exe &>/dev/null; then
-  aws() {
-    local args=()
-    for arg in "$@"; do
-      if [[ "$arg" =~ ^/mnt/([a-z])/(.*) ]]; then
-        args+=("${BASH_REMATCH[1]^^}:\\${BASH_REMATCH[2]//\//\\}")
-      else
-        args+=("$arg")
-      fi
-    done
-    aws.exe "${args[@]}"
-  }
-  export -f aws
+  aws() { local a=(); for x in "$@"; do a+=("$(_winpath "$x")"); done; aws.exe "${a[@]}"; }
+  export -f aws _winpath
 fi
 
 if ! command -v terraform &>/dev/null && command -v terraform.exe &>/dev/null; then
   terraform() {
-    local args=()
-    for arg in "$@"; do
-      if [[ "$arg" =~ ^/mnt/([a-z])/(.*) ]]; then
-        args+=("${BASH_REMATCH[1]^^}:\\${BASH_REMATCH[2]//\//\\}")
+    local a=()
+    for x in "$@"; do
+      if [[ "$x" =~ ^(-[a-z-]+=)(/mnt/[a-z]/.*)$ ]]; then
+        a+=("${BASH_REMATCH[1]}$(_winpath "${BASH_REMATCH[2]}")")
       else
-        args+=("$arg")
+        a+=("$(_winpath "$x")")
       fi
     done
-    terraform.exe "${args[@]}"
+    terraform.exe "${a[@]}"
   }
-  export -f terraform
+  export -f terraform _winpath
 fi
 
 ENV="dev"
