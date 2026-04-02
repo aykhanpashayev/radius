@@ -128,6 +128,9 @@ resource "aws_api_gateway_deployment" "radius" {
   triggers = {
     redeployment = sha1(jsonencode([
       aws_api_gateway_rest_api.radius.body,
+      # Increment this number to force a redeployment when endpoint changes
+      # don't automatically trigger a new hash (e.g. new OPTIONS methods)
+      "v2",
     ]))
   }
 
