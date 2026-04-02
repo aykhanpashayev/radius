@@ -1,5 +1,5 @@
 # Dev environment configuration for Radius
-# Copy this file to terraform.tfvars and fill in the values marked with <REPLACE>
+# Copy this file to terraform.tfvars and fill in all TODO: values
 #
 #   cp terraform.tfvars.example terraform.tfvars
 
@@ -8,8 +8,7 @@ aws_region      = "us-east-1"
 resource_prefix = "radius"
 
 # S3 bucket where Lambda zip packages are uploaded by build-lambdas.sh
-# Create this bucket before running deploy-infra.sh
-lambda_s3_bucket = "<REPLACE: your-s3-bucket-name>"
+lambda_s3_bucket = "TODO: your-s3-bucket-name"
 
 lambda_memory = {
   event_normalizer   = 512
@@ -32,16 +31,13 @@ lambda_timeout = {
 }
 
 lambda_concurrency_limit = 0
-
-log_retention_days = 7
+log_retention_days       = 7
 
 cloudtrail_organization_enabled = false
-
-enable_pitr = true
+enable_pitr                     = true
 
 score_engine_schedule = "rate(24 hours)"
-
-remediation_dry_run = true
+remediation_dry_run   = true
 
 api_throttle_burst_limit = 50
 api_throttle_rate_limit  = 25
@@ -49,7 +45,8 @@ api_throttle_rate_limit  = 25
 cognito_callback_urls = ["http://localhost:5173/callback"]
 cognito_logout_urls   = ["http://localhost:5173/logout"]
 
-github_repo = "<REPLACE: your-org/radius>"
+# Your GitHub org/repo — used for the OIDC deploy role (e.g. "my-org/radius")
+github_repo = "TODO: your-org/radius"
 
 email_subscriptions = []
 https_subscriptions = []

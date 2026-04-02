@@ -1,5 +1,5 @@
 # Production environment configuration for Radius
-# Copy this file to terraform.tfvars and fill in all <REPLACE> values
+# Copy this file to terraform.tfvars and fill in all TODO: values
 #
 #   cp terraform.tfvars.example terraform.tfvars
 
@@ -7,7 +7,7 @@ environment     = "prod"
 aws_region      = "us-east-1"
 resource_prefix = "radius"
 
-lambda_s3_bucket = "<REPLACE: your-s3-bucket-name>"
+lambda_s3_bucket = "TODO: your-s3-bucket-name"
 
 lambda_memory = {
   event_normalizer   = 512
@@ -30,29 +30,26 @@ lambda_timeout = {
 }
 
 lambda_concurrency_limit = 0
-
-log_retention_days = 365
+log_retention_days       = 365
 
 cloudtrail_organization_enabled = false
-
-enable_pitr = true
+enable_pitr                     = true
 
 score_engine_schedule = "rate(6 hours)"
-
-remediation_dry_run = false
+remediation_dry_run   = false
 
 api_throttle_burst_limit = 200
 api_throttle_rate_limit  = 100
 
-cognito_callback_urls = ["https://<REPLACE: your-cloudfront-domain>/callback"]
-cognito_logout_urls   = ["https://<REPLACE: your-cloudfront-domain>/logout"]
+cognito_callback_urls = ["https://TODO-your-cloudfront-domain/callback"]
+cognito_logout_urls   = ["https://TODO-your-cloudfront-domain/logout"]
 
-github_repo = "<REPLACE: your-org/radius>"
+github_repo = "TODO: your-org/radius"
 
-frontend_s3_bucket         = "<REPLACE: your-frontend-bucket>"
-cloudfront_distribution_id = "<REPLACE: your-cloudfront-distribution-id>"
+frontend_s3_bucket         = "TODO: your-frontend-bucket"
+cloudfront_distribution_id = "TODO: your-cloudfront-distribution-id"
 
-email_subscriptions = ["<REPLACE: ops-team@example.com>"]
+email_subscriptions = ["TODO: ops-team@example.com"]
 https_subscriptions = []
 
 tags = {

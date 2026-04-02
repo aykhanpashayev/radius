@@ -188,9 +188,9 @@ section "Config files [env=${ENV}]"
 ENV_DIR="infra/envs/${ENV}"
 
 if [[ -f "${ENV_DIR}/terraform.tfvars" ]]; then
-  if grep -qF "<REPLACE" "${ENV_DIR}/terraform.tfvars"; then
-    UNFILLED=$(grep -nF "<REPLACE" "${ENV_DIR}/terraform.tfvars" | awk -F: '{print "    line "$1": "$2}')
-    fail "${ENV_DIR}/terraform.tfvars still has unfilled placeholders:
+  if grep -qF "TODO:" "${ENV_DIR}/terraform.tfvars"; then
+    UNFILLED=$(grep -nF "TODO:" "${ENV_DIR}/terraform.tfvars" | awk -F: '{print "    line "$1": "$2}')
+    fail "${ENV_DIR}/terraform.tfvars still has unfilled values:
 ${UNFILLED}"
   else
     ok "${ENV_DIR}/terraform.tfvars"
@@ -201,9 +201,9 @@ else
 fi
 
 if [[ -f "${ENV_DIR}/backend.tfvars" ]]; then
-  if grep -qF "<REPLACE" "${ENV_DIR}/backend.tfvars"; then
-    UNFILLED=$(grep -nF "<REPLACE" "${ENV_DIR}/backend.tfvars" | awk -F: '{print "    line "$1": "$2}')
-    fail "${ENV_DIR}/backend.tfvars still has unfilled placeholders:
+  if grep -qF "TODO:" "${ENV_DIR}/backend.tfvars"; then
+    UNFILLED=$(grep -nF "TODO:" "${ENV_DIR}/backend.tfvars" | awk -F: '{print "    line "$1": "$2}')
+    fail "${ENV_DIR}/backend.tfvars still has unfilled values:
 ${UNFILLED}"
   else
     ok "${ENV_DIR}/backend.tfvars"

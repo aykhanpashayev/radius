@@ -1,9 +1,9 @@
-# Terraform remote state configuration for the prod environment.
-# Copy this file to backend.tfvars and fill in your values.
+# Terraform remote state — prod environment
+# Copy this file to backend.tfvars and fill in all TODO: values
 #
 #   cp backend.tfvars.example backend.tfvars
 
-bucket         = "<REPLACE: your-terraform-state-bucket>"
+bucket         = "TODO: your-terraform-state-bucket"
 key            = "radius/prod/terraform.tfstate"
 region         = "us-east-1"
 dynamodb_table = "radius-terraform-locks"
