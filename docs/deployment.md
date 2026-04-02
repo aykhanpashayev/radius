@@ -587,22 +587,28 @@ EOF
 
 **Step 4 — Create your first dashboard user**
 
-The Cognito User Pool is admin-only — there is no self-registration. Create a user with the AWS CLI:
+The Cognito User Pool is admin-only — there is no self-registration. Create a user with the AWS CLI.
 
+Linux/macOS/WSL2:
 ```bash
-# Create the user (sends a temporary password)
 aws cognito-idp admin-create-user \
   --user-pool-id <your-user-pool-id> \
   --username your@email.com \
   --region us-east-1
 
-# Set a permanent password so you don't have to change it on first login
 aws cognito-idp admin-set-user-password \
   --user-pool-id <your-user-pool-id> \
   --username your@email.com \
   --password "YourStr0ng!Password" \
   --permanent \
   --region us-east-1
+```
+
+Windows PowerShell:
+```powershell
+aws cognito-idp admin-create-user --user-pool-id <your-user-pool-id> --username your@email.com --region us-east-1
+
+aws cognito-idp admin-set-user-password --user-pool-id <your-user-pool-id> --username your@email.com --password "YourStr0ng!Password" --permanent --region us-east-1
 ```
 
 Password requirements: minimum 12 characters, uppercase, lowercase, numbers, and symbols.
@@ -633,6 +639,7 @@ Wait 30–60 seconds, then refresh the dashboard.
 
 To give additional team members access:
 
+Linux/macOS/WSL2:
 ```bash
 aws cognito-idp admin-create-user \
   --user-pool-id <your-user-pool-id> \
@@ -645,6 +652,13 @@ aws cognito-idp admin-set-user-password \
   --password "TheirStr0ng!Password" \
   --permanent \
   --region us-east-1
+```
+
+Windows PowerShell:
+```powershell
+aws cognito-idp admin-create-user --user-pool-id <your-user-pool-id> --username colleague@example.com --region us-east-1
+
+aws cognito-idp admin-set-user-password --user-pool-id <your-user-pool-id> --username colleague@example.com --password "TheirStr0ng!Password" --permanent --region us-east-1
 ```
 
 ---
