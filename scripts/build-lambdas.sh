@@ -157,16 +157,33 @@ print('    Wrote root handler.py ({} bytes)'.format(len(content)))
       2>&1 | tail -3
   fi
 
-  # Create zip
+  # Create zip using Python's zipfile module — works on Windows, macOS, and Linux
+  # without requiring the zip CLI tool.
   rm -f "$ZIP_FILE"
-  (cd "$PACKAGE_DIR" && zip -r "$ZIP_FILE" . \
-    -x "*.pyc" \
-    -x "__pycache__/*" \
-    -x "*/__pycache__/*" \
-    -x "*.dist-info/*" \
-    -x "*.egg-info/*") > /dev/null
+  python3 -c "
+import zipfile, os, sys
 
-  ZIP_SIZE=$(du -sh "$ZIP_FILE" | cut -f1)
+package_dir = '${PACKAGE_DIR}'
+zip_file    = '${ZIP_FILE}'
+
+exclude_dirs  = {'__pycache__', '.dist-info', '.egg-info'}
+exclude_exts  = {'.pyc'}
+
+with zipfile.ZipFile(zip_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+    for root, dirs, files in os.walk(package_dir):
+        # Prune excluded directories in-place
+        dirs[:] = [d for d in dirs if not any(ex in d for ex in exclude_dirs)]
+        for file in files:
+            if os.path.splitext(file)[1] in exclude_exts:
+                continue
+            abs_path = os.path.join(root, file)
+            arc_name = os.path.relpath(abs_path, package_dir)
+            zf.write(abs_path, arc_name)
+
+print('    Zipped {} files'.format(len(zf.namelist())))
+"
+
+  ZIP_SIZE=$(python3 -c "import os; s=os.path.getsize('${ZIP_FILE}'); print(f'{s//1024}KB' if s<1048576 else f'{s//1048576}MB')")
   echo "    Package: ${ZIP_FILE} (${ZIP_SIZE})"
 
   if [[ "$LOCAL_ONLY" == "false" ]]; then
