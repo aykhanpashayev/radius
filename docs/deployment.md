@@ -337,13 +337,15 @@ bash scripts/preflight.sh --env dev
 
 Terraform needs an S3 bucket to store its state file. Lambda packages also need an S3 bucket. You can use the same bucket for both, or separate ones.
 
+> **Note:** Replace `YOUR-STATE-BUCKET` in all commands below with your own globally unique bucket name.
+
 ```bash
-# Replace "my-radius-state" with a globally unique bucket name (S3 names are global)
-aws s3 mb s3://my-radius-state --region us-east-1
+# Replace "YOUR-STATE-BUCKET" with a globally unique bucket name (S3 names are global)
+aws s3 mb s3://YOUR-STATE-BUCKET --region us-east-1
 
 # Enable versioning so you can roll back Terraform state if needed
 aws s3api put-bucket-versioning \
-  --bucket my-radius-state \
+  --bucket YOUR-STATE-BUCKET \
   --versioning-configuration Status=Enabled
 ```
 
@@ -351,7 +353,7 @@ aws s3api put-bucket-versioning \
 
 **Verify it worked:**
 ```bash
-aws s3 ls s3://my-radius-state
+aws s3 ls s3://YOUR-STATE-BUCKET
 # Should return an empty listing (no error)
 ```
 
@@ -366,7 +368,7 @@ Two config files need your values before deployment can proceed. Both were creat
 Open this file and replace the placeholder with your state bucket name:
 
 ```hcl
-bucket         = "my-radius-state"   # <-- your bucket name from Step 2
+bucket         = "YOUR-STATE-BUCKET"   # <-- your bucket name from Step 2
 key            = "radius/dev/terraform.tfstate"
 region         = "us-east-1"
 dynamodb_table = "radius-terraform-locks"
@@ -378,7 +380,7 @@ encrypt        = true
 Open this file and set `lambda_s3_bucket` to the bucket where Lambda packages will be uploaded. This can be the same bucket as the state bucket:
 
 ```hcl
-lambda_s3_bucket = "my-radius-state"   # <-- your bucket name
+lambda_s3_bucket = "YOUR-STATE-BUCKET"   # <-- your bucket name
 ```
 
 Everything else in `terraform.tfvars` has sensible defaults for dev. You don't need to change anything else.
@@ -438,7 +440,7 @@ The script reads `lambda_s3_bucket` from `infra/envs/dev/terraform.tfvars` autom
 
 **Verify:**
 ```bash
-aws s3 ls s3://my-radius-state/functions/
+aws s3 ls s3://YOUR-STATE-BUCKET/functions/
 # Should list 7 zip files: event_normalizer.zip, detection_engine.zip, etc.
 ```
 
@@ -703,15 +705,15 @@ Terraform state is versioned in S3. To roll back to a previous deployment:
 ```bash
 # 1. List available state versions
 aws s3api list-object-versions \
-  --bucket my-radius-state \
+  --bucket YOUR-STATE-BUCKET \
   --prefix radius/dev/terraform.tfstate \
   --query 'Versions[*].{VersionId:VersionId,LastModified:LastModified}' \
   --output table
 
 # 2. Restore the desired version (replace VERSION_ID with the ID from step 1)
 aws s3api copy-object \
-  --bucket my-radius-state \
-  --copy-source "my-radius-state/radius/dev/terraform.tfstate?versionId=VERSION_ID" \
+  --bucket YOUR-STATE-BUCKET \
+  --copy-source "YOUR-STATE-BUCKET/radius/dev/terraform.tfstate?versionId=VERSION_ID" \
   --key radius/dev/terraform.tfstate
 
 # 3. Re-apply to reconcile infrastructure with the restored state
@@ -736,8 +738,8 @@ After destroying, you can also delete the S3 buckets manually if you no longer n
 
 ```bash
 # Empty the bucket first (required before deletion)
-aws s3 rm s3://my-radius-state --recursive
-aws s3 rb s3://my-radius-state
+aws s3 rm s3://YOUR-STATE-BUCKET --recursive
+aws s3 rb s3://YOUR-STATE-BUCKET
 ```
 
 ---
