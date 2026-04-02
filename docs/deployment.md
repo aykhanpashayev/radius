@@ -552,6 +552,33 @@ If incidents and scores appear, the pipeline is working end-to-end.
 
 The Remediation_Engine evaluates rules against high-severity incidents and optionally executes IAM actions. Follow these steps to confirm it's working.
 
+### Getting a Cognito ID token
+
+Several steps below require a Cognito ID token in the `Authorization` header. Get one with the AWS CLI after creating your user:
+
+Linux/macOS/WSL2:
+```bash
+aws cognito-idp initiate-auth \
+  --auth-flow USER_PASSWORD_AUTH \
+  --client-id <your-client-id> \
+  --auth-parameters USERNAME=your@email.com,PASSWORD="YourStr0ng!Password" \
+  --region us-east-1 \
+  --query "AuthenticationResult.IdToken" \
+  --output text
+```
+
+Windows PowerShell:
+```powershell
+aws cognito-idp initiate-auth --auth-flow USER_PASSWORD_AUTH --client-id <your-client-id> --auth-parameters USERNAME=your@email.com,PASSWORD="YourStr0ng!Password" --region us-east-1 --query "AuthenticationResult.IdToken" --output text
+```
+
+Copy the printed token — it's a long JWT string. Use it as `<your-cognito-id-token>` in the commands below. Tokens expire after 1 hour; re-run the command to get a fresh one.
+
+Get your client ID any time with:
+```powershell
+terraform -chdir=infra/envs/dev output -raw cognito_client_id
+```
+
 ### Step 1 — Confirm dry-run mode
 
 By default `remediation_dry_run = true` in dev — actions are logged but no real IAM changes are made. Check your `infra/envs/dev/terraform.tfvars`:
