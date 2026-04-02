@@ -13,6 +13,14 @@
 
 set -euo pipefail
 
+# ---------------------------------------------------------------------------
+# Windows/WSL2 compatibility — fall back to aws.exe if aws is not found
+# ---------------------------------------------------------------------------
+if ! command -v aws &>/dev/null && command -v aws.exe &>/dev/null; then
+  aws() { aws.exe "$@"; }
+  export -f aws
+fi
+
 ENV=""
 REGION="us-east-1"
 

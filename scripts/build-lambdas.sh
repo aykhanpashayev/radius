@@ -13,13 +13,21 @@
 #
 # Prerequisites:
 #   - python3 and pip
-#   - zip (Linux/macOS: built-in; Windows: use WSL2 or Git Bash)
 #   - aws CLI configured (only needed without --local)
 #
 # Windows users: run this script inside WSL2 or Git Bash.
-# See docs/deployment.md for Windows setup instructions.
+# If aws is not in the WSL2 PATH, this script will automatically fall back
+# to aws.exe from the Windows host.
 
 set -euo pipefail
+
+# ---------------------------------------------------------------------------
+# Windows/WSL2 compatibility — fall back to aws.exe if aws is not found
+# ---------------------------------------------------------------------------
+if ! command -v aws &>/dev/null && command -v aws.exe &>/dev/null; then
+  aws() { aws.exe "$@"; }
+  export -f aws
+fi
 
 # ---------------------------------------------------------------------------
 # Defaults
