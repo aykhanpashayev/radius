@@ -575,8 +575,9 @@ Verify: `node --version` should print `v18.x` or higher.
 
 **Step 3 — Configure the frontend environment**
 
-Create `frontend/.env.local` with the values from Step 1:
+Create `frontend/.env.local` with the values from Step 1.
 
+Linux/macOS/WSL2:
 ```bash
 cat > frontend/.env.local << EOF
 VITE_API_BASE_URL=https://<your-api-endpoint>
@@ -584,6 +585,17 @@ VITE_COGNITO_USER_POOL_ID=<your-user-pool-id>
 VITE_COGNITO_CLIENT_ID=<your-client-id>
 EOF
 ```
+
+Windows PowerShell — use `WriteAllText` to avoid BOM encoding issues:
+```powershell
+[System.IO.File]::WriteAllText(
+  "frontend\.env.local",
+  "VITE_API_BASE_URL=https://<your-api-endpoint>`nVITE_COGNITO_USER_POOL_ID=<your-user-pool-id>`nVITE_COGNITO_CLIENT_ID=<your-client-id>`n",
+  [System.Text.UTF8Encoding]::new($false)
+)
+```
+
+> **Windows note:** Do not use PowerShell's `Set-Content` or `Out-File` to create `.env` files — they write UTF-8 with BOM by default, which causes Vite to misread variable names. Use the `WriteAllText` command above, or create the file manually in VS Code.
 
 **Step 4 — Create your first dashboard user**
 
