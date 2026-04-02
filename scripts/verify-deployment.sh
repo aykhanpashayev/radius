@@ -18,7 +18,17 @@ set -euo pipefail
 # Windows/WSL2 compatibility — fall back to aws.exe if aws is not found
 # ---------------------------------------------------------------------------
 if ! command -v aws &>/dev/null && command -v aws.exe &>/dev/null; then
-  aws() { aws.exe "$@"; }
+  aws() {
+    local args=()
+    for arg in "$@"; do
+      if [[ "$arg" =~ ^/mnt/([a-z])/(.*) ]]; then
+        args+=("${BASH_REMATCH[1]^^}:\\${BASH_REMATCH[2]//\//\\}")
+      else
+        args+=("$arg")
+      fi
+    done
+    aws.exe "${args[@]}"
+  }
   export -f aws
 fi
 

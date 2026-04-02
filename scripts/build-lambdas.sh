@@ -22,10 +22,22 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# Windows/WSL2 compatibility — fall back to aws.exe if aws is not found
+# Windows/WSL2 compatibility — fall back to aws.exe if aws is not found,
+# and convert /mnt/c/... paths to C:\... for aws.exe
 # ---------------------------------------------------------------------------
 if ! command -v aws &>/dev/null && command -v aws.exe &>/dev/null; then
-  aws() { aws.exe "$@"; }
+  aws() {
+    # Convert any /mnt/<drive>/... argument to <DRIVE>:\... for Windows aws.exe
+    local args=()
+    for arg in "$@"; do
+      if [[ "$arg" =~ ^/mnt/([a-z])/(.*) ]]; then
+        args+=("${BASH_REMATCH[1]^^}:\\${BASH_REMATCH[2]//\//\\}")
+      else
+        args+=("$arg")
+      fi
+    done
+    aws.exe "${args[@]}"
+  }
   export -f aws
 fi
 
@@ -162,19 +174,14 @@ print('    Wrote root handler.py ({} bytes)'.format(len(content)))
       --quiet \
       --target "$PACKAGE_DIR" \
       --requirement "$REQUIREMENTS" \
-      --no-deps \
       2>&1 | tail -3
-    # Re-install with deps but exclude boto3/botocore — provided by Lambda runtime
-    pip install \
-      --quiet \
-      --target "$PACKAGE_DIR" \
-      --requirement "$REQUIREMENTS" \
-      2>&1 | tail -3
-    # Remove boto3/botocore to keep package size small — Lambda runtime provides them
-    rm -rf "${PACKAGE_DIR}/boto3" "${PACKAGE_DIR}/botocore" \
-           "${PACKAGE_DIR}/boto3-"*.dist-info "${PACKAGE_DIR}/botocore-"*.dist-info \
-           "${PACKAGE_DIR}/s3transfer" "${PACKAGE_DIR}/s3transfer-"*.dist-info \
-           "${PACKAGE_DIR}/urllib3" "${PACKAGE_DIR}/urllib3-"*.dist-info 2>/dev/null || true
+    # Remove boto3/botocore — provided by the Lambda runtime, no need to bundle them
+    rm -rf \
+      "${PACKAGE_DIR}/boto3"         "${PACKAGE_DIR}/boto3"-*.dist-info \
+      "${PACKAGE_DIR}/botocore"      "${PACKAGE_DIR}/botocore"-*.dist-info \
+      "${PACKAGE_DIR}/s3transfer"    "${PACKAGE_DIR}/s3transfer"-*.dist-info \
+      "${PACKAGE_DIR}/urllib3"       "${PACKAGE_DIR}/urllib3"-*.dist-info \
+      2>/dev/null || true
   fi
 
   # Create zip using Python's zipfile module — works on Windows, macOS, and Linux
