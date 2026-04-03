@@ -74,6 +74,7 @@ venv.bak/
 # IDE
 .vscode/
 .idea/
+.claude/
 *.swp
 *.swo
 *~
@@ -89,6 +90,8 @@ lambda-packages/
 .env.*
 .env.local
 .env.*.local
+*.local.json
+settings.local.json
 
 # Logs
 logs/
