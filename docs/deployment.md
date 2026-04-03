@@ -636,17 +636,22 @@ Invoke-RestMethod -Method POST `
 
 ### Step 3 — Trigger a high-severity incident
 
-Inject a privilege escalation event which produces a Critical severity incident.
+Invoke the Event_Normalizer Lambda directly with the sample event — this bypasses EventBridge and goes straight into the pipeline:
 
 Linux/macOS/WSL2:
 ```bash
-python scripts/inject-events.py --env dev \
-  --file sample-data/cloud-trail-events/suspicious-privilege-escalation.json
+aws lambda invoke \
+  --function-name radius-dev-event-normalizer \
+  --region us-east-1 \
+  --payload file://sample-data/cloud-trail-events/suspicious-privilege-escalation.json \
+  --cli-binary-format raw-in-base64-out \
+  response.json && cat response.json
 ```
 
 Windows PowerShell:
 ```powershell
-python scripts/inject-events.py --env dev --file sample-data/cloud-trail-events/suspicious-privilege-escalation.json
+aws lambda invoke --function-name radius-dev-event-normalizer --region us-east-1 --payload file://sample-data/cloud-trail-events/suspicious-privilege-escalation.json --cli-binary-format raw-in-base64-out response.json
+Get-Content response.json
 ```
 
 Wait 30–60 seconds for the pipeline to process it.

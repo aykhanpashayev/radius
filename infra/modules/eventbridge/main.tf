@@ -19,8 +19,8 @@ resource "aws_cloudwatch_event_rule" "cloudtrail_management" {
   description = "Route IAM, STS, Organizations, and EC2 management events to Event_Normalizer"
 
   event_pattern = jsonencode({
-    source      = ["aws.iam", "aws.sts", "aws.organizations", "aws.ec2"]
-    detail-type = ["AWS API Call via CloudTrail"]
+    source      = ["aws.iam", "aws.sts", "aws.organizations", "aws.ec2", "radius.test"]
+    detail-type = ["AWS API Call via CloudTrail", "CloudTrail via Radius Test Injector"]
   })
 
   tags = local.common_tags
