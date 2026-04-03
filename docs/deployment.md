@@ -605,7 +605,25 @@ aws lambda get-function-configuration --function-name radius-dev-remediation-eng
 
 Should print `true` if dry-run is active.
 
-### Step 2 — Create a remediation rule
+### Step 2 — Set risk mode to alert
+
+In `monitor` mode the engine evaluates rules but does **not** write to the audit log. Switch to `alert` mode so audit entries are written (no IAM mutations, just logging + SNS):
+
+Linux/macOS/WSL2:
+```bash
+curl -s -X PUT \
+  "https://<your-api-endpoint>/remediation/config/mode" \
+  -H "Authorization: <your-cognito-id-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"risk_mode": "alert"}'
+```
+
+Windows PowerShell:
+```powershell
+Invoke-RestMethod -Method PUT -Uri "https://<your-api-endpoint>/remediation/config/mode" -Headers @{ Authorization = "<your-cognito-id-token>"; "Content-Type" = "application/json" } -Body '{"risk_mode":"alert"}'
+```
+
+### Step 3 — Create a remediation rule
 
 Use the API to create a rule that fires on Critical incidents:
 
@@ -634,7 +652,7 @@ Invoke-RestMethod -Method POST `
 
 Get your API endpoint with: `terraform -chdir=infra/envs/dev output -raw api_endpoint`
 
-### Step 3 — Trigger a high-severity incident
+### Step 4 — Trigger a high-severity incident
 
 Invoke the Event_Normalizer Lambda directly with the sample event — this bypasses EventBridge and goes straight into the pipeline:
 
@@ -656,7 +674,9 @@ Get-Content response.json
 
 Wait 30–60 seconds for the pipeline to process it.
 
-### Step 4 — Check the remediation audit log
+> **Note:** If you already ran this event before, the incident processor will deduplicate it (same identity + detection type within 24 hours) and remediation won't fire again. In that case, wait 24 hours or seed fresh data with `python scripts/seed-dev-data.py --env dev --region us-east-1` to get new identities.
+
+### Step 5 — Check the remediation audit log
 
 Linux/macOS/WSL2:
 ```bash
@@ -683,7 +703,7 @@ aws dynamodb scan --table-name radius-dev-remediation-audit-log --region us-east
 
 If you see `executed` with `dry_run=true`, the engine is working correctly in safe mode.
 
-### Step 5 — Check the remediation config via the API
+### Step 6 — Check the remediation config via the API
 
 Linux/macOS/WSL2:
 ```bash
@@ -699,7 +719,7 @@ Invoke-RestMethod -Uri "https://<your-api-endpoint>/remediation/config" -Headers
 
 This returns the current `risk_mode`, active rules, and exclusion lists.
 
-### Step 6 — Enable live remediation (prod only)
+### Step 7 — Enable live remediation (prod only)
 
 When you're confident the rules are correct, switch off dry-run in `terraform.tfvars`:
 

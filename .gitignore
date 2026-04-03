@@ -112,3 +112,4 @@ temp/
 *.tmp
 response.json
 key.json
+test-event.json
