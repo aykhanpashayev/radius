@@ -627,12 +627,12 @@ curl -s -X POST \
 Windows PowerShell:
 ```powershell
 Invoke-RestMethod -Method POST `
-  -Uri "https://h0ii76vl1g.execute-api.us-east-1.amazonaws.com/dev/remediation/rules" `
+  -Uri "https://<your-api-id>.execute-api.us-east-1.amazonaws.com/dev/remediation/rules" `
   -Headers @{ Authorization = "<your-cognito-id-token>"; "Content-Type" = "application/json" } `
   -Body '{"name":"Test — notify on Critical","min_severity":"Critical","actions":["notify_security_team"],"active":true,"priority":1}'
 ```
 
-> **Note:** Replace `h0ii76vl1g.execute-api.us-east-1.amazonaws.com/dev` with your actual API endpoint from `terraform -chdir=infra/envs/dev output -raw api_endpoint`. Do not add `https://` again — it is already in the URL.
+Get your API endpoint with: `terraform -chdir=infra/envs/dev output -raw api_endpoint`
 
 ### Step 3 — Trigger a high-severity incident
 

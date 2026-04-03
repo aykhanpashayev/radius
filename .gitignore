@@ -110,3 +110,5 @@ frontend/package-lock.json
 tmp/
 temp/
 *.tmp
+response.json
+key.json
