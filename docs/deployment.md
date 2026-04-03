@@ -654,27 +654,27 @@ Get your API endpoint with: `terraform -chdir=infra/envs/dev output -raw api_end
 
 ### Step 4 — Trigger a high-severity incident
 
-Invoke the Event_Normalizer Lambda directly with the sample event — this bypasses EventBridge and goes straight into the pipeline:
+The simplest way to test remediation is to invoke Incident_Processor directly with a pre-built Critical finding — this bypasses the detection pipeline and goes straight to incident creation and remediation:
 
 Linux/macOS/WSL2:
 ```bash
 aws lambda invoke \
-  --function-name radius-dev-event-normalizer \
+  --function-name radius-dev-incident-processor \
   --region us-east-1 \
-  --payload file://sample-data/cloud-trail-events/suspicious-privilege-escalation.json \
   --cli-binary-format raw-in-base64-out \
+  --payload '{"identity_arn":"arn:aws:iam::123456789012:user/test-attacker","detection_type":"privilege_escalation","severity":"Critical","confidence":95,"related_event_ids":["test-event-001"]}' \
   response.json && cat response.json
 ```
 
 Windows PowerShell:
 ```powershell
-aws lambda invoke --function-name radius-dev-event-normalizer --region us-east-1 --payload file://sample-data/cloud-trail-events/suspicious-privilege-escalation.json --cli-binary-format raw-in-base64-out response.json
+aws lambda invoke --function-name radius-dev-incident-processor --region us-east-1 --cli-binary-format raw-in-base64-out --payload '{"identity_arn":"arn:aws:iam::123456789012:user/test-attacker","detection_type":"privilege_escalation","severity":"Critical","confidence":95,"related_event_ids":["test-event-001"]}' response.json
 Get-Content response.json
 ```
 
-Wait 30–60 seconds for the pipeline to process it.
+Expected response: `{"status": "created", "incident_id": "..."}` — if you see `"deduplicated"` instead, change `test-attacker` to a different username (e.g. `test-attacker-2`).
 
-> **Note:** If you already ran this event before, the incident processor will deduplicate it (same identity + detection type within 24 hours) and remediation won't fire again. In that case, wait 24 hours or seed fresh data with `python scripts/seed-dev-data.py --env dev --region us-east-1` to get new identities.
+Wait 30 seconds for the remediation engine to process it.
 
 ### Step 5 — Check the remediation audit log
 

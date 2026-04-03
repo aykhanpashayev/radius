@@ -130,18 +130,16 @@ class DetectionContext:
                         Key("identity_arn").eq(identity_arn)
                         & Key("timestamp").between(cutoff_30d, current_event_timestamp)
                     ),
-                    # Exclude the current event timestamp boundary (strictly before)
-                    "FilterExpression": (
-                        Key("timestamp").lt(current_event_timestamp)
-                    ),
                 }
                 if last_key:
                     kwargs["ExclusiveStartKey"] = last_key
 
                 response = table.query(**kwargs)
                 for item in response.get("Items", []):
-                    # Safety guard: also exclude by event_id
+                    # Exclude the current event by event_id and exact timestamp boundary
                     if item.get("event_id") == current_event_id:
+                        continue
+                    if item.get("timestamp", "") >= current_event_timestamp:
                         continue
                     event_type = item.get("event_type", "")
                     if ":" in event_type:
