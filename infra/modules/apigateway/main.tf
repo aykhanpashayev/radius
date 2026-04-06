@@ -217,9 +217,9 @@ resource "aws_api_gateway_method_settings" "radius" {
   method_path = "*/*"
 
   settings {
-    metrics_enabled    = true
-    logging_level      = var.enable_logging ? "INFO" : "OFF"
-    data_trace_enabled = false
+    metrics_enabled        = true
+    logging_level          = var.enable_logging ? "INFO" : "OFF"
+    data_trace_enabled     = false
     throttling_burst_limit = var.throttle_burst_limit
     throttling_rate_limit  = var.throttle_rate_limit
   }

@@ -125,11 +125,11 @@ resource "aws_vpc_endpoint" "dynamodb" {
 # ---------------------------------------------------------------------------
 locals {
   interface_services = {
-    sns             = "com.amazonaws.${var.aws_region}.sns"
-    sqs             = "com.amazonaws.${var.aws_region}.sqs"
-    secretsmanager  = "com.amazonaws.${var.aws_region}.secretsmanager"
-    lambda          = "com.amazonaws.${var.aws_region}.lambda"
-    ssm             = "com.amazonaws.${var.aws_region}.ssm"
+    sns            = "com.amazonaws.${var.aws_region}.sns"
+    sqs            = "com.amazonaws.${var.aws_region}.sqs"
+    secretsmanager = "com.amazonaws.${var.aws_region}.secretsmanager"
+    lambda         = "com.amazonaws.${var.aws_region}.lambda"
+    ssm            = "com.amazonaws.${var.aws_region}.ssm"
   }
 }
 

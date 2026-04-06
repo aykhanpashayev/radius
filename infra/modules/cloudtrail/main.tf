@@ -22,7 +22,7 @@ resource "aws_cloudtrail" "radius" {
   kms_key_id                    = var.kms_key_arn
 
   # Send events to EventBridge for real-time processing
-  cloud_watch_logs_group_arn = null  # Using EventBridge, not CWL delivery
+  cloud_watch_logs_group_arn = null # Using EventBridge, not CWL delivery
 
   event_selector {
     read_write_type           = "WriteOnly"

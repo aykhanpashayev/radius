@@ -27,9 +27,9 @@ provider "aws" {
 module "organizations" {
   source = "../../modules/organizations"
 
-  security_account_id     = var.security_account_id
+  security_account_id      = var.security_account_id
   cloudtrail_s3_bucket_arn = var.cloudtrail_s3_bucket_arn
-  tags                    = var.tags
+  tags                     = var.tags
 }
 
 # ---------------------------------------------------------------------------
@@ -58,8 +58,8 @@ variable "tags" {
 # ---------------------------------------------------------------------------
 # Outputs
 # ---------------------------------------------------------------------------
-output "organization_id"           { value = module.organizations.organization_id }
-output "organization_root_id"      { value = module.organizations.organization_root_id }
+output "organization_id" { value = module.organizations.organization_id }
+output "organization_root_id" { value = module.organizations.organization_root_id }
 output "deny_cloudtrail_policy_id" { value = module.organizations.deny_cloudtrail_policy_id }
-output "deny_leave_org_policy_id"  { value = module.organizations.deny_leave_org_policy_id }
-output "guardduty_detector_id"     { value = module.organizations.guardduty_detector_id }
+output "deny_leave_org_policy_id" { value = module.organizations.deny_leave_org_policy_id }
+output "guardduty_detector_id" { value = module.organizations.guardduty_detector_id }

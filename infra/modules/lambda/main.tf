@@ -152,13 +152,13 @@ resource "aws_lambda_function" "event_normalizer" {
 
   environment {
     variables = {
-      ENVIRONMENT                  = var.environment
-      AWS_ACCOUNT_REGION           = var.aws_region
-      LOG_LEVEL                    = var.log_level
-      EVENT_SUMMARY_TABLE          = var.dynamodb_table_names.event_summary
-      DETECTION_ENGINE_ARN         = aws_lambda_function.detection_engine.arn
-      IDENTITY_COLLECTOR_ARN       = aws_lambda_function.identity_collector.arn
-      SCORE_ENGINE_FUNCTION_NAME   = aws_lambda_function.score_engine.function_name
+      ENVIRONMENT                = var.environment
+      AWS_ACCOUNT_REGION         = var.aws_region
+      LOG_LEVEL                  = var.log_level
+      EVENT_SUMMARY_TABLE        = var.dynamodb_table_names.event_summary
+      DETECTION_ENGINE_ARN       = aws_lambda_function.detection_engine.arn
+      IDENTITY_COLLECTOR_ARN     = aws_lambda_function.identity_collector.arn
+      SCORE_ENGINE_FUNCTION_NAME = aws_lambda_function.score_engine.function_name
     }
   }
 
@@ -183,16 +183,16 @@ resource "aws_lambda_function" "event_normalizer" {
 }
 
 resource "aws_lambda_function" "detection_engine" {
-  function_name = "${var.prefix}-detection-engine"
-  role          = aws_iam_role.detection_engine.arn
-  runtime       = "python3.11"
-  architectures = ["arm64"]
-  handler       = "handler.lambda_handler"
-  s3_bucket     = var.lambda_s3_bucket
-  s3_key        = "functions/detection_engine.zip"
+  function_name    = "${var.prefix}-detection-engine"
+  role             = aws_iam_role.detection_engine.arn
+  runtime          = "python3.11"
+  architectures    = ["arm64"]
+  handler          = "handler.lambda_handler"
+  s3_bucket        = var.lambda_s3_bucket
+  s3_key           = "functions/detection_engine.zip"
   source_code_hash = data.aws_s3_object.detection_engine.etag
-  timeout       = var.timeout_configs.detection_engine
-  memory_size   = var.function_configs.detection_engine
+  timeout          = var.timeout_configs.detection_engine
+  memory_size      = var.function_configs.detection_engine
 
   reserved_concurrent_executions = local.effective_concurrency
 
@@ -200,11 +200,11 @@ resource "aws_lambda_function" "detection_engine" {
 
   environment {
     variables = {
-      ENVIRONMENT              = var.environment
-      AWS_ACCOUNT_REGION       = var.aws_region
-      LOG_LEVEL                = var.log_level
-      EVENT_SUMMARY_TABLE      = var.dynamodb_table_names.event_summary
-      INCIDENT_PROCESSOR_ARN   = aws_lambda_function.incident_processor.arn
+      ENVIRONMENT            = var.environment
+      AWS_ACCOUNT_REGION     = var.aws_region
+      LOG_LEVEL              = var.log_level
+      EVENT_SUMMARY_TABLE    = var.dynamodb_table_names.event_summary
+      INCIDENT_PROCESSOR_ARN = aws_lambda_function.incident_processor.arn
     }
   }
 
@@ -229,16 +229,16 @@ resource "aws_lambda_function" "detection_engine" {
 }
 
 resource "aws_lambda_function" "incident_processor" {
-  function_name = "${var.prefix}-incident-processor"
-  role          = aws_iam_role.incident_processor.arn
-  runtime       = "python3.11"
-  architectures = ["arm64"]
-  handler       = "handler.lambda_handler"
-  s3_bucket     = var.lambda_s3_bucket
-  s3_key        = "functions/incident_processor.zip"
+  function_name    = "${var.prefix}-incident-processor"
+  role             = aws_iam_role.incident_processor.arn
+  runtime          = "python3.11"
+  architectures    = ["arm64"]
+  handler          = "handler.lambda_handler"
+  s3_bucket        = var.lambda_s3_bucket
+  s3_key           = "functions/incident_processor.zip"
   source_code_hash = data.aws_s3_object.incident_processor.etag
-  timeout       = var.timeout_configs.incident_processor
-  memory_size   = var.function_configs.incident_processor
+  timeout          = var.timeout_configs.incident_processor
+  memory_size      = var.function_configs.incident_processor
 
   reserved_concurrent_executions = local.effective_concurrency
 
@@ -246,9 +246,9 @@ resource "aws_lambda_function" "incident_processor" {
 
   environment {
     variables = {
-      ENVIRONMENT      = var.environment
-      AWS_ACCOUNT_REGION = var.aws_region
-      LOG_LEVEL        = var.log_level
+      ENVIRONMENT            = var.environment
+      AWS_ACCOUNT_REGION     = var.aws_region
+      LOG_LEVEL              = var.log_level
       INCIDENT_TABLE         = var.dynamodb_table_names.incident
       SNS_TOPIC_ARN          = var.sns_topic_arn
       REMEDIATION_LAMBDA_ARN = aws_lambda_function.remediation_engine.arn
@@ -278,16 +278,16 @@ resource "aws_lambda_function" "incident_processor" {
 }
 
 resource "aws_lambda_function" "identity_collector" {
-  function_name = "${var.prefix}-identity-collector"
-  role          = aws_iam_role.identity_collector.arn
-  runtime       = "python3.11"
-  architectures = ["arm64"]
-  handler       = "handler.lambda_handler"
-  s3_bucket     = var.lambda_s3_bucket
-  s3_key        = "functions/identity_collector.zip"
+  function_name    = "${var.prefix}-identity-collector"
+  role             = aws_iam_role.identity_collector.arn
+  runtime          = "python3.11"
+  architectures    = ["arm64"]
+  handler          = "handler.lambda_handler"
+  s3_bucket        = var.lambda_s3_bucket
+  s3_key           = "functions/identity_collector.zip"
   source_code_hash = data.aws_s3_object.identity_collector.etag
-  timeout       = var.timeout_configs.identity_collector
-  memory_size   = var.function_configs.identity_collector
+  timeout          = var.timeout_configs.identity_collector
+  memory_size      = var.function_configs.identity_collector
 
   reserved_concurrent_executions = local.effective_concurrency
 
@@ -324,16 +324,16 @@ resource "aws_lambda_function" "identity_collector" {
 }
 
 resource "aws_lambda_function" "score_engine" {
-  function_name = "${var.prefix}-score-engine"
-  role          = aws_iam_role.score_engine.arn
-  runtime       = "python3.11"
-  architectures = ["arm64"]
-  handler       = "handler.lambda_handler"
-  s3_bucket     = var.lambda_s3_bucket
-  s3_key        = "functions/score_engine.zip"
+  function_name    = "${var.prefix}-score-engine"
+  role             = aws_iam_role.score_engine.arn
+  runtime          = "python3.11"
+  architectures    = ["arm64"]
+  handler          = "handler.lambda_handler"
+  s3_bucket        = var.lambda_s3_bucket
+  s3_key           = "functions/score_engine.zip"
   source_code_hash = data.aws_s3_object.score_engine.etag
-  timeout       = var.timeout_configs.score_engine
-  memory_size   = var.function_configs.score_engine
+  timeout          = var.timeout_configs.score_engine
+  memory_size      = var.function_configs.score_engine
 
   kms_key_arn = var.kms_key_arn
 
@@ -367,16 +367,16 @@ resource "aws_lambda_function" "score_engine" {
 }
 
 resource "aws_lambda_function" "api_handler" {
-  function_name = "${var.prefix}-api-handler"
-  role          = aws_iam_role.api_handler.arn
-  runtime       = "python3.11"
-  architectures = ["arm64"]
-  handler       = "handler.lambda_handler"
-  s3_bucket     = var.lambda_s3_bucket
-  s3_key        = "functions/api_handler.zip"
+  function_name    = "${var.prefix}-api-handler"
+  role             = aws_iam_role.api_handler.arn
+  runtime          = "python3.11"
+  architectures    = ["arm64"]
+  handler          = "handler.lambda_handler"
+  s3_bucket        = var.lambda_s3_bucket
+  s3_key           = "functions/api_handler.zip"
   source_code_hash = data.aws_s3_object.api_handler.etag
-  timeout       = var.timeout_configs.api_handler
-  memory_size   = var.function_configs.api_handler
+  timeout          = var.timeout_configs.api_handler
+  memory_size      = var.function_configs.api_handler
 
   kms_key_arn = var.kms_key_arn
 
@@ -412,16 +412,16 @@ resource "aws_lambda_function" "api_handler" {
 }
 
 resource "aws_lambda_function" "remediation_engine" {
-  function_name = "${var.prefix}-remediation-engine"
-  role          = aws_iam_role.remediation_engine.arn
-  runtime       = "python3.11"
-  architectures = ["arm64"]
-  handler       = "handler.lambda_handler"
-  s3_bucket     = var.lambda_s3_bucket
-  s3_key        = "functions/remediation_engine.zip"
+  function_name    = "${var.prefix}-remediation-engine"
+  role             = aws_iam_role.remediation_engine.arn
+  runtime          = "python3.11"
+  architectures    = ["arm64"]
+  handler          = "handler.lambda_handler"
+  s3_bucket        = var.lambda_s3_bucket
+  s3_key           = "functions/remediation_engine.zip"
   source_code_hash = data.aws_s3_object.remediation_engine.etag
-  timeout       = var.timeout_configs.remediation_engine
-  memory_size   = var.function_configs.remediation_engine
+  timeout          = var.timeout_configs.remediation_engine
+  memory_size      = var.function_configs.remediation_engine
 
   reserved_concurrent_executions = local.effective_concurrency
 

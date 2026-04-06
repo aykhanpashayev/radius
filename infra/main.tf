@@ -40,9 +40,9 @@ module "kms" {
 # 2. Cognito — user pool for dashboard authentication (no dependencies)
 # ---------------------------------------------------------------------------
 module "cognito" {
-  source  = "./modules/cognito"
-  prefix  = local.name_prefix
-  tags    = var.tags
+  source = "./modules/cognito"
+  prefix = local.name_prefix
+  tags   = var.tags
 
   callback_urls = length(var.cognito_callback_urls) > 0 ? var.cognito_callback_urls : ["https://${module.frontend.domain_name}/callback", "http://localhost:5173/callback"]
   logout_urls   = length(var.cognito_logout_urls) > 0 ? var.cognito_logout_urls : ["https://${module.frontend.domain_name}/logout", "http://localhost:5173/logout"]
@@ -127,10 +127,10 @@ module "secrets" {
 module "lambda" {
   source = "./modules/lambda"
 
-  environment       = var.environment
-  prefix            = local.name_prefix
-  aws_region        = var.aws_region
-  lambda_s3_bucket  = var.lambda_s3_bucket
+  environment        = var.environment
+  prefix             = local.name_prefix
+  aws_region         = var.aws_region
+  lambda_s3_bucket   = var.lambda_s3_bucket
   log_retention_days = var.log_retention_days
 
   function_configs = {
@@ -194,12 +194,12 @@ module "apigateway" {
   environment = var.environment
   prefix      = local.name_prefix
 
-  lambda_function_arn  = module.lambda.function_arns.api_handler
-  lambda_function_name = module.lambda.function_names.api_handler
-  log_retention_days   = var.log_retention_days
-  enable_logging       = false
-  throttle_burst_limit = var.api_throttle_burst_limit
-  throttle_rate_limit  = var.api_throttle_rate_limit
+  lambda_function_arn   = module.lambda.function_arns.api_handler
+  lambda_function_name  = module.lambda.function_names.api_handler
+  log_retention_days    = var.log_retention_days
+  enable_logging        = false
+  throttle_burst_limit  = var.api_throttle_burst_limit
+  throttle_rate_limit   = var.api_throttle_rate_limit
   cognito_user_pool_arn = module.cognito.user_pool_arn
 
   tags = var.tags

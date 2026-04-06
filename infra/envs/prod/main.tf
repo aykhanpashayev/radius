@@ -48,8 +48,8 @@ module "radius" {
 # ---------------------------------------------------------------------------
 # Pass-through variables (values come from terraform.tfvars)
 # ---------------------------------------------------------------------------
-variable "environment"    { type = string }
-variable "aws_region"     { type = string }
+variable "environment" { type = string }
+variable "aws_region" { type = string }
 variable "resource_prefix" { type = string }
 
 variable "lambda_memory" {
@@ -76,10 +76,10 @@ variable "lambda_timeout" {
   })
 }
 
-variable "lambda_concurrency_limit"        { type = number }
-variable "log_retention_days"              { type = number }
+variable "lambda_concurrency_limit" { type = number }
+variable "log_retention_days" { type = number }
 variable "cloudtrail_organization_enabled" { type = bool }
-variable "enable_pitr"                     { type = bool }
+variable "enable_pitr" { type = bool }
 
 variable "lambda_s3_bucket" {
   type    = string
@@ -124,7 +124,7 @@ variable "api_throttle_rate_limit" {
 }
 
 variable "cognito_callback_urls" { type = list(string) }
-variable "cognito_logout_urls"   { type = list(string) }
+variable "cognito_logout_urls" { type = list(string) }
 variable "github_repo" { type = string }
 
 variable "enable_waf" {
@@ -175,10 +175,10 @@ variable "backup_secondary_region" {
 # ---------------------------------------------------------------------------
 # Outputs
 # ---------------------------------------------------------------------------
-output "environment"          { value = module.radius.environment }
-output "aws_region"           { value = module.radius.aws_region }
-output "resource_prefix"      { value = module.radius.resource_prefix }
-output "api_endpoint"         { value = module.radius.api_endpoint }
+output "environment" { value = module.radius.environment }
+output "aws_region" { value = module.radius.aws_region }
+output "resource_prefix" { value = module.radius.resource_prefix }
+output "api_endpoint" { value = module.radius.api_endpoint }
 output "cognito_user_pool_id" { value = module.radius.cognito_user_pool_id }
-output "cognito_client_id"    { value = module.radius.cognito_client_id }
-output "cognito_domain"       { value = module.radius.cognito_domain }
+output "cognito_client_id" { value = module.radius.cognito_client_id }
+output "cognito_domain" { value = module.radius.cognito_domain }

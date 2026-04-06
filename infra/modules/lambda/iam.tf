@@ -98,15 +98,15 @@ resource "aws_iam_role_policy" "event_normalizer" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "CloudWatchLogs"
-        Effect = "Allow"
-        Action = ["logs:CreateLogStream", "logs:PutLogEvents"]
+        Sid      = "CloudWatchLogs"
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
         Resource = "${aws_cloudwatch_log_group.event_normalizer.arn}:*"
       },
       {
-        Sid    = "WriteEventSummary"
-        Effect = "Allow"
-        Action = ["dynamodb:PutItem"]
+        Sid      = "WriteEventSummary"
+        Effect   = "Allow"
+        Action   = ["dynamodb:PutItem"]
         Resource = var.dynamodb_table_arns.event_summary
       },
       {
@@ -120,15 +120,15 @@ resource "aws_iam_role_policy" "event_normalizer" {
         ]
       },
       {
-        Sid    = "DLQ"
-        Effect = "Allow"
-        Action = ["sqs:SendMessage"]
+        Sid      = "DLQ"
+        Effect   = "Allow"
+        Action   = ["sqs:SendMessage"]
         Resource = aws_sqs_queue.event_normalizer_dlq.arn
       },
       {
-        Sid    = "KMS"
-        Effect = "Allow"
-        Action = ["kms:Decrypt", "kms:GenerateDataKey*"]
+        Sid      = "KMS"
+        Effect   = "Allow"
+        Action   = ["kms:Decrypt", "kms:GenerateDataKey*"]
         Resource = var.kms_key_arn
       }
     ]
@@ -153,9 +153,9 @@ resource "aws_iam_role_policy" "detection_engine" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "CloudWatchLogs"
-        Effect = "Allow"
-        Action = ["logs:CreateLogStream", "logs:PutLogEvents"]
+        Sid      = "CloudWatchLogs"
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
         Resource = "${aws_cloudwatch_log_group.detection_engine.arn}:*"
       },
       {
@@ -168,21 +168,21 @@ resource "aws_iam_role_policy" "detection_engine" {
         )
       },
       {
-        Sid    = "InvokeIncidentProcessor"
-        Effect = "Allow"
-        Action = ["lambda:InvokeFunction"]
+        Sid      = "InvokeIncidentProcessor"
+        Effect   = "Allow"
+        Action   = ["lambda:InvokeFunction"]
         Resource = aws_lambda_function.incident_processor.arn
       },
       {
-        Sid    = "DLQ"
-        Effect = "Allow"
-        Action = ["sqs:SendMessage"]
+        Sid      = "DLQ"
+        Effect   = "Allow"
+        Action   = ["sqs:SendMessage"]
         Resource = aws_sqs_queue.detection_engine_dlq.arn
       },
       {
-        Sid    = "KMS"
-        Effect = "Allow"
-        Action = ["kms:Decrypt", "kms:GenerateDataKey*"]
+        Sid      = "KMS"
+        Effect   = "Allow"
+        Action   = ["kms:Decrypt", "kms:GenerateDataKey*"]
         Resource = var.kms_key_arn
       }
     ]
@@ -208,9 +208,9 @@ resource "aws_iam_role_policy" "incident_processor" {
     Statement = concat(
       [
         {
-          Sid    = "CloudWatchLogs"
-          Effect = "Allow"
-          Action = ["logs:CreateLogStream", "logs:PutLogEvents"]
+          Sid      = "CloudWatchLogs"
+          Effect   = "Allow"
+          Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
           Resource = "${aws_cloudwatch_log_group.incident_processor.arn}:*"
         },
         {
@@ -223,27 +223,27 @@ resource "aws_iam_role_policy" "incident_processor" {
           )
         },
         {
-          Sid    = "PublishSNS"
-          Effect = "Allow"
-          Action = ["sns:Publish"]
+          Sid      = "PublishSNS"
+          Effect   = "Allow"
+          Action   = ["sns:Publish"]
           Resource = var.sns_topic_arn
         },
         {
-          Sid    = "InvokeRemediationEngine"
-          Effect = "Allow"
-          Action = ["lambda:InvokeFunction"]
+          Sid      = "InvokeRemediationEngine"
+          Effect   = "Allow"
+          Action   = ["lambda:InvokeFunction"]
           Resource = aws_lambda_function.remediation_engine.arn
         },
         {
-          Sid    = "DLQ"
-          Effect = "Allow"
-          Action = ["sqs:SendMessage"]
+          Sid      = "DLQ"
+          Effect   = "Allow"
+          Action   = ["sqs:SendMessage"]
           Resource = aws_sqs_queue.incident_processor_dlq.arn
         },
         {
-          Sid    = "KMS"
-          Effect = "Allow"
-          Action = ["kms:Decrypt", "kms:GenerateDataKey*"]
+          Sid      = "KMS"
+          Effect   = "Allow"
+          Action   = ["kms:Decrypt", "kms:GenerateDataKey*"]
           Resource = var.kms_key_arn
         },
       ],
@@ -277,33 +277,33 @@ resource "aws_iam_role_policy" "identity_collector" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "CloudWatchLogs"
-        Effect = "Allow"
-        Action = ["logs:CreateLogStream", "logs:PutLogEvents"]
+        Sid      = "CloudWatchLogs"
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
         Resource = "${aws_cloudwatch_log_group.identity_collector.arn}:*"
       },
       {
-        Sid    = "WriteIdentityProfile"
-        Effect = "Allow"
-        Action = ["dynamodb:PutItem", "dynamodb:UpdateItem"]
+        Sid      = "WriteIdentityProfile"
+        Effect   = "Allow"
+        Action   = ["dynamodb:PutItem", "dynamodb:UpdateItem"]
         Resource = var.dynamodb_table_arns.identity_profile
       },
       {
-        Sid    = "WriteTrustRelationship"
-        Effect = "Allow"
-        Action = ["dynamodb:PutItem", "dynamodb:UpdateItem"]
+        Sid      = "WriteTrustRelationship"
+        Effect   = "Allow"
+        Action   = ["dynamodb:PutItem", "dynamodb:UpdateItem"]
         Resource = var.dynamodb_table_arns.trust_relationship
       },
       {
-        Sid    = "DLQ"
-        Effect = "Allow"
-        Action = ["sqs:SendMessage"]
+        Sid      = "DLQ"
+        Effect   = "Allow"
+        Action   = ["sqs:SendMessage"]
         Resource = aws_sqs_queue.identity_collector_dlq.arn
       },
       {
-        Sid    = "KMS"
-        Effect = "Allow"
-        Action = ["kms:Decrypt", "kms:GenerateDataKey*"]
+        Sid      = "KMS"
+        Effect   = "Allow"
+        Action   = ["kms:Decrypt", "kms:GenerateDataKey*"]
         Resource = var.kms_key_arn
       }
     ]
@@ -328,9 +328,9 @@ resource "aws_iam_role_policy" "score_engine" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "CloudWatchLogs"
-        Effect = "Allow"
-        Action = ["logs:CreateLogStream", "logs:PutLogEvents"]
+        Sid      = "CloudWatchLogs"
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
         Resource = "${aws_cloudwatch_log_group.score_engine.arn}:*"
       },
       {
@@ -343,9 +343,9 @@ resource "aws_iam_role_policy" "score_engine" {
         )
       },
       {
-        Sid    = "WriteBlastRadiusScore"
-        Effect = "Allow"
-        Action = ["dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:GetItem"]
+        Sid      = "WriteBlastRadiusScore"
+        Effect   = "Allow"
+        Action   = ["dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:GetItem"]
         Resource = var.dynamodb_table_arns.blast_radius_score
       },
       {
@@ -376,9 +376,9 @@ resource "aws_iam_role_policy" "score_engine" {
         )
       },
       {
-        Sid    = "KMS"
-        Effect = "Allow"
-        Action = ["kms:Decrypt", "kms:GenerateDataKey*"]
+        Sid      = "KMS"
+        Effect   = "Allow"
+        Action   = ["kms:Decrypt", "kms:GenerateDataKey*"]
         Resource = var.kms_key_arn
       }
     ]
@@ -403,9 +403,9 @@ resource "aws_iam_role_policy" "api_handler" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "CloudWatchLogs"
-        Effect = "Allow"
-        Action = ["logs:CreateLogStream", "logs:PutLogEvents"]
+        Sid      = "CloudWatchLogs"
+        Effect   = "Allow"
+        Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
         Resource = "${aws_cloudwatch_log_group.api_handler.arn}:*"
       },
       {
@@ -428,9 +428,9 @@ resource "aws_iam_role_policy" "api_handler" {
         )
       },
       {
-        Sid    = "UpdateIncidentStatus"
-        Effect = "Allow"
-        Action = ["dynamodb:UpdateItem"]
+        Sid      = "UpdateIncidentStatus"
+        Effect   = "Allow"
+        Action   = ["dynamodb:UpdateItem"]
         Resource = var.dynamodb_table_arns.incident
       },
       {
@@ -460,9 +460,9 @@ resource "aws_iam_role_policy" "api_handler" {
         )
       },
       {
-        Sid    = "KMS"
-        Effect = "Allow"
-        Action = ["kms:Decrypt", "kms:GenerateDataKey*"]
+        Sid      = "KMS"
+        Effect   = "Allow"
+        Action   = ["kms:Decrypt", "kms:GenerateDataKey*"]
         Resource = var.kms_key_arn
       }
     ]
@@ -489,15 +489,15 @@ resource "aws_iam_role_policy" "remediation_engine" {
     Statement = concat(
       [
         {
-          Sid    = "CloudWatchLogs"
-          Effect = "Allow"
-          Action = ["logs:CreateLogStream", "logs:PutLogEvents"]
+          Sid      = "CloudWatchLogs"
+          Effect   = "Allow"
+          Action   = ["logs:CreateLogStream", "logs:PutLogEvents"]
           Resource = "${aws_cloudwatch_log_group.remediation_engine.arn}:*"
         },
         {
-          Sid    = "DLQ"
-          Effect = "Allow"
-          Action = ["sqs:SendMessage"]
+          Sid      = "DLQ"
+          Effect   = "Allow"
+          Action   = ["sqs:SendMessage"]
           Resource = aws_sqs_queue.remediation_engine_dlq.arn
         },
         {
@@ -550,15 +550,15 @@ resource "aws_iam_role_policy" "remediation_engine" {
           )
         },
         {
-          Sid    = "PublishRemediationTopic"
-          Effect = "Allow"
-          Action = ["sns:Publish"]
+          Sid      = "PublishRemediationTopic"
+          Effect   = "Allow"
+          Action   = ["sns:Publish"]
           Resource = var.remediation_topic_arn
         },
         {
-          Sid    = "KMS"
-          Effect = "Allow"
-          Action = ["kms:Decrypt", "kms:GenerateDataKey*"]
+          Sid      = "KMS"
+          Effect   = "Allow"
+          Action   = ["kms:Decrypt", "kms:GenerateDataKey*"]
           Resource = var.kms_key_arn
         },
       ],

@@ -35,7 +35,7 @@ resource "aws_cloudwatch_event_target" "event_normalizer" {
   arn       = var.lambda_function_arns.event_normalizer
 
   retry_policy {
-    maximum_event_age_in_seconds = 3600  # 1 hour
+    maximum_event_age_in_seconds = 3600 # 1 hour
     maximum_retry_attempts       = 3
   }
 
