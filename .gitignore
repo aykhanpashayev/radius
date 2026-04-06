@@ -111,7 +111,6 @@ coverage/
 coverage.xml
 node_modules/
 frontend/build/
-frontend/package-lock.json
 
 # Temporary files
 tmp/
