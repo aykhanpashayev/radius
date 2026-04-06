@@ -634,11 +634,14 @@ Get your API endpoint: `terraform -chdir=infra/envs/dev output -raw api_endpoint
 
 ### Step 4 — Trigger a high-severity incident
 
-Invoke Incident_Processor directly with a Critical finding. This creates a new incident and immediately async-invokes the Remediation_Engine:
+Invoke Incident_Processor directly with a Critical finding. This creates a new incident and immediately async-invokes the Remediation_Engine.
+
+First create the payload file (avoids PowerShell quote escaping issues):
 
 Windows PowerShell:
 ```powershell
-aws lambda invoke --function-name radius-dev-incident-processor --region us-east-1 --cli-binary-format raw-in-base64-out --payload '{"identity_arn":"arn:aws:iam::123456789012:user/test-attacker","detection_type":"privilege_escalation","severity":"Critical","confidence":95,"related_event_ids":["test-001"]}' response.json
+[System.IO.File]::WriteAllText("payload.json", '{"identity_arn":"arn:aws:iam::123456789012:user/test-attacker","detection_type":"privilege_escalation","severity":"Critical","confidence":95,"related_event_ids":["test-001"]}', [System.Text.UTF8Encoding]::new($false))
+aws lambda invoke --function-name radius-dev-incident-processor --region us-east-1 --cli-binary-format raw-in-base64-out --payload file://payload.json response.json
 Get-Content response.json
 ```
 
