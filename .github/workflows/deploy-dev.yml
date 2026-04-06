@@ -2,7 +2,7 @@ name: Deploy — Dev
 
 on:
   push:
-    branches: [develop]
+    branches: [dev, develop]
 
 # Cancel any in-progress dev deploy when a new commit is pushed
 concurrency:
