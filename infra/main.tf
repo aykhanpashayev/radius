@@ -253,6 +253,33 @@ module "cloudwatch" {
 }
 
 # ---------------------------------------------------------------------------
+# 8b. AWS Backup — daily snapshots of PITR-enabled DynamoDB tables (optional)
+# ---------------------------------------------------------------------------
+module "backup" {
+  count  = var.enable_backup ? 1 : 0
+  source = "./modules/backup"
+
+  prefix      = local.name_prefix
+  environment = var.environment
+  aws_region  = var.aws_region
+  kms_key_arn = module.kms.dynamodb_key_arn
+
+  # Only back up the 5 PITR-enabled tables; event_summary and trust_relationship
+  # are excluded because they can be rebuilt from CloudTrail.
+  table_arns = [
+    module.dynamodb.table_arns.identity_profile,
+    module.dynamodb.table_arns.blast_radius_score,
+    module.dynamodb.table_arns.incident,
+    module.dynamodb.table_arns.remediation_config,
+    module.dynamodb.table_arns.remediation_audit_log,
+  ]
+
+  backup_retention_days = var.backup_retention_days
+  copy_to_region        = var.backup_secondary_region
+  tags                  = var.tags
+}
+
+# ---------------------------------------------------------------------------
 # 9. Frontend — S3 + CloudFront for the React dashboard
 # ---------------------------------------------------------------------------
 module "frontend" {

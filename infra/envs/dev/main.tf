@@ -40,6 +40,9 @@ module "radius" {
   vpc_cidr                        = var.vpc_cidr
   availability_zones              = var.availability_zones
   enable_secrets_manager          = var.enable_secrets_manager
+  enable_backup                   = var.enable_backup
+  backup_retention_days           = var.backup_retention_days
+  backup_secondary_region         = var.backup_secondary_region
 }
 
 # ---------------------------------------------------------------------------
@@ -163,6 +166,21 @@ variable "availability_zones" {
 variable "enable_secrets_manager" {
   type    = bool
   default = false
+}
+
+variable "enable_backup" {
+  type    = bool
+  default = false
+}
+
+variable "backup_retention_days" {
+  type    = number
+  default = 35
+}
+
+variable "backup_secondary_region" {
+  type    = string
+  default = ""
 }
 
 # ---------------------------------------------------------------------------

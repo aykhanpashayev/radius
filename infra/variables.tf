@@ -198,3 +198,21 @@ variable "enable_secrets_manager" {
   type        = bool
   default     = false
 }
+
+variable "enable_backup" {
+  description = "Enable AWS Backup daily snapshots for the 5 PITR-enabled DynamoDB tables"
+  type        = bool
+  default     = false
+}
+
+variable "backup_retention_days" {
+  description = "Days to retain AWS Backup snapshots in the primary vault"
+  type        = number
+  default     = 35
+}
+
+variable "backup_secondary_region" {
+  description = "Secondary region to copy backups to for cross-region DR. Set to empty string to disable."
+  type        = string
+  default     = ""
+}

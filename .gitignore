@@ -17,6 +17,9 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+# Load test results (can be large; upload to S3 instead — see docs/runbooks/load-testing.md)
+.load-test-results/
+
 # Python
 __pycache__/
 *.py[cod]
