@@ -19,6 +19,26 @@ env:
 
 jobs:
   # ---------------------------------------------------------------------------
+  # 0. Preflight — skip all deploy jobs if AWS credentials are not configured
+  # ---------------------------------------------------------------------------
+  preflight:
+    name: Preflight Check
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      has-credentials: ${{ steps.check.outputs.has-credentials }}
+    steps:
+      - name: Check AWS credentials are configured
+        id: check
+        run: |
+          if [[ -n "${{ vars.AWS_DEPLOY_ROLE_ARN }}" ]]; then
+            echo "has-credentials=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has-credentials=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::AWS_DEPLOY_ROLE_ARN is not set — skipping deploy jobs."
+          fi
+
+  # ---------------------------------------------------------------------------
   # 1. Terraform — provision / update AWS infrastructure
   #    Uses a GitHub environment ("production") so approvers can gate the deploy.
   #    Configure required reviewers at: Settings → Environments → production
@@ -26,6 +46,8 @@ jobs:
   deploy-infra:
     name: Terraform Apply (prod)
     runs-on: ubuntu-latest
+    needs: preflight
+    if: needs.preflight.outputs.has-credentials == 'true'
     environment: production
     steps:
       - uses: actions/checkout@v5
@@ -59,6 +81,7 @@ jobs:
     name: Deploy Lambda Packages (prod)
     runs-on: ubuntu-latest
     needs: deploy-infra
+    if: needs.deploy-infra.result == 'success'
     steps:
       - uses: actions/checkout@v5
 
@@ -81,6 +104,7 @@ jobs:
     name: Deploy Frontend (prod)
     runs-on: ubuntu-latest
     needs: deploy-lambdas
+    if: needs.deploy-lambdas.result == 'success'
     steps:
       - uses: actions/checkout@v5
 
@@ -127,6 +151,7 @@ jobs:
     name: Post-Deploy Verification (prod)
     runs-on: ubuntu-latest
     needs: deploy-frontend
+    if: needs.deploy-frontend.result == 'success'
     steps:
       - uses: actions/checkout@v5
 
