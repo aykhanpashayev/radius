@@ -945,10 +945,10 @@ aws dynamodb scan \
 
 | Setting | Dev | Prod |
 |---|---|---|
-| `cloudtrail_organization_enabled` | `false` (single account) | `true` (requires AWS Organizations management account) |
+| `cloudtrail_organization_enabled` | `false` (single account) | `false` default; set `true` for org-wide coverage (see [Org-Wide CloudTrail Prerequisites](#production--org-wide-cloudtrail-prerequisites)) |
 | `enable_pitr` | `true` | `true` (DynamoDB point-in-time recovery) |
 | `log_retention_days` | 7 | 365 |
-| `lambda_concurrency_limit` | 0 (unreserved) | 0 (unreserved, scales freely) |
+| `lambda_concurrency_limit` | `0` (unreserved) | `0` (unreserved, scales freely) |
 | `lambda_memory.detection_engine` | 1024 MB | 2048 MB |
 | `score_engine_schedule` | every 24 hours | every 6 hours |
 | `remediation_dry_run` | `true` (log only, no IAM mutations) | `false` (live remediation — explicit opt-in) |
@@ -1111,7 +1111,7 @@ terraform -chdir=infra/envs/dev destroy -var-file=terraform.tfvars
 bash scripts/deploy-infra.sh --env dev
 ```
 
-
+### "Error acquiring the state lock"
 
 This happens when a previous `terraform apply` was interrupted. Get the lock ID from the error message, then:
 

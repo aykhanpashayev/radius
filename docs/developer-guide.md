@@ -369,20 +369,24 @@ Two GitHub Actions workflows automate testing and deployment.
 
 ### CI (`.github/workflows/ci.yml`)
 
-Runs on every pull request to `main`:
-- Python unit + integration tests via `run-tests.sh`
+Runs on every push to any branch and on pull requests targeting `main` or `develop`:
+- Python unit + integration tests via `run-tests.sh --fast` (skips property-based tests for speed)
 - Frontend build with placeholder env vars (confirms the build compiles)
-- `terraform fmt -check -recursive` to catch formatting drift
+- `terraform fmt -check -recursive` and `terraform validate` for both dev and prod configs
 
-### Deploy (`.github/workflows/deploy.yml`)
+### Deploy — Production (`.github/workflows/deploy-prod.yml`)
 
-Runs on merge to `main`, requires manual approval via the `production` GitHub environment:
-1. Runs the full test suite (gates deployment)
+Runs on every push to `main`, requires manual approval via the `production` GitHub environment:
+1. Runs Terraform apply (gated by environment approval)
 2. Builds Lambda packages and uploads to S3
-3. Runs `terraform plan` then `terraform apply`
-4. Pulls Cognito and API config from SSM Parameter Store
-5. Builds the React frontend with real config values
-6. Syncs `frontend/dist/` to the S3 hosting bucket
-7. Invalidates the CloudFront cache
+3. Pulls Cognito and API config from SSM Parameter Store
+4. Builds the React frontend with real config values
+5. Syncs `frontend/dist/` to the S3 hosting bucket
+6. Invalidates the CloudFront cache
+7. Runs a smoke-test verification script
 
-Authentication to AWS uses OIDC — no long-lived access keys are stored in GitHub Secrets. The deploy role ARN is stored as `AWS_DEPLOY_ROLE_ARN` in GitHub Secrets.
+### Deploy — Dev (`.github/workflows/deploy-dev.yml`)
+
+Runs manually or on pushes to a `dev` branch. Same pipeline as production but with cancellable concurrency for faster iteration.
+
+Authentication to AWS uses OIDC — no long-lived access keys are stored in GitHub Secrets. The deploy role ARN is stored as `AWS_DEPLOY_ROLE_ARN` in GitHub Variables (`vars.AWS_DEPLOY_ROLE_ARN`).

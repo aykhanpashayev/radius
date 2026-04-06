@@ -149,7 +149,7 @@ Incident_Processor Lambda
     ├── (existing) create_incident() → Incident table
     ├── (existing) publish_alert()   → SNS Alert_Topic
     │
-    └── (NEW) _invoke_remediation()  → Remediation_Engine Lambda (async, High+ only)
+    └── _invoke_remediation()        → Remediation_Engine Lambda (async, High+ only)
                                               │
                                               ├── load_config()          → Remediation_Config table
                                               ├── check_safety_controls()
@@ -171,20 +171,20 @@ The engine operates in one of three modes, configured via the `PUT /remediation/
 
 The `dry_run` flag (Lambda env var or per-invocation payload field) overrides any configured mode to `monitor`.
 
-### New Lambda Functions
+### Remediation Lambda
 
 | Function | Trigger | Purpose |
 |---|---|---|
 | Remediation_Engine | Async invoke (Incident_Processor) | Evaluate remediation rules, execute approved IAM actions, write audit log |
 
-### New DynamoDB Tables
+### Remediation DynamoDB Tables
 
 | Table | PK | GSIs | Purpose |
 |---|---|---|---|
 | Remediation_Config | `config_id` | — | Singleton config record: Risk_Mode, active rules, exclusion lists |
 | Remediation_Audit_Log | `audit_id` | `IdentityTimeIndex` (PK: `identity_arn`, SK: `timestamp`, ALL); `IncidentIndex` (PK: `incident_id`, SK: `timestamp`, KEYS_ONLY) | Append-only audit trail of every action evaluation; TTL 365 days |
 
-### New SNS Topic
+### Remediation SNS Topic
 
 | Topic | Purpose |
 |---|---|
