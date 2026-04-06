@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # Python unit + integration tests (no AWS credentials needed — moto mocks AWS)
+  # ---------------------------------------------------------------------------
+  test:
+    name: Python Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r backend/requirements-dev.txt
+
+      - name: Run tests (fast mode — skips property-based suite on PRs)
+        run: bash scripts/run-tests.sh --fast
+
+  # ---------------------------------------------------------------------------
+  # Terraform format + validate (no AWS credentials needed)
+  # ---------------------------------------------------------------------------
+  lint-terraform:
+    name: Terraform Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '~1.7'
+
+      - name: Check formatting
+        run: terraform fmt -check -recursive infra/
+
+      - name: Validate dev module
+        working-directory: infra/envs/dev
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      - name: Validate prod module
+        working-directory: infra/envs/prod
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+  # ---------------------------------------------------------------------------
+  # Frontend build (no AWS credentials needed — uses stub env vars)
+  # ---------------------------------------------------------------------------
+  build-frontend:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm --prefix frontend ci
+
+      - name: Build with stub config
+        env:
+          VITE_API_BASE_URL: https://stub.execute-api.us-east-1.amazonaws.com/prod
+          VITE_COGNITO_USER_POOL_ID: us-east-1_stub00000
+          VITE_COGNITO_CLIENT_ID: stubclientid0000000000000000
+        run: npm --prefix frontend run build

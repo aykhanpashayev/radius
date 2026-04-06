@@ -99,15 +99,15 @@ if [[ ! -d "$ENV_DIR" ]]; then
 fi
 
 # Check for placeholder values that haven't been filled in
-if grep -qF "TODO:" "$TFVARS" 2>/dev/null; then
-  echo "ERROR: ${TFVARS} still contains unfilled TODO: values."
-  echo "       Open the file and fill in every value marked TODO:"
+if grep -qE 'TODO:|<REPLACE:' "$TFVARS" 2>/dev/null; then
+  echo "ERROR: ${TFVARS} still contains unfilled placeholder values."
+  echo "       Open the file and replace every value marked TODO: or <REPLACE:...>"
   exit 1
 fi
 
-if grep -qF "TODO:" "$BACKEND_VARS" 2>/dev/null; then
-  echo "ERROR: ${BACKEND_VARS} still contains unfilled TODO: values."
-  echo "       Open the file and fill in every value marked TODO:"
+if grep -qE 'TODO:|<REPLACE:' "$BACKEND_VARS" 2>/dev/null; then
+  echo "ERROR: ${BACKEND_VARS} still contains unfilled placeholder values."
+  echo "       Open the file and replace every value marked TODO: or <REPLACE:...>"
   exit 1
 fi
 

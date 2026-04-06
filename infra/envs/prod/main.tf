@@ -34,8 +34,6 @@ module "radius" {
   cognito_callback_urls           = var.cognito_callback_urls
   cognito_logout_urls             = var.cognito_logout_urls
   github_repo                     = var.github_repo
-  frontend_s3_bucket              = var.frontend_s3_bucket
-  cloudfront_distribution_id      = var.cloudfront_distribution_id
 }
 
 # ---------------------------------------------------------------------------
@@ -119,16 +117,6 @@ variable "api_throttle_rate_limit" {
 variable "cognito_callback_urls" { type = list(string) }
 variable "cognito_logout_urls"   { type = list(string) }
 variable "github_repo"           { type = string }
-
-variable "frontend_s3_bucket" {
-  type    = string
-  default = ""
-}
-
-variable "cloudfront_distribution_id" {
-  type    = string
-  default = ""
-}
 
 # ---------------------------------------------------------------------------
 # Outputs

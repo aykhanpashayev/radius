@@ -1,0 +1,125 @@
+name: Deploy — Production
+
+on:
+  push:
+    branches: [main]
+
+# Only one prod deploy at a time — never cancel in-progress
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+permissions:
+  id-token: write   # required for OIDC token exchange
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  DEPLOY_ENV: prod
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 1. Terraform — provision / update AWS infrastructure
+  #    Uses a GitHub environment ("production") so approvers can gate the deploy.
+  #    Configure required reviewers at: Settings → Environments → production
+  # ---------------------------------------------------------------------------
+  deploy-infra:
+    name: Terraform Apply (prod)
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: '~1.7'
+
+      - name: Deploy infrastructure
+        run: bash scripts/deploy-infra.sh --env ${{ env.DEPLOY_ENV }} --auto-approve
+
+  # ---------------------------------------------------------------------------
+  # 2. Lambda packages — build and upload to S3
+  # ---------------------------------------------------------------------------
+  deploy-lambdas:
+    name: Deploy Lambda Packages (prod)
+    runs-on: ubuntu-latest
+    needs: deploy-infra
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build and upload Lambda packages
+        run: bash scripts/build-lambdas.sh --env ${{ env.DEPLOY_ENV }} --region ${{ env.AWS_REGION }}
+
+  # ---------------------------------------------------------------------------
+  # 3. Frontend — build React app from SSM config, sync to S3, invalidate CDN
+  # ---------------------------------------------------------------------------
+  deploy-frontend:
+    name: Deploy Frontend (prod)
+    runs-on: ubuntu-latest
+    needs: deploy-lambdas
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build frontend (fetches Cognito + API config from SSM)
+        run: bash scripts/build-frontend.sh --env ${{ env.DEPLOY_ENV }} --region ${{ env.AWS_REGION }}
+
+      - name: Sync to S3
+        run: |
+          BUCKET=$(aws ssm get-parameter \
+            --name "/radius/${{ env.DEPLOY_ENV }}/frontend/bucket" \
+            --region ${{ env.AWS_REGION }} \
+            --query "Parameter.Value" --output text)
+          aws s3 sync frontend/dist/ "s3://${BUCKET}/" --delete --region ${{ env.AWS_REGION }}
+
+      - name: Invalidate CloudFront cache
+        run: |
+          CF_ID=$(aws ssm get-parameter \
+            --name "/radius/${{ env.DEPLOY_ENV }}/cloudfront/distribution_id" \
+            --region ${{ env.AWS_REGION }} \
+            --query "Parameter.Value" --output text)
+          aws cloudfront create-invalidation \
+            --distribution-id "${CF_ID}" \
+            --paths "/*"
+
+  # ---------------------------------------------------------------------------
+  # 4. Smoke test — verify the deployment is healthy
+  # ---------------------------------------------------------------------------
+  verify:
+    name: Post-Deploy Verification (prod)
+    runs-on: ubuntu-latest
+    needs: deploy-frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Run deployment verification
+        run: bash scripts/verify-deployment.sh --env ${{ env.DEPLOY_ENV }}
