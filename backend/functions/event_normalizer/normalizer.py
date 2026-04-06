@@ -132,11 +132,22 @@ def parse_cloudtrail_event(raw_event: dict[str, Any]) -> dict[str, Any]:
     }
     sanitized_params = sanitize_event_data(raw_params)
 
+    event_name = detail.get("eventName", "")
+    event_source = detail.get("eventSource", "")
+    # Build event_type as "service:EventName" so detection rules can extract
+    # the service prefix for prior_services_30d context (e.g. "iam:AttachUserPolicy")
+    if event_source and "." in event_source:
+        service_prefix = event_source.split(".")[0].lower()
+        event_type = f"{service_prefix}:{event_name}"
+    else:
+        event_type = event_name
+
     event_summary = {
         "identity_arn": identity_arn,
         "timestamp": timestamp,
         "event_id": detail.get("eventID", ""),
-        "event_type": detail.get("eventName", ""),
+        "event_type": event_type,
+        "event_name": event_name,
         "source_ip": detail.get("sourceIPAddress", ""),
         "user_agent": detail.get("userAgent", ""),
         "event_parameters": sanitized_params,

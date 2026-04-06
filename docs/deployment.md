@@ -581,80 +581,66 @@ terraform -chdir=infra/envs/dev output -raw cognito_client_id
 
 ### Step 1 — Confirm dry-run mode
 
-By default `remediation_dry_run = true` in dev — actions are logged but no real IAM changes are made. Check your `infra/envs/dev/terraform.tfvars`:
+By default `remediation_dry_run = true` in dev — the engine evaluates rules and writes audit log entries, but executes no real IAM mutations. Check your `infra/envs/dev/terraform.tfvars`:
 
 ```hcl
-remediation_dry_run = true   # safe — logs only, no IAM mutations
+remediation_dry_run = true   # safe — audit log written, no IAM mutations
 ```
 
-To check the live Lambda environment variable:
-
-Linux/macOS/WSL2:
-```bash
-aws lambda get-function-configuration \
-  --function-name radius-dev-remediation-engine \
-  --region us-east-1 \
-  --query 'Environment.Variables.DRY_RUN' \
-  --output text
-```
+Verify the deployed Lambda has it set:
 
 Windows PowerShell:
 ```powershell
 aws lambda get-function-configuration --function-name radius-dev-remediation-engine --region us-east-1 --query "Environment.Variables.DRY_RUN" --output text
 ```
 
-Should print `true` if dry-run is active.
+Should print `true`.
 
 ### Step 2 — Set risk mode to alert
 
-In `monitor` mode the engine evaluates rules but does **not** write to the audit log. Switch to `alert` mode so audit entries are written (no IAM mutations, just logging + SNS):
-
-Linux/macOS/WSL2:
-```bash
-curl -s -X PUT \
-  "https://<your-api-endpoint>/remediation/config/mode" \
-  -H "Authorization: <your-cognito-id-token>" \
-  -H "Content-Type: application/json" \
-  -d '{"risk_mode": "alert"}'
-```
+The engine writes audit entries in **all** modes. However in `monitor` mode, `notify_security_team` is suppressed. Switch to `alert` so the notification action executes:
 
 Windows PowerShell:
 ```powershell
 Invoke-RestMethod -Method PUT -Uri "https://<your-api-endpoint>/remediation/config/mode" -Headers @{ Authorization = "<your-cognito-id-token>"; "Content-Type" = "application/json" } -Body '{"risk_mode":"alert"}'
 ```
 
-### Step 3 — Create a remediation rule
-
-Use the API to create a rule that fires on Critical incidents:
-
 Linux/macOS/WSL2:
 ```bash
-curl -s -X POST \
-  "https://<your-api-endpoint>/remediation/rules" \
+curl -s -X PUT "https://<your-api-endpoint>/remediation/config/mode" \
   -H "Authorization: <your-cognito-id-token>" \
   -H "Content-Type: application/json" \
-  -d '{
-    "name": "Test — notify on Critical",
-    "min_severity": "Critical",
-    "actions": ["notify_security_team"],
-    "active": true,
-    "priority": 1
-  }'
+  -d '{"risk_mode":"alert"}'
 ```
+
+### Step 3 — Create a remediation rule
+
+Create a rule that fires on Critical incidents and notifies the security team:
 
 Windows PowerShell:
 ```powershell
-Invoke-RestMethod -Method POST `
-  -Uri "https://<your-api-id>.execute-api.us-east-1.amazonaws.com/dev/remediation/rules" `
-  -Headers @{ Authorization = "<your-cognito-id-token>"; "Content-Type" = "application/json" } `
-  -Body '{"name":"Test — notify on Critical","min_severity":"Critical","actions":["notify_security_team"],"active":true,"priority":1}'
+Invoke-RestMethod -Method POST -Uri "https://<your-api-endpoint>/remediation/rules" -Headers @{ Authorization = "<your-cognito-id-token>"; "Content-Type" = "application/json" } -Body '{"name":"Test - notify on Critical","min_severity":"Critical","actions":["notify_security_team"],"active":true,"priority":1}'
 ```
 
-Get your API endpoint with: `terraform -chdir=infra/envs/dev output -raw api_endpoint`
+Linux/macOS/WSL2:
+```bash
+curl -s -X POST "https://<your-api-endpoint>/remediation/rules" \
+  -H "Authorization: <your-cognito-id-token>" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Test - notify on Critical","min_severity":"Critical","actions":["notify_security_team"],"active":true,"priority":1}'
+```
+
+Get your API endpoint: `terraform -chdir=infra/envs/dev output -raw api_endpoint`
 
 ### Step 4 — Trigger a high-severity incident
 
-The simplest way to test remediation is to invoke Incident_Processor directly with a pre-built Critical finding — this bypasses the detection pipeline and goes straight to incident creation and remediation:
+Invoke Incident_Processor directly with a Critical finding. This creates a new incident and immediately async-invokes the Remediation_Engine:
+
+Windows PowerShell:
+```powershell
+aws lambda invoke --function-name radius-dev-incident-processor --region us-east-1 --cli-binary-format raw-in-base64-out --payload '{"identity_arn":"arn:aws:iam::123456789012:user/test-attacker","detection_type":"privilege_escalation","severity":"Critical","confidence":95,"related_event_ids":["test-001"]}' response.json
+Get-Content response.json
+```
 
 Linux/macOS/WSL2:
 ```bash
@@ -662,21 +648,22 @@ aws lambda invoke \
   --function-name radius-dev-incident-processor \
   --region us-east-1 \
   --cli-binary-format raw-in-base64-out \
-  --payload '{"identity_arn":"arn:aws:iam::123456789012:user/test-attacker","detection_type":"privilege_escalation","severity":"Critical","confidence":95,"related_event_ids":["test-event-001"]}' \
+  --payload '{"identity_arn":"arn:aws:iam::123456789012:user/test-attacker","detection_type":"privilege_escalation","severity":"Critical","confidence":95,"related_event_ids":["test-001"]}' \
   response.json && cat response.json
 ```
 
-Windows PowerShell:
-```powershell
-aws lambda invoke --function-name radius-dev-incident-processor --region us-east-1 --cli-binary-format raw-in-base64-out --payload '{"identity_arn":"arn:aws:iam::123456789012:user/test-attacker","detection_type":"privilege_escalation","severity":"Critical","confidence":95,"related_event_ids":["test-event-001"]}' response.json
-Get-Content response.json
-```
+Expected: `{"status": "created", "incident_id": "..."}`.
 
-Expected response: `{"status": "created", "incident_id": "..."}` — if you see `"deduplicated"` instead, change `test-attacker` to a different username (e.g. `test-attacker-2`).
+If you see `"deduplicated"` — the same identity+detection_type was already processed within 24 hours. Change `test-attacker` to `test-attacker-2` and retry.
 
-Wait 30 seconds for the remediation engine to process it.
+Wait 15–30 seconds for the Remediation_Engine to process it asynchronously.
 
 ### Step 5 — Check the remediation audit log
+
+Windows PowerShell:
+```powershell
+aws dynamodb scan --table-name radius-dev-remediation-audit-log --region us-east-1 --query "Items[*].{action:action_name.S, outcome:outcome.S, mode:risk_mode.S, dry_run:dry_run.BOOL, identity:identity_arn.S}" --output table
+```
 
 Linux/macOS/WSL2:
 ```bash
@@ -687,34 +674,29 @@ aws dynamodb scan \
   --output table
 ```
 
-Windows PowerShell:
-```powershell
-aws dynamodb scan --table-name radius-dev-remediation-audit-log --region us-east-1 --query "Items[*].{action:action_name.S, outcome:outcome.S, mode:risk_mode.S, dry_run:dry_run.BOOL, identity:identity_arn.S}" --output table
-```
-
 **What to look for:**
 
-| outcome | dry_run | Meaning |
-|---|---|---|
-| `executed` | `true` | Action ran in dry-run — logged only, no real IAM change |
-| `executed` | `false` | Action ran for real — IAM was mutated |
-| `suppressed` | — | Safety control fired (cooldown, excluded ARN, protected account) |
-| `skipped` | — | No rules matched the incident |
+| action | outcome | dry_run | Meaning |
+|---|---|---|---|
+| `notify_security_team` | `executed` | `true` | SNS notification sent, no IAM changes (dry-run active) |
+| `notify_security_team` | `suppressed` | — | monitor mode or dry_run blocked the action |
+| `no_rules_matched` | `skipped` | — | No rules matched — check Step 3 was completed |
+| `remediation_suppressed` | `suppressed` | — | Safety control fired (cooldown, excluded ARN) |
+| `remediation_complete` | `summary` | — | Final summary record — always written |
 
-If you see `executed` with `dry_run=true`, the engine is working correctly in safe mode.
+A successful test shows `notify_security_team` with `outcome=executed` and a `remediation_complete` summary record.
 
 ### Step 6 — Check the remediation config via the API
-
-Linux/macOS/WSL2:
-```bash
-curl -s \
-  "https://<your-api-endpoint>/remediation/config" \
-  -H "Authorization: <your-cognito-id-token>"
-```
 
 Windows PowerShell:
 ```powershell
 Invoke-RestMethod -Uri "https://<your-api-endpoint>/remediation/config" -Headers @{ Authorization = "<your-cognito-id-token>" }
+```
+
+Linux/macOS/WSL2:
+```bash
+curl -s "https://<your-api-endpoint>/remediation/config" \
+  -H "Authorization: <your-cognito-id-token>"
 ```
 
 This returns the current `risk_mode`, active rules, and exclusion lists.

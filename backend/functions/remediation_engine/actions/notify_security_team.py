@@ -28,14 +28,12 @@ class NotifySecurityTeamAction(RemediationAction):
         config: dict[str, Any],
         dry_run: bool,
     ) -> ActionOutcome:
-        risk_mode = config.get("risk_mode", "monitor")
-
-        # Skip publish in monitor mode — no side effects allowed
-        if risk_mode == "monitor":
+        # Suppress in monitor mode or dry_run — no side effects allowed
+        if dry_run or config.get("risk_mode", "monitor") == "monitor":
             return ActionOutcome(
                 action_name=self.action_name,
                 outcome="suppressed",
-                reason="monitor_mode",
+                reason="monitor_mode" if not dry_run else "dry_run",
             )
 
         topic_arn = os.environ.get("REMEDIATION_TOPIC_ARN", "")
@@ -47,6 +45,7 @@ class NotifySecurityTeamAction(RemediationAction):
             )
 
         incident_id = incident.get("incident_id", "unknown")
+        risk_mode = config.get("risk_mode", "alert")
         message = {
             "incident_id": incident_id,
             "identity_arn": identity_arn,
