@@ -189,12 +189,6 @@ If this fails, your credentials are wrong or expired. Re-run `aws configure`.
 - `AdministratorAccess` — simplest for a first deployment
 - Minimum custom policy: IAM, Lambda, DynamoDB, S3, SNS, EventBridge, API Gateway, CloudTrail, CloudWatch, KMS, SQS create/update/delete
 
-### 6. zip utility
-
-Not required — `build-lambdas.sh` uses Python's built-in `zipfile` module to package Lambda functions, so no `zip` CLI tool is needed on any platform.
-
----
-
 ### 6. jq (optional)
 
 `jq` is not required but is useful for inspecting JSON output from AWS CLI commands.

@@ -1,17 +1,10 @@
 """Unit tests for ScoringContext.build()."""
 from __future__ import annotations
 
-import sys
-import os
 from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch, call
 
 import pytest
-
-# ---------------------------------------------------------------------------
-# Path setup — allow running from repo root without installing packages
-# ---------------------------------------------------------------------------
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from backend.functions.score_engine.context import ScoringContext
 

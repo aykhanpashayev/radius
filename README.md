@@ -69,6 +69,8 @@ flowchart TD
 4. `bash scripts/run-tests.sh` — runs the full test suite
 5. `python scripts/simulate-attack.py --mode mock` — runs the demo scenario locally, no AWS credentials needed
 
+> The React dashboard requires a deployed AWS backend. Steps 4 and 5 above work entirely offline. To run the full stack including the UI, follow [docs/deployment.md](docs/deployment.md) to deploy to AWS first.
+
 ## Test Results
 
 Run the test suite yourself to see current coverage:

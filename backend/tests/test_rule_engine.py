@@ -1,12 +1,7 @@
 """Unit tests for RuleEngine.evaluate()."""
 from __future__ import annotations
 
-import sys
-import os
-
 import pytest
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from backend.functions.score_engine.context import ScoringContext
 from backend.functions.score_engine.engine import RuleEngine

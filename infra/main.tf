@@ -322,10 +322,183 @@ resource "aws_iam_role" "github_deploy" {
   })
 }
 
-resource "aws_iam_role_policy_attachment" "github_deploy" {
-  count      = var.github_repo != "" ? 1 : 0
-  role       = aws_iam_role.github_deploy[0].name
-  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+resource "aws_iam_role_policy" "github_deploy" {
+  count = var.github_repo != "" ? 1 : 0
+  name  = "${local.name_prefix}-github-deploy-policy"
+  role  = aws_iam_role.github_deploy[0].name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "LambdaDeployment"
+        Effect = "Allow"
+        Action = [
+          "lambda:CreateFunction", "lambda:UpdateFunctionCode",
+          "lambda:UpdateFunctionConfiguration", "lambda:GetFunction",
+          "lambda:GetFunctionConfiguration", "lambda:DeleteFunction",
+          "lambda:AddPermission", "lambda:RemovePermission",
+          "lambda:ListFunctions", "lambda:TagResource",
+          "lambda:PutFunctionEventInvokeConfig",
+          "lambda:CreateEventSourceMapping", "lambda:DeleteEventSourceMapping",
+          "lambda:GetEventSourceMapping"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "DynamoDB"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:CreateTable", "dynamodb:DeleteTable", "dynamodb:DescribeTable",
+          "dynamodb:UpdateTable", "dynamodb:ListTables", "dynamodb:TagResource",
+          "dynamodb:UpdateTimeToLive", "dynamodb:DescribeTimeToLive",
+          "dynamodb:DescribeContinuousBackups", "dynamodb:UpdateContinuousBackups"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "S3Artifacts"
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject", "s3:GetObject", "s3:DeleteObject",
+          "s3:ListBucket", "s3:GetBucketVersioning",
+          "s3:PutBucketVersioning", "s3:CreateBucket",
+          "s3:PutBucketPolicy", "s3:GetBucketPolicy",
+          "s3:PutBucketPublicAccessBlock", "s3:GetBucketPublicAccessBlock"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "SNS"
+        Effect = "Allow"
+        Action = [
+          "sns:CreateTopic", "sns:DeleteTopic", "sns:GetTopicAttributes",
+          "sns:SetTopicAttributes", "sns:Subscribe", "sns:Unsubscribe",
+          "sns:ListSubscriptionsByTopic", "sns:TagResource"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "EventBridge"
+        Effect = "Allow"
+        Action = [
+          "events:PutRule", "events:DeleteRule", "events:DescribeRule",
+          "events:PutTargets", "events:RemoveTargets", "events:ListTargetsByRule",
+          "events:TagResource"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "APIGateway"
+        Effect = "Allow"
+        Action = ["apigateway:*"]
+        Resource = "*"
+      },
+      {
+        Sid    = "CloudTrail"
+        Effect = "Allow"
+        Action = [
+          "cloudtrail:CreateTrail", "cloudtrail:DeleteTrail",
+          "cloudtrail:DescribeTrails", "cloudtrail:GetTrailStatus",
+          "cloudtrail:StartLogging", "cloudtrail:StopLogging",
+          "cloudtrail:UpdateTrail", "cloudtrail:AddTags",
+          "cloudtrail:PutEventSelectors", "cloudtrail:GetEventSelectors"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "CloudWatch"
+        Effect = "Allow"
+        Action = [
+          "cloudwatch:PutMetricAlarm", "cloudwatch:DeleteAlarms",
+          "cloudwatch:DescribeAlarms", "cloudwatch:PutDashboard",
+          "cloudwatch:DeleteDashboards", "cloudwatch:GetDashboard",
+          "logs:CreateLogGroup", "logs:DeleteLogGroup",
+          "logs:PutRetentionPolicy", "logs:DescribeLogGroups",
+          "logs:TagLogGroup"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "KMS"
+        Effect = "Allow"
+        Action = [
+          "kms:CreateKey", "kms:DescribeKey", "kms:EnableKeyRotation",
+          "kms:GetKeyPolicy", "kms:PutKeyPolicy", "kms:ScheduleKeyDeletion",
+          "kms:CreateAlias", "kms:DeleteAlias", "kms:ListAliases",
+          "kms:TagResource"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "Cognito"
+        Effect = "Allow"
+        Action = [
+          "cognito-idp:CreateUserPool", "cognito-idp:DeleteUserPool",
+          "cognito-idp:DescribeUserPool", "cognito-idp:UpdateUserPool",
+          "cognito-idp:CreateUserPoolClient", "cognito-idp:DeleteUserPoolClient",
+          "cognito-idp:DescribeUserPoolClient", "cognito-idp:UpdateUserPoolClient",
+          "cognito-idp:CreateUserPoolDomain", "cognito-idp:DeleteUserPoolDomain"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "SSM"
+        Effect = "Allow"
+        Action = [
+          "ssm:PutParameter", "ssm:GetParameter", "ssm:GetParameters",
+          "ssm:DeleteParameter", "ssm:AddTagsToResource"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "IAMRolesForLambda"
+        Effect = "Allow"
+        Action = [
+          "iam:CreateRole", "iam:DeleteRole", "iam:GetRole",
+          "iam:PassRole", "iam:AttachRolePolicy", "iam:DetachRolePolicy",
+          "iam:PutRolePolicy", "iam:DeleteRolePolicy", "iam:GetRolePolicy",
+          "iam:TagRole", "iam:CreateOpenIDConnectProvider",
+          "iam:DeleteOpenIDConnectProvider", "iam:GetOpenIDConnectProvider",
+          "iam:CreatePolicy", "iam:DeletePolicy", "iam:GetPolicy",
+          "iam:GetPolicyVersion", "iam:CreatePolicyVersion",
+          "iam:DeletePolicyVersion", "iam:ListPolicyVersions"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "CloudFront"
+        Effect = "Allow"
+        Action = [
+          "cloudfront:CreateDistribution", "cloudfront:UpdateDistribution",
+          "cloudfront:DeleteDistribution", "cloudfront:GetDistribution",
+          "cloudfront:CreateInvalidation", "cloudfront:TagResource",
+          "cloudfront:CreateOriginAccessControl",
+          "cloudfront:DeleteOriginAccessControl",
+          "cloudfront:GetOriginAccessControl"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "SQSForDLQ"
+        Effect = "Allow"
+        Action = [
+          "sqs:CreateQueue", "sqs:DeleteQueue", "sqs:GetQueueAttributes",
+          "sqs:SetQueueAttributes", "sqs:TagQueue"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "TerraformState"
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket",
+          "dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:DeleteItem"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
 }
 
 # SSM — frontend S3 bucket and CloudFront distribution ID for CI/CD deploy workflow.

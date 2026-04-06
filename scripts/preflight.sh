@@ -128,11 +128,11 @@ else
   fail "pip not found — install Python 3.11+ which includes pip"
 fi
 
-# zip (needed by build-lambdas.sh)
+# zip (optional — build-lambdas.sh uses Python's zipfile module, not the zip CLI)
 if command -v zip &>/dev/null; then
   ok "zip $(zip --version 2>&1 | head -1 | awk '{print $2}')"
 else
-  fail "zip not found — install with: sudo apt install zip (Linux) or brew install zip (macOS)"
+  warn "zip not found — not required (build-lambdas.sh uses Python's built-in zipfile module)"
 fi
 
 # Terraform

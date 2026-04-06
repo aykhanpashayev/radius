@@ -31,7 +31,7 @@ Install dependencies:
 
 ```bash
 cd frontend
-npm install
+npm ci
 ```
 
 Start the dev server:
