@@ -34,6 +34,12 @@ module "radius" {
   cognito_callback_urls           = var.cognito_callback_urls
   cognito_logout_urls             = var.cognito_logout_urls
   github_repo                     = var.github_repo
+  enable_waf                      = var.enable_waf
+  waf_rate_limit                  = var.waf_rate_limit
+  enable_vpc                      = var.enable_vpc
+  vpc_cidr                        = var.vpc_cidr
+  availability_zones              = var.availability_zones
+  enable_secrets_manager          = var.enable_secrets_manager
 }
 
 # ---------------------------------------------------------------------------
@@ -127,6 +133,36 @@ variable "cognito_logout_urls" {
 variable "github_repo" {
   type    = string
   default = "YOUR_ORG/radius"
+}
+
+variable "enable_waf" {
+  type    = bool
+  default = false
+}
+
+variable "waf_rate_limit" {
+  type    = number
+  default = 300
+}
+
+variable "enable_vpc" {
+  type    = bool
+  default = false
+}
+
+variable "vpc_cidr" {
+  type    = string
+  default = "10.0.0.0/16"
+}
+
+variable "availability_zones" {
+  type    = list(string)
+  default = ["us-east-1a", "us-east-1b"]
+}
+
+variable "enable_secrets_manager" {
+  type    = bool
+  default = false
 }
 
 # ---------------------------------------------------------------------------

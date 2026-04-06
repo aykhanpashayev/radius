@@ -40,7 +40,17 @@ jobs:
           terraform_version: '~1.7'
 
       - name: Deploy infrastructure
-        run: bash scripts/deploy-infra.sh --env ${{ env.DEPLOY_ENV }} --auto-approve
+        env:
+          # Optional: set PAGERDUTY_WEBHOOK_URL in GitHub → Settings → Secrets
+          # to subscribe the SNS Alert_Topic to PagerDuty at deploy time.
+          # Format: https://events.pagerduty.com/integration/<key>/enqueue
+          PAGERDUTY_WEBHOOK_URL: ${{ secrets.PAGERDUTY_WEBHOOK_URL }}
+        run: |
+          EXTRA_ARGS=()
+          if [[ -n "${PAGERDUTY_WEBHOOK_URL}" ]]; then
+            EXTRA_ARGS+=(--var "https_subscriptions=[\"${PAGERDUTY_WEBHOOK_URL}\"]")
+          fi
+          bash scripts/deploy-infra.sh --env ${{ env.DEPLOY_ENV }} --auto-approve "${EXTRA_ARGS[@]}"
 
   # ---------------------------------------------------------------------------
   # 2. Lambda packages — build and upload to S3

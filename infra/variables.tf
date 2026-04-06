@@ -162,3 +162,39 @@ variable "github_repo" {
   type        = string
   default     = ""
 }
+
+variable "enable_waf" {
+  description = "Attach a WAF v2 Web ACL to the API Gateway stage (recommended for prod)"
+  type        = bool
+  default     = false
+}
+
+variable "waf_rate_limit" {
+  description = "Maximum requests per 5-minute window per source IP before WAF blocks the request"
+  type        = number
+  default     = 300
+}
+
+variable "enable_vpc" {
+  description = "Place Lambda functions inside a VPC with private subnets and VPC endpoints (recommended for prod)"
+  type        = bool
+  default     = false
+}
+
+variable "vpc_cidr" {
+  description = "CIDR block for the VPC when enable_vpc = true"
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "availability_zones" {
+  description = "AZs to deploy VPC private subnets into (minimum 2)"
+  type        = list(string)
+  default     = ["us-east-1a", "us-east-1b"]
+}
+
+variable "enable_secrets_manager" {
+  description = "Provision Secrets Manager secrets for alerting webhook integrations (PagerDuty, OpsGenie)"
+  type        = bool
+  default     = false
+}

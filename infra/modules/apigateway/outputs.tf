@@ -22,3 +22,8 @@ output "stage_name" {
   description = "Deployed stage name"
   value       = aws_api_gateway_stage.radius.stage_name
 }
+
+output "stage_arn" {
+  description = "API Gateway stage ARN (used for WAF ACL association)"
+  value       = aws_api_gateway_stage.radius.arn
+}

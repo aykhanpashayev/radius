@@ -162,6 +162,14 @@ resource "aws_lambda_function" "event_normalizer" {
     }
   }
 
+  dynamic "vpc_config" {
+    for_each = var.vpc_config != null ? [var.vpc_config] : []
+    content {
+      subnet_ids         = vpc_config.value.subnet_ids
+      security_group_ids = vpc_config.value.security_group_ids
+    }
+  }
+
   dead_letter_config {
     target_arn = aws_sqs_queue.event_normalizer_dlq.arn
   }
@@ -200,6 +208,14 @@ resource "aws_lambda_function" "detection_engine" {
     }
   }
 
+  dynamic "vpc_config" {
+    for_each = var.vpc_config != null ? [var.vpc_config] : []
+    content {
+      subnet_ids         = vpc_config.value.subnet_ids
+      security_group_ids = vpc_config.value.security_group_ids
+    }
+  }
+
   dead_letter_config {
     target_arn = aws_sqs_queue.detection_engine_dlq.arn
   }
@@ -233,9 +249,19 @@ resource "aws_lambda_function" "incident_processor" {
       ENVIRONMENT      = var.environment
       AWS_ACCOUNT_REGION = var.aws_region
       LOG_LEVEL        = var.log_level
-      INCIDENT_TABLE   = var.dynamodb_table_names.incident
-      SNS_TOPIC_ARN    = var.sns_topic_arn
+      INCIDENT_TABLE         = var.dynamodb_table_names.incident
+      SNS_TOPIC_ARN          = var.sns_topic_arn
       REMEDIATION_LAMBDA_ARN = aws_lambda_function.remediation_engine.arn
+      PAGERDUTY_SECRET_ARN   = length(var.secret_arns) > 0 ? var.secret_arns[0] : ""
+      OPSGENIE_SECRET_ARN    = length(var.secret_arns) > 1 ? var.secret_arns[1] : ""
+    }
+  }
+
+  dynamic "vpc_config" {
+    for_each = var.vpc_config != null ? [var.vpc_config] : []
+    content {
+      subnet_ids         = vpc_config.value.subnet_ids
+      security_group_ids = vpc_config.value.security_group_ids
     }
   }
 
@@ -274,6 +300,14 @@ resource "aws_lambda_function" "identity_collector" {
       LOG_LEVEL                = var.log_level
       IDENTITY_PROFILE_TABLE   = var.dynamodb_table_names.identity_profile
       TRUST_RELATIONSHIP_TABLE = var.dynamodb_table_names.trust_relationship
+    }
+  }
+
+  dynamic "vpc_config" {
+    for_each = var.vpc_config != null ? [var.vpc_config] : []
+    content {
+      subnet_ids         = vpc_config.value.subnet_ids
+      security_group_ids = vpc_config.value.security_group_ids
     }
   }
 
@@ -316,6 +350,14 @@ resource "aws_lambda_function" "score_engine" {
     }
   }
 
+  dynamic "vpc_config" {
+    for_each = var.vpc_config != null ? [var.vpc_config] : []
+    content {
+      subnet_ids         = vpc_config.value.subnet_ids
+      security_group_ids = vpc_config.value.security_group_ids
+    }
+  }
+
   depends_on = [
     aws_cloudwatch_log_group.score_engine,
     aws_iam_role_policy.score_engine,
@@ -353,6 +395,14 @@ resource "aws_lambda_function" "api_handler" {
     }
   }
 
+  dynamic "vpc_config" {
+    for_each = var.vpc_config != null ? [var.vpc_config] : []
+    content {
+      subnet_ids         = vpc_config.value.subnet_ids
+      security_group_ids = vpc_config.value.security_group_ids
+    }
+  }
+
   depends_on = [
     aws_cloudwatch_log_group.api_handler,
     aws_iam_role_policy.api_handler,
@@ -386,6 +436,16 @@ resource "aws_lambda_function" "remediation_engine" {
       REMEDIATION_AUDIT_TABLE  = var.dynamodb_table_names.remediation_audit_log
       REMEDIATION_TOPIC_ARN    = var.remediation_topic_arn
       DRY_RUN                  = tostring(var.dry_run)
+      PAGERDUTY_SECRET_ARN     = length(var.secret_arns) > 0 ? var.secret_arns[0] : ""
+      OPSGENIE_SECRET_ARN      = length(var.secret_arns) > 1 ? var.secret_arns[1] : ""
+    }
+  }
+
+  dynamic "vpc_config" {
+    for_each = var.vpc_config != null ? [var.vpc_config] : []
+    content {
+      subnet_ids         = vpc_config.value.subnet_ids
+      security_group_ids = vpc_config.value.security_group_ids
     }
   }
 

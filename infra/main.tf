@@ -94,6 +94,34 @@ module "sns" {
 }
 
 # ---------------------------------------------------------------------------
+# 3b. VPC — private subnets + endpoints (optional, no dependencies)
+# ---------------------------------------------------------------------------
+module "vpc" {
+  count  = var.enable_vpc ? 1 : 0
+  source = "./modules/vpc"
+
+  prefix             = local.name_prefix
+  environment        = var.environment
+  aws_region         = var.aws_region
+  vpc_cidr           = var.vpc_cidr
+  availability_zones = var.availability_zones
+  tags               = var.tags
+}
+
+# ---------------------------------------------------------------------------
+# 3c. Secrets Manager — alerting webhook secrets (optional, no dependencies)
+# ---------------------------------------------------------------------------
+module "secrets" {
+  count  = var.enable_secrets_manager ? 1 : 0
+  source = "./modules/secrets"
+
+  prefix      = local.name_prefix
+  environment = var.environment
+  kms_key_arn = module.kms.lambda_key_arn
+  tags        = var.tags
+}
+
+# ---------------------------------------------------------------------------
 # 4. Lambda — functions (depends on DynamoDB, SNS, KMS)
 # ---------------------------------------------------------------------------
 module "lambda" {
@@ -125,15 +153,17 @@ module "lambda" {
     remediation_engine = var.lambda_timeout.remediation_engine
   }
 
-  concurrency_limit    = var.lambda_concurrency_limit
-  dynamodb_table_names = module.dynamodb.table_names
-  dynamodb_table_arns  = module.dynamodb.table_arns
-  dynamodb_gsi_arns    = module.dynamodb.gsi_arns
-  sns_topic_arn        = module.sns.alert_topic_arn
+  concurrency_limit     = var.lambda_concurrency_limit
+  dynamodb_table_names  = module.dynamodb.table_names
+  dynamodb_table_arns   = module.dynamodb.table_arns
+  dynamodb_gsi_arns     = module.dynamodb.gsi_arns
+  sns_topic_arn         = module.sns.alert_topic_arn
   remediation_topic_arn = module.sns.remediation_topic_arn
-  kms_key_arn          = module.kms.lambda_key_arn
-  dry_run              = var.remediation_dry_run
-  log_level            = var.log_level
+  kms_key_arn           = module.kms.lambda_key_arn
+  dry_run               = var.remediation_dry_run
+  log_level             = var.log_level
+  vpc_config            = var.enable_vpc ? module.vpc[0].vpc_config : null
+  secret_arns           = var.enable_secrets_manager ? module.secrets[0].secret_arns : []
 
   tags = var.tags
 }
@@ -173,6 +203,20 @@ module "apigateway" {
   cognito_user_pool_arn = module.cognito.user_pool_arn
 
   tags = var.tags
+}
+
+# ---------------------------------------------------------------------------
+# 6b. WAF — Web ACL for API Gateway (optional, depends on API Gateway)
+# ---------------------------------------------------------------------------
+module "waf" {
+  count  = var.enable_waf ? 1 : 0
+  source = "./modules/waf"
+
+  prefix        = local.name_prefix
+  environment   = var.environment
+  api_stage_arn = module.apigateway.stage_arn
+  rate_limit    = var.waf_rate_limit
+  tags          = var.tags
 }
 
 # ---------------------------------------------------------------------------

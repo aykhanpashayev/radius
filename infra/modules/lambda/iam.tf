@@ -13,6 +13,73 @@ data "aws_iam_policy_document" "lambda_assume_role" {
 }
 
 # ---------------------------------------------------------------------------
+# VPC access policy — attached to all Lambda roles when vpc_config is set.
+# Grants the EC2 permissions Lambda needs to create and clean up ENIs.
+# ---------------------------------------------------------------------------
+resource "aws_iam_policy" "lambda_vpc_access" {
+  count = var.vpc_config != null ? 1 : 0
+  name  = "${var.prefix}-lambda-vpc-access"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid    = "LambdaVPCAccess"
+      Effect = "Allow"
+      Action = [
+        "ec2:CreateNetworkInterface",
+        "ec2:DescribeNetworkInterfaces",
+        "ec2:DeleteNetworkInterface",
+        "ec2:AssignPrivateIpAddresses",
+        "ec2:UnassignPrivateIpAddresses",
+      ]
+      Resource = "*"
+    }]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "event_normalizer_vpc" {
+  count      = var.vpc_config != null ? 1 : 0
+  role       = aws_iam_role.event_normalizer.name
+  policy_arn = aws_iam_policy.lambda_vpc_access[0].arn
+}
+
+resource "aws_iam_role_policy_attachment" "detection_engine_vpc" {
+  count      = var.vpc_config != null ? 1 : 0
+  role       = aws_iam_role.detection_engine.name
+  policy_arn = aws_iam_policy.lambda_vpc_access[0].arn
+}
+
+resource "aws_iam_role_policy_attachment" "incident_processor_vpc" {
+  count      = var.vpc_config != null ? 1 : 0
+  role       = aws_iam_role.incident_processor.name
+  policy_arn = aws_iam_policy.lambda_vpc_access[0].arn
+}
+
+resource "aws_iam_role_policy_attachment" "identity_collector_vpc" {
+  count      = var.vpc_config != null ? 1 : 0
+  role       = aws_iam_role.identity_collector.name
+  policy_arn = aws_iam_policy.lambda_vpc_access[0].arn
+}
+
+resource "aws_iam_role_policy_attachment" "score_engine_vpc" {
+  count      = var.vpc_config != null ? 1 : 0
+  role       = aws_iam_role.score_engine.name
+  policy_arn = aws_iam_policy.lambda_vpc_access[0].arn
+}
+
+resource "aws_iam_role_policy_attachment" "api_handler_vpc" {
+  count      = var.vpc_config != null ? 1 : 0
+  role       = aws_iam_role.api_handler.name
+  policy_arn = aws_iam_policy.lambda_vpc_access[0].arn
+}
+
+resource "aws_iam_role_policy_attachment" "remediation_engine_vpc" {
+  count      = var.vpc_config != null ? 1 : 0
+  role       = aws_iam_role.remediation_engine.name
+  policy_arn = aws_iam_policy.lambda_vpc_access[0].arn
+}
+
+# ---------------------------------------------------------------------------
 # Event_Normalizer
 # Reads from EventBridge (implicit via trigger), writes Event_Summary,
 # invokes Detection_Engine and Identity_Collector asynchronously.
@@ -177,8 +244,15 @@ resource "aws_iam_role_policy" "incident_processor" {
         Effect = "Allow"
         Action = ["kms:Decrypt", "kms:GenerateDataKey*"]
         Resource = var.kms_key_arn
+      },
+    ] + (length(var.secret_arns) > 0 ? [
+      {
+        Sid      = "ReadAlertingSecrets"
+        Effect   = "Allow"
+        Action   = ["secretsmanager:GetSecretValue"]
+        Resource = var.secret_arns
       }
-    ]
+    ] : [])
   })
 }
 
@@ -482,7 +556,14 @@ resource "aws_iam_role_policy" "remediation_engine" {
         Effect = "Allow"
         Action = ["kms:Decrypt", "kms:GenerateDataKey*"]
         Resource = var.kms_key_arn
+      },
+    ] + (length(var.secret_arns) > 0 ? [
+      {
+        Sid      = "ReadAlertingSecrets"
+        Effect   = "Allow"
+        Action   = ["secretsmanager:GetSecretValue"]
+        Resource = var.secret_arns
       }
-    ]
+    ] : [])
   })
 }

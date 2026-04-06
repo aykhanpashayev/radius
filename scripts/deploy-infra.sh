@@ -68,6 +68,7 @@ fi
 ENV=""
 AUTO_APPROVE=false
 PLAN_ONLY=false
+EXTRA_VARS=()
 # The env dirs live under infra/envs/<env>/ and contain their own main.tf
 # which calls the root module via source = "../.."
 INFRA_ROOT="$(pwd)/infra"
@@ -77,9 +78,10 @@ INFRA_ROOT="$(pwd)/infra"
 # ---------------------------------------------------------------------------
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --env)          ENV="$2";          shift 2 ;;
-    --auto-approve) AUTO_APPROVE=true; shift ;;
-    --plan-only)    PLAN_ONLY=true;    shift ;;
+    --env)          ENV="$2";                           shift 2 ;;
+    --auto-approve) AUTO_APPROVE=true;                  shift ;;
+    --plan-only)    PLAN_ONLY=true;                     shift ;;
+    --var)          EXTRA_VARS+=("-var" "$2");           shift 2 ;;
     *) echo "Unknown argument: $1"; exit 1 ;;
   esac
 done
@@ -134,6 +136,7 @@ echo ""
 echo "--> terraform plan"
 terraform -chdir="${ENV_DIR}" plan \
   -var-file="${TFVARS}" \
+  "${EXTRA_VARS[@]}" \
   -out="${PLAN_FILE}" \
   -input=false
 

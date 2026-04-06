@@ -128,3 +128,18 @@ variable "log_level" {
     error_message = "log_level must be one of: DEBUG, INFO, WARNING, ERROR."
   }
 }
+
+variable "vpc_config" {
+  description = "VPC configuration for Lambda functions. Set to null to run outside VPC (default). When set, all 7 functions are placed in the specified subnets and security groups."
+  type = object({
+    subnet_ids         = list(string)
+    security_group_ids = list(string)
+  })
+  default = null
+}
+
+variable "secret_arns" {
+  description = "List of Secrets Manager secret ARNs that Lambda functions are allowed to read. Grants secretsmanager:GetSecretValue in IAM policies for Incident_Processor and Remediation_Engine."
+  type        = list(string)
+  default     = []
+}
