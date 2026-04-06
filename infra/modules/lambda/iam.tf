@@ -483,87 +483,90 @@ resource "aws_iam_role_policy" "remediation_engine" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "CloudWatchLogs"
-        Effect = "Allow"
-        Action = ["logs:CreateLogStream", "logs:PutLogEvents"]
-        Resource = "${aws_cloudwatch_log_group.remediation_engine.arn}:*"
-      },
-      {
-        Sid    = "DLQ"
-        Effect = "Allow"
-        Action = ["sqs:SendMessage"]
-        Resource = aws_sqs_queue.remediation_engine_dlq.arn
-      },
-      {
-        Sid    = "IAMRemediation"
-        Effect = "Allow"
-        Action = [
-          "iam:ListAccessKeys",
-          "iam:UpdateAccessKey",
-          "iam:DeleteLoginProfile",
-          "iam:ListAttachedUserPolicies",
-          "iam:ListAttachedRolePolicies",
-          "iam:ListUserPolicies",
-          "iam:ListRolePolicies",
-          "iam:GetUserPolicy",
-          "iam:GetRolePolicy",
-          "iam:DetachUserPolicy",
-          "iam:DetachRolePolicy",
-          "iam:DeleteUserPolicy",
-          "iam:DeleteRolePolicy",
-          "iam:GetRole",
-          "iam:UpdateAssumeRolePolicy",
-          "iam:PutUserPolicy",
-          "iam:PutRolePolicy",
-        ]
-        Resource = "*"
-      },
-      {
-        Sid    = "RemediationConfigTable"
-        Effect = "Allow"
-        Action = [
-          "dynamodb:GetItem",
-          "dynamodb:PutItem",
-          "dynamodb:UpdateItem",
-          "dynamodb:Query",
-        ]
-        Resource = var.dynamodb_table_arns.remediation_config
-      },
-      {
-        Sid    = "RemediationAuditTable"
-        Effect = "Allow"
-        Action = [
-          "dynamodb:GetItem",
-          "dynamodb:PutItem",
-          "dynamodb:UpdateItem",
-          "dynamodb:Query",
-        ]
-        Resource = concat(
-          [var.dynamodb_table_arns.remediation_audit_log],
-          var.dynamodb_gsi_arns["remediation_audit_log"]
-        )
-      },
-      {
-        Sid    = "PublishRemediationTopic"
-        Effect = "Allow"
-        Action = ["sns:Publish"]
-        Resource = var.remediation_topic_arn
-      },
-      {
-        Sid    = "KMS"
-        Effect = "Allow"
-        Action = ["kms:Decrypt", "kms:GenerateDataKey*"]
-        Resource = var.kms_key_arn
-      },
-    ] + (length(var.secret_arns) > 0 ? [
-      {
-        Sid      = "ReadAlertingSecrets"
-        Effect   = "Allow"
-        Action   = ["secretsmanager:GetSecretValue"]
-        Resource = var.secret_arns
-      }
-    ] : [])
+    Statement = concat(
+      [
+        {
+          Sid    = "CloudWatchLogs"
+          Effect = "Allow"
+          Action = ["logs:CreateLogStream", "logs:PutLogEvents"]
+          Resource = "${aws_cloudwatch_log_group.remediation_engine.arn}:*"
+        },
+        {
+          Sid    = "DLQ"
+          Effect = "Allow"
+          Action = ["sqs:SendMessage"]
+          Resource = aws_sqs_queue.remediation_engine_dlq.arn
+        },
+        {
+          Sid    = "IAMRemediation"
+          Effect = "Allow"
+          Action = [
+            "iam:ListAccessKeys",
+            "iam:UpdateAccessKey",
+            "iam:DeleteLoginProfile",
+            "iam:ListAttachedUserPolicies",
+            "iam:ListAttachedRolePolicies",
+            "iam:ListUserPolicies",
+            "iam:ListRolePolicies",
+            "iam:GetUserPolicy",
+            "iam:GetRolePolicy",
+            "iam:DetachUserPolicy",
+            "iam:DetachRolePolicy",
+            "iam:DeleteUserPolicy",
+            "iam:DeleteRolePolicy",
+            "iam:GetRole",
+            "iam:UpdateAssumeRolePolicy",
+            "iam:PutUserPolicy",
+            "iam:PutRolePolicy",
+          ]
+          Resource = "*"
+        },
+        {
+          Sid    = "RemediationConfigTable"
+          Effect = "Allow"
+          Action = [
+            "dynamodb:GetItem",
+            "dynamodb:PutItem",
+            "dynamodb:UpdateItem",
+            "dynamodb:Query",
+          ]
+          Resource = var.dynamodb_table_arns.remediation_config
+        },
+        {
+          Sid    = "RemediationAuditTable"
+          Effect = "Allow"
+          Action = [
+            "dynamodb:GetItem",
+            "dynamodb:PutItem",
+            "dynamodb:UpdateItem",
+            "dynamodb:Query",
+          ]
+          Resource = concat(
+            [var.dynamodb_table_arns.remediation_audit_log],
+            var.dynamodb_gsi_arns["remediation_audit_log"]
+          )
+        },
+        {
+          Sid    = "PublishRemediationTopic"
+          Effect = "Allow"
+          Action = ["sns:Publish"]
+          Resource = var.remediation_topic_arn
+        },
+        {
+          Sid    = "KMS"
+          Effect = "Allow"
+          Action = ["kms:Decrypt", "kms:GenerateDataKey*"]
+          Resource = var.kms_key_arn
+        },
+      ],
+      length(var.secret_arns) > 0 ? [
+        {
+          Sid      = "ReadAlertingSecrets"
+          Effect   = "Allow"
+          Action   = ["secretsmanager:GetSecretValue"]
+          Resource = var.secret_arns
+        }
+      ] : []
+    )
   })
 }
