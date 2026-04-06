@@ -216,7 +216,7 @@ resource "aws_iam_role_policy" "incident_processor" {
         {
           Sid    = "WriteIncident"
           Effect = "Allow"
-          Action = ["dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:Query"]
+          Action = ["dynamodb:GetItem", "dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:Query"]
           Resource = concat(
             [var.dynamodb_table_arns.incident],
             var.dynamodb_gsi_arns["incident"]

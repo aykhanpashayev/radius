@@ -10,7 +10,8 @@
   - [3. Terraform 1.5.0 or higher](#3-terraform-150-or-higher)
   - [4. AWS CLI v2](#4-aws-cli-v2)
   - [5. Configure AWS credentials](#5-configure-aws-credentials)
-  - [6. git](#6-git)
+  - [6. jq (optional)](#6-jq-optional)
+  - [7. git](#7-git)
 - [Quick Start — Local Testing (No AWS Required)](#quick-start--local-testing-no-aws-required)
 - [Full AWS Deployment](#full-aws-deployment)
   - [Step 1 — Run the preflight check](#step-1--run-the-preflight-check)
@@ -188,15 +189,19 @@ If this fails, your credentials are wrong or expired. Re-run `aws configure`.
 - `AdministratorAccess` — simplest for a first deployment
 - Minimum custom policy: IAM, Lambda, DynamoDB, S3, SNS, EventBridge, API Gateway, CloudTrail, CloudWatch, KMS, SQS create/update/delete
 
+### 6. zip utility
+
+Not required — `build-lambdas.sh` uses Python's built-in `zipfile` module to package Lambda functions, so no `zip` CLI tool is needed on any platform.
+
 ---
 
-### 6. zip utility (Linux/macOS only)
+### 6. jq (optional)
 
-The Lambda build script uses `zip` to package function code.
+`jq` is not required but is useful for inspecting JSON output from AWS CLI commands.
 
-**Linux:** `sudo apt install zip`
-**macOS:** Built-in, no action needed.
-**Windows:** Not needed — use WSL2 where `zip` is available, or install via `winget install GnuWin32.Zip`.
+**Linux:** `sudo apt install jq`
+**macOS:** `brew install jq`
+**Windows:** `winget install jqlang.jq`
 
 ---
 
@@ -250,15 +255,24 @@ source .venv/Scripts/activate
 pip install -r backend/requirements-dev.txt
 
 # 5. Run the full test suite (no AWS credentials needed — uses moto mock)
-python -m pytest backend/tests/ -q
+bash scripts/run-tests.sh
 
 # 6. Run the attack simulation demo (no AWS credentials needed)
 python scripts/simulate-attack.py --mode mock
 ```
 
-**Expected output from step 5:** All tests pass. You should see something like:
+**Expected output from step 5:** All tests pass with a suite summary table. You should see something like:
 ```
-306 passed in 12s
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Suite                     Tests    Passed   Failed   Coverage   Duration
+─────────────────────────────────────────────────────────────────────────────
+Unit Tests                180      180      0        87%        8.2s
+Integration Tests         90       90       0        91%        14.1s
+Property-Based Tests      36       36       0        N/A        22.4s
+─────────────────────────────────────────────────────────────────────────────
+TOTAL                     306      306      0                   44.7s
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+All tests passed.
 ```
 
 **Expected output from step 6:** A five-phase attack simulation showing identity seeding, event injection, incident detection, blast radius scoring, and audit log entries — all running against an in-memory mock AWS environment.
@@ -411,14 +425,14 @@ python -c "import boto3, moto, pytest, hypothesis; print('OK')"
 Always run tests before building and deploying. This confirms the backend logic is correct before you spend time on infrastructure.
 
 ```bash
-# Full suite (unit + integration + property-based):
-python -m pytest backend/tests/ -q
+# Full suite (unit + integration + property-based) with coverage summary:
+bash scripts/run-tests.sh
 
 # Fast mode (skip property-based tests, ~15 seconds):
-python -m pytest backend/tests/ --ignore=backend/tests/test_*_properties.py -q
+bash scripts/run-tests.sh --fast
 ```
 
-**Expected output:** All tests pass. If any fail, do not proceed to deployment — fix the failures first.
+**Expected output:** All tests pass with a suite summary table. If any fail, do not proceed to deployment — fix the failures first.
 
 ---
 
@@ -1138,10 +1152,12 @@ lambda_timeout = {
 
 ### DynamoDB throttling errors
 
-On-demand billing handles bursts automatically, but very sudden spikes can cause transient throttling. For dev, reduce the injection rate:
+On-demand billing handles bursts automatically, but very sudden spikes can cause transient throttling. For dev, inject events in smaller batches:
 
 ```bash
-python scripts/inject-events.py --env dev --dir sample-data/cloud-trail-events --delay 0.5
+python scripts/inject-events.py --env dev --dir sample-data/cloud-trail-events --dry-run
+# Validate first, then inject a single file at a time:
+python scripts/inject-events.py --env dev --file sample-data/cloud-trail-events/suspicious-privilege-escalation.json
 ```
 
 ---
@@ -1165,7 +1181,7 @@ WSL2 gives you a full Linux environment inside Windows. It's the most reliable o
 3. Install required tools inside WSL2:
    ```bash
    sudo apt update
-   sudo apt install -y python3.11 python3-pip zip unzip
+   sudo apt install -y python3.11 python3-pip
    ```
 
 4. Install Terraform inside WSL2:
@@ -1197,13 +1213,6 @@ Git Bash (included with Git for Windows) can run the shell scripts without WSL2.
 2. Open "Git Bash" from the Start menu
 3. Follow the Linux deployment steps — they work in Git Bash
 
-**Limitation:** Git Bash doesn't include `zip` by default. Install it:
-```bash
-# In Git Bash:
-curl -L https://sourceforge.net/projects/gnuwin32/files/zip/3.0/zip-3.0-bin.zip/download -o zip.zip
-# Or use: winget install GnuWin32.Zip
-```
-
 ### What works natively in PowerShell
 
 These commands work directly in PowerShell without WSL2 or Git Bash:
@@ -1231,9 +1240,7 @@ terraform -chdir=infra\envs\dev apply -var-file=terraform.tfvars
 
 ## Known Limitations
 
-**`build-lambdas.sh` on Windows without WSL2:** The script uses bash and `zip`, which are not available in native PowerShell. Use WSL2 or Git Bash. Alternatively, you can manually zip each Lambda function directory and upload to S3 — the structure is: function code + `backend/common/` + installed dependencies, all at the root of the zip.
-
-**`--platform manylinux2014_aarch64` removed:** Earlier versions of `build-lambdas.sh` used `pip install --platform manylinux2014_aarch64 --only-binary=:all:` to build arm64-compatible packages. This was removed because it fails for packages without pre-built arm64 wheels and breaks on Windows. Lambda arm64 compatibility is handled at the Terraform layer level. If you have packages that require native arm64 binaries, build on an arm64 Linux machine or use a Docker-based build.
+**`build-lambdas.sh` on Windows without WSL2:** The script uses bash, which is not available in native PowerShell. Use WSL2 or Git Bash. The script itself uses Python's `zipfile` module for packaging (no `zip` CLI required), so once you have a bash environment it works without any extra tools.
 
 **CloudTrail organization trail:** Setting `cloudtrail_organization_enabled = true` requires deploying from an AWS Organizations management account. This is not available in standalone AWS accounts. Leave it `false` for dev and single-account deployments.
 

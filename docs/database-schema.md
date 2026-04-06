@@ -10,7 +10,7 @@
 - [Remediation_Config](#remediation_config)
 - [Remediation_Audit_Log](#remediation_audit_log)
 
-All tables use on-demand billing and KMS encryption. PITR is enabled on Identity_Profile, Blast_Radius_Score, and Incident tables.
+All tables use on-demand billing and KMS encryption. PITR is enabled on Identity_Profile, Blast_Radius_Score, Incident, Remediation_Config, and Remediation_Audit_Log tables.
 
 ## Identity_Profile
 
@@ -23,8 +23,10 @@ Stores one record per IAM identity observed in CloudTrail events.
 | identity_arn | String | Full IAM ARN (PK) |
 | identity_type | String | IAMUser, AssumedRole, or AWSService |
 | account_id | String | 12-digit AWS account ID |
+| creation_date | String | ISO 8601 timestamp of first observation |
 | last_activity_timestamp | String | ISO 8601 timestamp of most recent event |
-| status | String | active or inactive |
+| is_active | Boolean | `true` if identity is active; `false` after a deletion event |
+| activity_count | Number | Running count of observed CloudTrail events |
 | tags | Map | IAM tags from CloudTrail metadata |
 
 **GSIs:**
@@ -85,7 +87,7 @@ Stores security incidents created by Incident_Processor.
 | status_history | List | List of {status, timestamp} transition records |
 | notes | String | Analyst notes |
 | assigned_to | String | Assigned analyst |
-| ttl | Number | Unix epoch expiry (set for resolved/false_positive) |
+| ttl | Number | Unix epoch expiry (set for resolved/false_positive) — stored as `ttl_timestamp` in DynamoDB |
 
 **Valid status transitions:** open → investigating → resolved, open → false_positive
 
@@ -97,7 +99,7 @@ Stores security incidents created by Incident_Processor.
 | SeverityIndex | severity | creation_timestamp | ALL | List incidents by severity |
 | IdentityIndex | identity_arn | creation_timestamp | KEYS_ONLY | List incidents for an identity |
 
-**TTL:** Enabled on `ttl` field  
+**TTL:** Enabled on `ttl_timestamp` field  
 **PITR:** Enabled
 
 ---
@@ -119,7 +121,7 @@ Stores normalized CloudTrail event records. TTL expires records after 90 days.
 | user_agent | String | User agent string |
 | date_partition | String | YYYY-MM-DD for TimeRangeIndex |
 | event_parameters | Map | Sanitized request parameters (≤10KB) |
-| ttl | Number | Unix epoch expiry (90 days) |
+| ttl | Number | Unix epoch expiry (90 days) — stored as `ttl_timestamp` in DynamoDB |
 
 **GSIs:**
 
@@ -129,7 +131,7 @@ Stores normalized CloudTrail event records. TTL expires records after 90 days.
 | EventTypeIndex | event_type | timestamp | KEYS_ONLY | Filter by event type |
 | TimeRangeIndex | date_partition | timestamp | ALL | Time-range queries by day |
 
-**TTL:** Enabled on `ttl` field (90-day expiry)
+**TTL:** Enabled on `ttl_timestamp` field (90-day expiry)
 
 ---
 
@@ -189,6 +191,8 @@ Stores the singleton global remediation configuration. There is exactly one reco
 
 **TTL:** Not enabled
 
+**PITR:** Enabled
+
 **Example record:**
 ```json
 {
@@ -240,9 +244,11 @@ Append-only audit log. Every action evaluation — executed, skipped, suppressed
 | Index | PK | SK | Projection | Use case |
 |---|---|---|---|---|
 | IdentityTimeIndex | identity_arn | timestamp | ALL | List audit entries for an identity, sorted by time |
-| IncidentIndex | incident_id | timestamp | ALL | List all audit entries for a specific incident |
+| IncidentIndex | incident_id | timestamp | KEYS_ONLY | List all audit entries for a specific incident |
 
 **TTL:** Enabled on `ttl` field (365-day expiry)
+
+**PITR:** Enabled
 
 **Example record:**
 ```json

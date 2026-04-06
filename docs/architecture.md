@@ -52,7 +52,7 @@ All API Gateway endpoints (except OPTIONS preflight) require a valid Cognito JWT
 |---|---|---|---|
 | Event_Normalizer | EventBridge rule | Parse and validate CloudTrail events; write Event_Summary; fan out to downstream functions | Detection_Engine, Identity_Collector (async) |
 | Detection_Engine | Async invoke (Event_Normalizer) | Evaluate 7 detection rules against event + DetectionContext; emit Findings | Incident_Processor (async) |
-| Incident_Processor | Async invoke (Detection_Engine) | Create or deduplicate Incident records; publish SNS alerts for high-severity findings | SNS Alert_Topic |
+| Incident_Processor | Async invoke (Detection_Engine) | Create or deduplicate Incident records; publish SNS alerts for high-severity findings; async invoke Remediation_Engine for High+ incidents | SNS Alert_Topic, Remediation_Engine (async) |
 | Identity_Collector | Async invoke (Event_Normalizer) | Upsert Identity_Profile records; record Trust_Relationship edges for AssumeRole events | — |
 | Score_Engine | EventBridge schedule / direct invoke | Evaluate 8 scoring rules against ScoringContext; write Blast_Radius_Score snapshot | — |
 | API_Handler | API Gateway (REST) | Serve all read/write operations for the React dashboard | — |
@@ -62,7 +62,7 @@ All API Gateway endpoints (except OPTIONS preflight) require a valid Cognito JWT
 
 | Table | PK | SK | Purpose |
 |---|---|---|---|
-| Identity_Profile | `identity_arn` | — | IAM identity metadata, type, account, last activity |
+| Identity_Profile | `identity_arn` | — | IAM identity metadata, type, account, activity count, active status |
 | Blast_Radius_Score | `identity_arn` | — | Current score snapshot: value, severity level, contributing factors |
 | Incident | `incident_id` | — | Security incidents: status, severity, related events, status history |
 | Event_Summary | `identity_arn` | `timestamp` | Normalized CloudTrail events; TTL-expired after 90 days |
