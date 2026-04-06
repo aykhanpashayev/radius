@@ -389,9 +389,9 @@ resource "aws_iam_role_policy" "github_deploy" {
         Resource = "*"
       },
       {
-        Sid    = "APIGateway"
-        Effect = "Allow"
-        Action = ["apigateway:*"]
+        Sid      = "APIGateway"
+        Effect   = "Allow"
+        Action   = ["apigateway:*"]
         Resource = "*"
       },
       {
