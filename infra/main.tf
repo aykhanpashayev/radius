@@ -44,8 +44,8 @@ module "cognito" {
   prefix  = local.name_prefix
   tags    = var.tags
 
-  callback_urls = var.cognito_callback_urls
-  logout_urls   = var.cognito_logout_urls
+  callback_urls = length(var.cognito_callback_urls) > 0 ? var.cognito_callback_urls : ["https://${module.frontend.domain_name}/callback", "http://localhost:5173/callback"]
+  logout_urls   = length(var.cognito_logout_urls) > 0 ? var.cognito_logout_urls : ["https://${module.frontend.domain_name}/logout", "http://localhost:5173/logout"]
 }
 
 # SSM parameters — config values written here so CI/CD can read them at
@@ -209,7 +209,17 @@ module "cloudwatch" {
 }
 
 # ---------------------------------------------------------------------------
-# 9. GitHub Actions OIDC — allows CI/CD to assume a deploy role without
+# 9. Frontend — S3 + CloudFront for the React dashboard
+# ---------------------------------------------------------------------------
+module "frontend" {
+  source      = "./modules/frontend"
+  environment = var.environment
+  prefix      = local.name_prefix
+  tags        = var.tags
+}
+
+# ---------------------------------------------------------------------------
+# 10. GitHub Actions OIDC — allows CI/CD to assume a deploy role without
 #    long-lived AWS access keys stored in GitHub Secrets.
 # ---------------------------------------------------------------------------
 resource "aws_iam_openid_connect_provider" "github" {
@@ -244,20 +254,15 @@ resource "aws_iam_role_policy_attachment" "github_deploy" {
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
-# SSM — frontend S3 bucket and CloudFront distribution ID.
-# These are only written when values are provided — they depend on the
-# CloudFront module which is not yet deployed. The deploy workflow reads
-# these to push the built frontend and bust the CDN cache.
+# SSM — frontend S3 bucket and CloudFront distribution ID for CI/CD deploy workflow.
 resource "aws_ssm_parameter" "frontend_bucket" {
-  count = var.frontend_s3_bucket != "" ? 1 : 0
   name  = "/radius/${var.environment}/frontend/bucket"
   type  = "String"
-  value = var.frontend_s3_bucket
+  value = module.frontend.bucket_name
 }
 
 resource "aws_ssm_parameter" "cloudfront_distribution_id" {
-  count = var.cloudfront_distribution_id != "" ? 1 : 0
   name  = "/radius/${var.environment}/cloudfront/distribution_id"
   type  = "String"
-  value = var.cloudfront_distribution_id
+  value = module.frontend.distribution_id
 }

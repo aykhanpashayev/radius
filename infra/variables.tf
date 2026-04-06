@@ -146,31 +146,19 @@ variable "log_level" {
 }
 
 variable "cognito_callback_urls" {
-  description = "Allowed OAuth callback URLs for the Cognito app client (e.g. https://yourdomain.com/callback)"
+  description = "Override Cognito OAuth callback URLs. Defaults to the CloudFront distribution URL."
   type        = list(string)
-  default     = ["http://localhost:5173/callback"]
+  default     = []
 }
 
 variable "cognito_logout_urls" {
-  description = "Allowed OAuth logout URLs for the Cognito app client"
+  description = "Override Cognito OAuth logout URLs. Defaults to the CloudFront distribution URL."
   type        = list(string)
-  default     = ["http://localhost:5173/logout"]
+  default     = []
 }
 
 variable "github_repo" {
   description = "GitHub repository in org/repo format for the OIDC deploy role (e.g. my-org/radius). Leave empty to skip OIDC role creation."
-  type        = string
-  default     = ""
-}
-
-variable "frontend_s3_bucket" {
-  description = "S3 bucket name hosting the built React frontend. Set once the CloudFront module is added."
-  type        = string
-  default     = ""
-}
-
-variable "cloudfront_distribution_id" {
-  description = "CloudFront distribution ID for the frontend. Set once the CloudFront module is added."
   type        = string
   default     = ""
 }

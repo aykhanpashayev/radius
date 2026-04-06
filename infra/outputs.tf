@@ -82,3 +82,18 @@ output "cognito_domain" {
   description = "Cognito hosted UI domain prefix"
   value       = module.cognito.domain
 }
+
+output "frontend_url" {
+  description = "CloudFront URL of the deployed dashboard"
+  value       = module.frontend.url
+}
+
+output "frontend_bucket" {
+  description = "S3 bucket name for frontend assets"
+  value       = module.frontend.bucket_name
+}
+
+output "cloudfront_distribution_id" {
+  description = "CloudFront distribution ID (for cache invalidation)"
+  value       = module.frontend.distribution_id
+}
