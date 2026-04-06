@@ -998,18 +998,32 @@ bash scripts/deploy-infra.sh --env dev --auto-approve
 
 To remove all AWS resources created by Terraform:
 
+**Linux / macOS / WSL2:**
 ```bash
-# This destroys everything — DynamoDB tables, Lambda functions, CloudTrail, etc.
-# Data in DynamoDB will be permanently deleted.
-terraform -chdir=infra/envs/dev destroy -var-file=terraform.tfvars
+cd infra/envs/dev
+terraform destroy -var-file=terraform.tfvars
+```
+
+**Windows (PowerShell):**
+```powershell
+Set-Location infra\envs\dev
+terraform destroy -var-file=terraform.tfvars
 ```
 
 Type `yes` when prompted. This takes 3–5 minutes.
 
-After destroying, you can also delete the S3 buckets manually if you no longer need them:
+> **Windows note:** Do not use `terraform -chdir=infra/envs/dev destroy -var-file=terraform.tfvars` from the repo root on Windows — Terraform misinterprets the bare filename as a plan file and fails with `Failed to load ".tfvars" as a plan file`. Always change into the env directory first.
 
+After destroying, delete the S3 buckets manually if you no longer need them:
+
+**Linux / macOS / WSL2:**
 ```bash
-# Empty the bucket first (required before deletion)
+aws s3 rm s3://YOUR-STATE-BUCKET --recursive
+aws s3 rb s3://YOUR-STATE-BUCKET
+```
+
+**Windows (PowerShell):**
+```powershell
 aws s3 rm s3://YOUR-STATE-BUCKET --recursive
 aws s3 rb s3://YOUR-STATE-BUCKET
 ```
@@ -1114,8 +1128,20 @@ bash scripts/deploy-infra.sh --env dev
 
 **Alternative — destroy and start fresh:**
 If multiple resource types are in a partial state, it may be faster to destroy everything and re-apply:
+
+Linux / macOS / WSL2:
 ```bash
-terraform -chdir=infra/envs/dev destroy -var-file=terraform.tfvars
+cd infra/envs/dev
+terraform destroy -var-file=terraform.tfvars
+cd ../../..
+bash scripts/deploy-infra.sh --env dev
+```
+
+Windows (PowerShell):
+```powershell
+Set-Location infra\envs\dev
+terraform destroy -var-file=terraform.tfvars
+Set-Location ..\..\..
 bash scripts/deploy-infra.sh --env dev
 ```
 
