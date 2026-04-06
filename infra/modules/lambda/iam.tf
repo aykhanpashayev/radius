@@ -205,54 +205,57 @@ resource "aws_iam_role_policy" "incident_processor" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "CloudWatchLogs"
-        Effect = "Allow"
-        Action = ["logs:CreateLogStream", "logs:PutLogEvents"]
-        Resource = "${aws_cloudwatch_log_group.incident_processor.arn}:*"
-      },
-      {
-        Sid    = "WriteIncident"
-        Effect = "Allow"
-        Action = ["dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:Query"]
-        Resource = concat(
-          [var.dynamodb_table_arns.incident],
-          var.dynamodb_gsi_arns["incident"]
-        )
-      },
-      {
-        Sid    = "PublishSNS"
-        Effect = "Allow"
-        Action = ["sns:Publish"]
-        Resource = var.sns_topic_arn
-      },
-      {
-        Sid    = "InvokeRemediationEngine"
-        Effect = "Allow"
-        Action = ["lambda:InvokeFunction"]
-        Resource = aws_lambda_function.remediation_engine.arn
-      },
-      {
-        Sid    = "DLQ"
-        Effect = "Allow"
-        Action = ["sqs:SendMessage"]
-        Resource = aws_sqs_queue.incident_processor_dlq.arn
-      },
-      {
-        Sid    = "KMS"
-        Effect = "Allow"
-        Action = ["kms:Decrypt", "kms:GenerateDataKey*"]
-        Resource = var.kms_key_arn
-      },
-    ] + (length(var.secret_arns) > 0 ? [
-      {
-        Sid      = "ReadAlertingSecrets"
-        Effect   = "Allow"
-        Action   = ["secretsmanager:GetSecretValue"]
-        Resource = var.secret_arns
-      }
-    ] : [])
+    Statement = concat(
+      [
+        {
+          Sid    = "CloudWatchLogs"
+          Effect = "Allow"
+          Action = ["logs:CreateLogStream", "logs:PutLogEvents"]
+          Resource = "${aws_cloudwatch_log_group.incident_processor.arn}:*"
+        },
+        {
+          Sid    = "WriteIncident"
+          Effect = "Allow"
+          Action = ["dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:Query"]
+          Resource = concat(
+            [var.dynamodb_table_arns.incident],
+            var.dynamodb_gsi_arns["incident"]
+          )
+        },
+        {
+          Sid    = "PublishSNS"
+          Effect = "Allow"
+          Action = ["sns:Publish"]
+          Resource = var.sns_topic_arn
+        },
+        {
+          Sid    = "InvokeRemediationEngine"
+          Effect = "Allow"
+          Action = ["lambda:InvokeFunction"]
+          Resource = aws_lambda_function.remediation_engine.arn
+        },
+        {
+          Sid    = "DLQ"
+          Effect = "Allow"
+          Action = ["sqs:SendMessage"]
+          Resource = aws_sqs_queue.incident_processor_dlq.arn
+        },
+        {
+          Sid    = "KMS"
+          Effect = "Allow"
+          Action = ["kms:Decrypt", "kms:GenerateDataKey*"]
+          Resource = var.kms_key_arn
+        },
+      ],
+      length(var.secret_arns) > 0 ? [
+        {
+          Sid      = "ReadAlertingSecrets"
+          Effect   = "Allow"
+          Action   = ["secretsmanager:GetSecretValue"]
+          Resource = var.secret_arns
+        }
+      ] : []
+    )
   })
 }
 
