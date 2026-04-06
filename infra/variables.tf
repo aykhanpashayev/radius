@@ -158,9 +158,9 @@ variable "cognito_logout_urls" {
 }
 
 variable "github_repo" {
-  description = "GitHub repository in org/repo format — used to scope the OIDC deploy role (e.g. my-org/radius)"
+  description = "GitHub repository in org/repo format for the OIDC deploy role (e.g. my-org/radius). Leave empty to skip OIDC role creation."
   type        = string
-  default     = "YOUR_ORG/radius"
+  default     = ""
 }
 
 variable "frontend_s3_bucket" {

@@ -71,20 +71,14 @@ flowchart TD
 
 ## Test Results
 
+Run the test suite yourself to see current coverage:
+
+```bash
+pip install -r backend/requirements-dev.txt
+bash scripts/run-tests.sh
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Test Suite Summary
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Suite                  Tests   Passed  Failed  Coverage  Duration
-─────────────────────────────────────────────────────────────────────────────
-Unit Tests             142     142     0       87%       18.4s
-Integration Tests       38      38     0       91%       24.1s
-Property-Based Tests    12      12     0       89%        8.7s
-─────────────────────────────────────────────────────────────────────────────
-TOTAL                  192     192     0       89%       51.2s
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-All tests passed.
-```
+
+The suite covers unit tests, integration tests (using moto AWS mocks), and property-based tests via Hypothesis.
 
 ## Deploying to AWS
 

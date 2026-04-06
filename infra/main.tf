@@ -213,23 +213,24 @@ module "cloudwatch" {
 #    long-lived AWS access keys stored in GitHub Secrets.
 # ---------------------------------------------------------------------------
 resource "aws_iam_openid_connect_provider" "github" {
+  count           = var.github_repo != "" ? 1 : 0
   url             = "https://token.actions.githubusercontent.com"
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
 }
 
 resource "aws_iam_role" "github_deploy" {
-  name = "${local.name_prefix}-github-deploy"
+  count = var.github_repo != "" ? 1 : 0
+  name  = "${local.name_prefix}-github-deploy"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
       Effect    = "Allow"
-      Principal = { Federated = aws_iam_openid_connect_provider.github.arn }
+      Principal = { Federated = aws_iam_openid_connect_provider.github[0].arn }
       Action    = "sts:AssumeRoleWithWebIdentity"
       Condition = {
         StringLike = {
-          # Replace YOUR_ORG/radius with your actual GitHub org and repo name
           "token.actions.githubusercontent.com:sub" = "repo:${var.github_repo}:ref:refs/heads/main"
         }
       }
@@ -237,10 +238,9 @@ resource "aws_iam_role" "github_deploy" {
   })
 }
 
-# TODO: Replace AdministratorAccess with a scoped policy in prod covering only
-# Lambda, DynamoDB, S3, CloudFront, SSM, API Gateway, Cognito, IAM (limited).
 resource "aws_iam_role_policy_attachment" "github_deploy" {
-  role       = aws_iam_role.github_deploy.name
+  count      = var.github_repo != "" ? 1 : 0
+  role       = aws_iam_role.github_deploy[0].name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
 
